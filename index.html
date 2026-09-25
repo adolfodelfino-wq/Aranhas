@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Clínico | Decisão Clínica & Suporte Médico</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
+    <link rel="apple-touch-icon" href="/logo.jpg" />
+    <meta name="description" content="Ferramenta de suporte à decisão clínica e registros estruturados para medicina e atenção primária à saúde" />
+    <meta property="og:title" content="Nexus Clínico | Decisão Clínica & Suporte Médico" />
+    <meta property="og:description" content="Ferramenta de suporte à decisão clínica e registros estruturados para medicina e atenção primária à saúde" />
+    <meta property="og:image" content="/logo.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-[#F8F7F4] text-[#1A1C1E] antialiased selection:bg-[#115E59] selection:text-white">
+    <div id="root">
+      {/* Static Semantic Fallback for Browsers, Crawlers and Retrieval Agents prior to JS Hydration */}
+      <header style="padding: 16px; background-color: #0A3B74; color: white;">
+        <h1>Nexus Clínico — Decisão Clínica & Registro Estruturado na APS</h1>
+        <p>Sistema Especialista em Atenção Primária à Saúde (APS) e Medicina de Família e Comunidade (MFC).</p>
+      </header>
+      <main style="padding: 16px; font-family: sans-serif;">
+        <h2>Navegação & Ferramentas Clínicas</h2>
+        <ul>
+          <li><a href="/">Início / Catálogo de Ferramentas</a></li>
+          <li><a href="/escalas/phq-9">PHQ-9 (Patient Health Questionnaire - 9) — Rastreio e Gravidade da Depressão</a></li>
+          <li><a href="/escalas/gad-7">GAD-7 (Generalized Anxiety Disorder - 7) — Transtorno de Ansiedade Generalizada</a></li>
+          <li><a href="/escalas/audit">AUDIT (Alcohol Use Disorders Identification Test) — Padrão de Consumo de Álcool</a></li>
+          <li><a href="/escalas/cage">CAGE — Triagem Breve para Dependência Alcoólica</a></li>
+          <li><a href="/escalas/meem">MEEM (Mini-Exame do Estado Mental de Folstein) — Rastreio Cognitivo</a></li>
+          <li><a href="/escalas/gds-15">GDS-15 (Escala de Depressão Geriátrica de Yesavage)</a></li>
+          <li><a href="/escalas/katz">Índice de Katz — Atividades Básicas de Vida Diária (ABVD)</a></li>
+          <li><a href="/escalas/asrs-18">ASRS-18 — Rastreio de TDAH em Adultos (OMS / ASRS-v1.1)</a></li>
+          <li><a href="/escalas/snap-iv">SNAP-IV — Escala para TDAH e Transtorno Desafiador Opositivo em Crianças</a></li>
+          <li><a href="/escalas/edinburgh">EPDS (Escala de Depressão Pós-Parto de Edimburgo)</a></li>
+          <li><a href="/escalas/mdq">MDQ (Mood Disorder Questionnaire) — Rastreio de Transtorno Bipolar</a></li>
+          <li><a href="/escalas/pcl-5">PCL-5 — Transtorno de Estresse Pós-Traumático (TEPT)</a></li>
+          <li><a href="/escalas/ybocs">Y-BOCS — Gravidade do Transtorno Obsessivo-Compulsivo (TOC)</a></li>
+          <li><a href="/escalas/assist">ASSIST (OMS) — Triagem de Uso de Substâncias</a></li>
+          <li><a href="/calculadoras/antidepressant">Calculadora de Troca de Antidepressivos (Maudsley & Hayasaka)</a></li>
+          <li><a href="/calculadoras/antipsychotic">Equivalência de Doses de Antipsicóticos (CPZE Leucht/Davis)</a></li>
+          <li><a href="/calculadoras/egfr">Taxa de Filtração Glomerular Estimada (CKD-EPI 2021)</a></li>
+          <li><a href="/calculadoras/cv">Escore de Risco Cardiovascular Global (SBC / Framingham)</a></li>
+          <li><a href="/eem">Exame do Estado Mental Estruturado (EEM)</a></li>
+          <li><a href="/soap">Registro Estruturado de Consulta SOAP</a></li>
+        </ul>
+      </main>
+    </div>
+    <noscript>
+      <div style="padding: 20px; background-color: #FEF3C7; color: #92400E; font-family: sans-serif;">
+        <strong>Aviso:</strong> O Nexus Clínico funciona como um aplicativo interativo. Para utilizar as calculadoras interativas em tempo real, cálculos determinísticos e exportação SOAP instantânea, por favor habilite o JavaScript em seu navegador.
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

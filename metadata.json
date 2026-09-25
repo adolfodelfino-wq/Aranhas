@@ -1,0 +1,6 @@
+{
+  "name": "Nexus Clínico",
+  "description": "Ferramenta de suporte à decisão clínica e registros estruturados para medicina e atenção primária à saúde",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
