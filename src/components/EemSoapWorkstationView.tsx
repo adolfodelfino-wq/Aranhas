@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState, SoapState, PatientSession, ScaleResult } from '../types';
+import { generateEemSummary } from '../utils/eemFormatter';
 import {
   Stethoscope,
   FileText,
@@ -203,22 +204,26 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
       }
 
       if (key === 'atencaoMemoria') {
-        if (optionId === 'atencao_normoprosexica') newList = newList.filter((id) => id !== 'hipoprosexico');
-        if (optionId === 'hipoprosexico') newList = newList.filter((id) => id !== 'atencao_normoprosexica');
-        if (optionId === 'memoria_preservada') newList = newList.filter((id) => id !== 'deficit_memoria_recente' && id !== 'deficit_memoria_remota');
-        if (optionId === 'deficit_memoria_recente' || optionId === 'deficit_memoria_remota') {
+        if (optionId === 'atencao_normoprosexica') {
+          newList = newList.filter((id) => id !== 'atencao_hipoprosexia' && id !== 'atencao_hiperprosexia');
+        }
+        if (optionId === 'atencao_hipoprosexia' || optionId === 'atencao_hiperprosexia') {
+          newList = newList.filter((id) => id !== 'atencao_normoprosexica');
+        }
+        if (optionId === 'memoria_preservada') {
+          newList = newList.filter((id) => id !== 'memoria_hipomnesia_fixacao' && id !== 'memoria_hipomnesia_evocacao');
+        }
+        if (optionId === 'memoria_hipomnesia_fixacao' || optionId === 'memoria_hipomnesia_evocacao') {
           newList = newList.filter((id) => id !== 'memoria_preservada');
         }
       }
 
       if (key === 'insight') {
-        if (optionId === 'insight_preservado') newList = [optionId];
-        if (optionId === 'insight_parcial' || optionId === 'insight_ausente') newList = [optionId];
+        newList = [optionId];
       }
 
       if (key === 'julgamento') {
-        if (optionId === 'julgamento_preservado') newList = [optionId];
-        if (optionId === 'julgamento_prejudicado') newList = [optionId];
+        newList = [optionId];
       }
     }
 
@@ -240,67 +245,25 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
     return labels.join(', ');
   };
 
-  // Generate technical EEM narrative
-  const generateEemNarrative = (): string => {
-    const parts: string[] = [];
-
-    const getLabels = (domainId: string, list?: string[]) => {
-      const domain = EEM_DOMAINS.find((d) => d.id === domainId);
-      if (!domain || !Array.isArray(list)) return [];
-      return list
-        .map((id) => domain.options.find((o) => o.id === id)?.label)
-        .filter(Boolean) as string[];
-    };
-
-    const aparencia = getLabels('aparencia', eemState.aparencia);
-    if (aparencia.length > 0) parts.push(`Aparência: ${aparencia.join(', ').toLowerCase()}`);
-
-    const atitude = getLabels('atitude', eemState.atitude);
-    if (atitude.length > 0) parts.push(`Atitude: ${atitude.join(', ').toLowerCase()}`);
-
-    const fala = getLabels('fala', eemState.fala);
-    if (fala.length > 0) parts.push(`Fala: ${fala.join(', ').toLowerCase()}`);
-
-    const humor = getLabels('humor', eemState.humor);
-    if (humor.length > 0) parts.push(`Humor: ${humor.join(', ').toLowerCase()}`);
-
-    const afeto = getLabels('afeto', eemState.afeto);
-    if (afeto.length > 0) parts.push(`Afeto: ${afeto.join(', ').toLowerCase()}`);
-
-    const pCurso = getLabels('pensamentoCurso', eemState.pensamentoCurso);
-    const pForma = getLabels('pensamentoForma', eemState.pensamentoForma);
-    const pConteudo = getLabels('pensamentoConteudo', eemState.pensamentoConteudo);
-    const pensParts = [...pCurso, ...pForma, ...pConteudo];
-    if (pensParts.length > 0) parts.push(`Pensamento: ${pensParts.join(', ').toLowerCase()}`);
-
-    const senso = getLabels('sensopercepcao', eemState.sensopercepcao);
-    if (senso.length > 0) parts.push(`Sensopercepção: ${senso.join(', ').toLowerCase()}`);
-
-    const orient = getLabels('orientacao', eemState.orientacao);
-    if (orient.length > 0) parts.push(`Orientação: ${orient.join(', ').toLowerCase()}`);
-
-    const atencaoMem = getLabels('atencaoMemoria', eemState.atencaoMemoria);
-    if (atencaoMem.length > 0) parts.push(`Atenção/Memória: ${atencaoMem.join(', ').toLowerCase()}`);
-
-    const insight = getLabels('insight', eemState.insight);
-    if (insight.length > 0) parts.push(`Insight: ${insight.join(', ').toLowerCase()}`);
-
-    const julgamento = getLabels('julgamento', eemState.julgamento);
-    if (julgamento.length > 0) parts.push(`Julgamento: ${julgamento.join(', ').toLowerCase()}`);
-
-    if (parts.length === 0) return 'Exame do Estado Mental sem achados registrados.';
-    return `EEM: ${parts.join('; ')}.`;
-  };
-
-  const currentEemNarrative = generateEemNarrative();
+  // Generate technical EEM narrative in sequence (each dimension on its own line)
+  const currentEemNarrative = generateEemSummary(eemState);
 
   // Insert EEM into SOAP Objective
   const handleInsertEemToSoap = () => {
     const separator = soapState.objective.trim() ? '\n\n' : '';
-    // Avoid duplicate EEM header if already there
-    const updatedObjective = soapState.objective.includes('EEM:')
-      ? soapState.objective.replace(/EEM:[\s\S]*?\./, currentEemNarrative)
-      : `${soapState.objective}${separator}${currentEemNarrative}`;
+    let updatedObjective = soapState.objective;
+
+    // Check if an existing EEM block is already in the objective
+    const eemHeaderRegex = /Exame do Estado Mental \(EEM\):[\s\S]*?(?=(\n\n[A-Z0-9]|$)|$)/;
+    const oldEemRegex = /EEM:[\s\S]*?(?=(\n\n[A-Z0-9]|$)|$)/;
+
+    if (eemHeaderRegex.test(updatedObjective)) {
+      updatedObjective = updatedObjective.replace(eemHeaderRegex, currentEemNarrative);
+    } else if (oldEemRegex.test(updatedObjective)) {
+      updatedObjective = updatedObjective.replace(oldEemRegex, currentEemNarrative);
+    } else {
+      updatedObjective = `${updatedObjective}${separator}${currentEemNarrative}`;
+    }
 
     onUpdateSoap({
       ...soapState,
@@ -662,7 +625,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 </button>
               </div>
 
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 leading-relaxed font-sans min-h-[65px]">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 leading-relaxed font-mono whitespace-pre-wrap min-h-[65px] max-h-52 overflow-y-auto">
                 {currentEemNarrative}
               </div>
 
