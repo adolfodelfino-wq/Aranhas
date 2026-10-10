@@ -1,6 +1,6 @@
 import { NavView } from '../types';
 
-export type CalculatorTabId = 'antidepressant' | 'antipsychotic' | 'egfr' | 'cv';
+export type CalculatorTabId = 'antidepressant' | 'benzodiazepine' | 'antipsychotic' | 'egfr' | 'cv';
 
 export interface RouteState {
   view: NavView;
@@ -16,6 +16,11 @@ const CALC_TAB_ALIASES: Record<string, CalculatorTabId> = {
   antidepressant: 'antidepressant',
   'troca-antidepressivo': 'antidepressant',
   'troca-antidepressivos': 'antidepressant',
+  benzodiazepine: 'benzodiazepine',
+  'desmame-benzo': 'benzodiazepine',
+  benzo: 'benzodiazepine',
+  bzd: 'benzodiazepine',
+  ashton: 'benzodiazepine',
   antipsychotic: 'antipsychotic',
   cpze: 'antipsychotic',
   antipsicoticos: 'antipsychotic',
@@ -39,18 +44,18 @@ export function parseCurrentLocation(): RouteState {
       calcTab: 'antidepressant',
       isPatientMode: false,
       patientScaleId: 'phq-9',
-      patientName: '',
+      patientName: 'Paciente',
     };
   }
 
   const pathname = window.location.pathname.toLowerCase();
   const searchParams = new URLSearchParams(window.location.search);
 
-  // Check patient mode
+  // Check patient mode (No PII: names, CPF, CNS or clinical responses are placed in URLs)
   const modeParam = searchParams.get('mode');
   const isPatientMode = modeParam === 'patient' || pathname.startsWith('/autoaplicacao');
   const patientScaleId = searchParams.get('scale') || (pathname.startsWith('/autoaplicacao/') ? pathname.split('/')[2] : 'phq-9');
-  const patientName = searchParams.get('p') || 'Paciente';
+  const patientName = 'Paciente'; // Intentionally anonymized: PII is strictly excluded from query parameters
 
   // Check modal param
   const modalParam = searchParams.get('modal') as RouteState['modalTab'] | null;

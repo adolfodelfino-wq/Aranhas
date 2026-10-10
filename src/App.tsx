@@ -26,6 +26,13 @@ import {
   DEMO_SCALE_HISTORY,
   DEMO_SCALE_RESULTS,
 } from './data/demoPatientData';
+import { formatEemIntoObjective, sanitizeDuplicateEemHeader } from './utils/eemFormatter';
+import {
+  fetchPatientCloudHistory,
+  syncPatientToCloud,
+  sanitizeProntuarioKey,
+} from './services/patientSyncService';
+import { testFirestoreConnection } from './services/firebase';
 
 export const App: React.FC = () => {
   // Parse initial route from URL
@@ -116,26 +123,164 @@ export const App: React.FC = () => {
   };
 
   // Active Patient Session (Default: Blank patient for real clinical use)
-  const [patient, setPatient] = useState<PatientSession>({
-    name: '',
-    age: 0,
-    prontuario: '',
-    date: new Date().toLocaleDateString('pt-BR'),
-    isDemo: false,
+  const [patient, setPatient] = useState<PatientSession>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('nexus_patient_session');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return {
+      name: '',
+      age: 0,
+      prontuario: '',
+      date: new Date().toLocaleDateString('pt-BR'),
+      isDemo: false,
+    };
   });
 
   // SOAP State (Default: Empty for real consultations)
-  const [soapState, setSoapState] = useState<SoapState>({
-    subjective: '',
-    objective: '',
-    assessment: '',
-    plan: '',
-    importedItems: [],
+  const [soapState, setSoapState] = useState<SoapState>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('nexus_soap_state');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed.objective === 'string') {
+            parsed.objective = sanitizeDuplicateEemHeader(parsed.objective);
+          }
+          return parsed;
+        }
+      } catch {}
+    }
+    return {
+      subjective: '',
+      objective: '',
+      assessment: '',
+      plan: '',
+      importedItems: [],
+    };
   });
 
   // Scale Results State (Scale History for Patient)
-  const [scaleHistory, setScaleHistory] = useState<ScaleResult[]>([]);
-  const [scaleResults, setScaleResults] = useState<ScaleResult[]>([]);
+  const [scaleHistory, setScaleHistory] = useState<ScaleResult[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('nexus_scale_history');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+  const [scaleResults, setScaleResults] = useState<ScaleResult[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('nexus_scale_results');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+
+  // Cloud synchronization state (Silent cloud follow-up by prontuário)
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+  const [cloudSynced, setCloudSynced] = useState<boolean>(false);
+
+  // Test connection on boot
+  useEffect(() => {
+    testFirestoreConnection();
+  }, []);
+
+  // Fetch longitudinal history from cloud when medical record (prontuário) changes
+  useEffect(() => {
+    const prontuario = patient.prontuario?.trim();
+    if (!prontuario || patient.isDemo || prontuario.toLowerCase().includes('demo')) {
+      setCloudSynced(false);
+      return;
+    }
+
+    const sanitized = sanitizeProntuarioKey(prontuario);
+    if (!sanitized) return;
+
+    let isMounted = true;
+    setIsSyncingCloud(true);
+
+    fetchPatientCloudHistory(sanitized)
+      .then((record) => {
+        if (!isMounted) return;
+        if (record && Array.isArray(record.scaleHistory) && record.scaleHistory.length > 0) {
+          // Merge fetched cloud scale history with current local history (avoiding duplicate IDs)
+          setScaleHistory((local) => {
+            const map = new Map<string, ScaleResult>();
+            // Add cloud entries first
+            record.scaleHistory.forEach((item) => {
+              const key = item.id || `${item.scaleId}-${item.date}-${item.consultationNumber}`;
+              map.set(key, item);
+            });
+            // Overwrite or append with local
+            local.forEach((item) => {
+              const key = item.id || `${item.scaleId}-${item.date}-${item.consultationNumber}`;
+              map.set(key, item);
+            });
+            return Array.from(map.values());
+          });
+          // If local name is empty or default, adopt cloud name if available
+          if ((!patient.name || patient.name === 'Novo Paciente') && record.name) {
+            setPatient((prev) => ({
+              ...prev,
+              name: record.name || prev.name,
+              age: record.age !== undefined && record.age > 0 ? record.age : prev.age,
+            }));
+          }
+          setCloudSynced(true);
+        } else {
+          setCloudSynced(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setCloudSynced(false);
+      })
+      .finally(() => {
+        if (isMounted) setIsSyncingCloud(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [patient.prontuario, patient.isDemo]);
+
+  // Persist consultation state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexus_patient_session', JSON.stringify(patient));
+      } catch {}
+    }
+  }, [patient]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexus_soap_state', JSON.stringify(soapState));
+      } catch {}
+    }
+  }, [soapState]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexus_scale_history', JSON.stringify(scaleHistory));
+      } catch {}
+    }
+  }, [scaleHistory]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexus_scale_results', JSON.stringify(scaleResults));
+      } catch {}
+    }
+  }, [scaleResults]);
 
   // EEM State
   const [eemState, setEemState] = useState<EemState>({
@@ -167,24 +312,29 @@ export const App: React.FC = () => {
   });
 
   const handleResetNewPatient = (customPatient?: Partial<PatientSession>) => {
-    setPatient({
-      name: customPatient?.name?.trim() || 'Novo Paciente',
-      age: typeof customPatient?.age === 'number' ? customPatient.age : 30,
-      prontuario: customPatient?.prontuario?.trim() || `${Math.floor(100000 + Math.random() * 900000)}-0`,
+    const cleanPatient: PatientSession = {
+      name: customPatient?.name !== undefined ? customPatient.name.trim() : '',
+      age: typeof customPatient?.age === 'number' && customPatient.age > 0 ? customPatient.age : 0,
+      prontuario: customPatient?.prontuario !== undefined ? customPatient.prontuario.trim() : '',
       date: customPatient?.date || new Date().toLocaleDateString('pt-BR'),
-    });
+      isDemo: false,
+    };
+    setPatient(cleanPatient);
 
-    setSoapState({
+    const emptySoap: SoapState = {
       subjective: '',
       objective: '',
       assessment: '',
       plan: '',
       importedItems: [],
-    });
+    };
+    setSoapState(emptySoap);
 
     // Zero out all active scales and historical consultations completely
     setScaleResults([]);
     setScaleHistory([]);
+    setCloudSynced(false);
+    setIsSyncingCloud(false);
 
     setEemState({
       aparencia: [],
@@ -213,6 +363,15 @@ export const App: React.FC = () => {
       julgamentoOutros: '',
       observacoesLivres: '',
     });
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('nexus_patient_session', JSON.stringify(cleanPatient));
+        localStorage.setItem('nexus_soap_state', JSON.stringify(emptySoap));
+        localStorage.setItem('nexus_scale_history', JSON.stringify([]));
+        localStorage.setItem('nexus_scale_results', JSON.stringify([]));
+      } catch {}
+    }
   };
 
   const handleLoadDemoPatient = () => {
@@ -233,7 +392,8 @@ export const App: React.FC = () => {
       date: newResult.date || new Date().toLocaleDateString('pt-BR'),
     };
 
-    setScaleHistory((prev) => [...prev, entryWithMeta]);
+    const updatedHistory = [...scaleHistory, entryWithMeta];
+    setScaleHistory(updatedHistory);
 
     setScaleResults((prev) => {
       const exists = prev.some((r) => r.scaleId === newResult.scaleId);
@@ -242,6 +402,18 @@ export const App: React.FC = () => {
       }
       return [...prev, entryWithMeta];
     });
+
+    // Silently synchronize updated longitudinal history to the cloud if patient has a prontuário
+    if (patient.prontuario && !patient.isDemo) {
+      setIsSyncingCloud(true);
+      syncPatientToCloud(patient, updatedHistory)
+        .then((success) => {
+          if (success) setCloudSynced(true);
+        })
+        .finally(() => {
+          setIsSyncingCloud(false);
+        });
+    }
   };
 
   const handleUpdateEem = (updated: EemState) => {
@@ -272,12 +444,14 @@ export const App: React.FC = () => {
 
   // Helper to import formatted text into SOAP sections
   const handleImportToSoapObjective = (text: string, title: string) => {
-    const existing = soapState.objective.trim();
-    const updatedObjective = existing ? `${existing}\n\n${text}` : text;
+    const isEem = title.toLowerCase().includes('exame do estado mental') || title.toLowerCase().includes('eem');
+    const updatedObjective = isEem
+      ? formatEemIntoObjective(soapState.objective, text)
+      : (soapState.objective.trim() ? `${soapState.objective.trim()}\n\n${text}` : text);
 
     setSoapState((prev) => ({
       ...prev,
-      objective: updatedObjective,
+      objective: sanitizeDuplicateEemHeader(updatedObjective),
       importedItems: [...prev.importedItems, { title, targetSection: 'O' }],
     }));
   };
@@ -295,17 +469,31 @@ export const App: React.FC = () => {
 
   if (patientUrlMode.isPatient) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4">
         <PatientSelfFillModal
           scaleId={patientUrlMode.scaleId}
-          patientName={patientUrlMode.patientName}
+          patientName={patientUrlMode.patientName || patient.name || 'Paciente'}
           onClose={() => {
-            if (typeof window !== 'undefined') {
-              window.location.href = window.location.pathname;
-            }
+            setPatientUrlMode({
+              isPatient: false,
+              scaleId: patientUrlMode.scaleId,
+              patientName: patient.name || 'Paciente',
+            });
+            setSelectedScaleId(patientUrlMode.scaleId);
+            setCurrentView('scales');
+            updateBrowserHistory('scales', { scaleId: patientUrlMode.scaleId });
           }}
           onSaveResult={(res) => {
-            console.log('Patient submitted response:', res);
+            const enriched: ScaleResult = {
+              ...res,
+              isSelfAdministered: true,
+              soapText:
+                res.soapText ||
+                `${res.scaleTitle}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no Tablet/PC]`,
+            };
+            handleSaveScaleResult(enriched);
+            const soapEntry = `[Autoaplicação no Tablet/PC - ${res.scaleTitle || res.scaleId}] Pontuação: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Respostas: [${(res.answersArray || []).join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            handleImportToSoapObjective(soapEntry, `Autoaplicação: ${res.scaleTitle || res.scaleId}`);
           }}
         />
       </div>
@@ -313,7 +501,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6F9] text-[#0F172A] flex flex-col font-sans selection:bg-[#0A3B74] selection:text-white w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-teal-700 selection:text-white w-full max-w-full overflow-x-hidden">
       {/* Top Header */}
       <Header
         currentView={currentView}
@@ -326,6 +514,8 @@ export const App: React.FC = () => {
         onOpenCodeExport={() => setShowCodeModal(true)}
         onNavigate={handleNavigate}
         onSelectScale={handleSelectScale}
+        isSyncingCloud={isSyncingCloud}
+        cloudSynced={cloudSynced}
       />
 
       {/* Main Flexible Body - 100% screen width on all devices */}
@@ -338,7 +528,7 @@ export const App: React.FC = () => {
         />
 
         {/* Content Area - Adjusted mobile paddings (px-2 py-3) for edge-to-edge layout without empty right margins */}
-        <main className="flex-1 w-full max-w-full min-w-0 px-2 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8 overflow-y-auto overflow-x-hidden bg-[#F4F6F9]">
+        <main className="flex-1 w-full max-w-full min-w-0 px-2 py-3 sm:px-6 sm:py-6 lg:px-8 lg:py-8 overflow-y-auto overflow-x-hidden bg-slate-50">
           <ErrorBoundary>
             {currentView === 'dashboard' && (
               <DashboardView

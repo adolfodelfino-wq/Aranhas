@@ -326,5 +326,20 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Orientação (Tempo, Lugar, Pessoa) é o primeiro índice cognitivo de rastreio de delirium e estados confusionais agudos.',
       'Atenção e Concentração representam a capacidade de focar e sustentar o esforço cognitivo em tarefas direcionadas.'
     ]
+  },
+  {
+    id: 'maudsley-deprescribing-guidelines-15th-ed',
+    topic: 'Desprescrição e Desmame de Benzodiazepínicos na APS',
+    title: 'The Maudsley Deprescribing Guidelines: Antidepressants, Benzodiazepines, Gabapentinoids and Z-drugs & The Maudsley Prescribing Guidelines in Psychiatry (15ª Edição)',
+    source: 'Horowitz M, Taylor DM. Wiley-Blackwell (2024) / Taylor DM, Barnes TRE, Young AH. The Maudsley Prescribing Guidelines 15th Edition, Wiley (2025)',
+    year: '2024-2025',
+    summary: 'Diretrizes internacionais de referência máxima para a desprescrição segura de psicofármacos. Introduz o conceito fundamental do Desmame Hiperbólico baseado na curva não-linear de Hill da ocupação de receptores GABA-A e SERT em estudos de PET scan. Demonstra matematicamente por que cortes lineares fixos em miligramas fracassam na fase final ("the difficult last mile") e estabelece a prática do Desmame Guiado pelo Paciente (Patient-Led Tapering).',
+    keyPoints: [
+      'Desmame Hiperbólico: Reduções proporcionais à dose remanescente (e não quedas lineares em mg) garantem uma desocupação linear e suave dos receptores GABA-A, evitando crises de ansiedade rebote e convulsões.',
+      'Diferenciação Crítica: Sintomas que surgem em horas/dias com características disestésicas (choques, zumbido, hiperacusia) decorrem da Síndrome de Retirada, e não de recaída do transtorno primário.',
+      'Regra da Pausa (Hold): Quando houver abstinência moderada, a dose deve ser mantida (pausada) por 2 a 4 semanas até estabilização biológica; nunca acelerar ou retornar à dose inicial plena.',
+      'Apresentações Líquidas e Microescalonamento: Clonazepam em gotas e formulações orais permitem microdoses precisas nas etapas finais de descontinuação.',
+      'Critérios de Beers (AGS 2023) e STOPP: A desprescrição na APS reduz em mais de 50% as quedas com fratura de fêmur e a síndrome pseudo-demencial reversível em idosos.'
+    ]
   }
 ];

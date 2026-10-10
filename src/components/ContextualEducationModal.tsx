@@ -220,7 +220,7 @@ export const ContextualEducationModal: React.FC<ContextualEducationModalProps> =
                       <div className="flex items-center gap-1 text-slate-500 font-mono text-[10px]">
                         {item.matchedSources.map((src, i) => (
                           <span
-                            key={i}
+                            key={`src-${item.id}-${i}`}
                             className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-700"
                           >
                             {src}

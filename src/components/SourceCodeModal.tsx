@@ -287,7 +287,7 @@ export interface SoapRecord {
         <div className="space-y-4 overflow-y-auto pr-1 flex-1 font-sans">
           {filesMap[selectedCategory].map((file, idx) => (
             <div
-              key={idx}
+              key={`file-${file.name}-${idx}`}
               className="bg-[#F8F7F4] border border-[#1A1C1E]/15 rounded-[4px] p-4 space-y-3"
             >
               <div className="flex items-center justify-between border-b border-[#1A1C1E]/10 pb-2.5">

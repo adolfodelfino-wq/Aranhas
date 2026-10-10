@@ -8,7 +8,9 @@ import {
   Sparkles,
   AlertTriangle,
   CheckCircle2,
+  Building2,
 } from 'lucide-react';
+import { PecExportModal } from './PecExportModal';
 
 interface SoapViewProps {
   soapState: SoapState;
@@ -26,6 +28,7 @@ export const SoapView: React.FC<SoapViewProps> = ({
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [copiedFull, setCopiedFull] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
+  const [showPecModal, setShowPecModal] = useState(false);
 
   const handleTextChange = (field: keyof SoapState, value: string) => {
     onUpdateSoap({
@@ -114,14 +117,24 @@ ${soapState.plan || 'Sem registros.'}`;
             {/* Copiar SOAP Completo */}
             <button
               onClick={copyFullSoap}
-              className="px-4 py-2.5 bg-[#0A3B74] hover:bg-[#07284F] text-white rounded-md font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg font-sans text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
             >
               {copiedFull ? (
-                <Check className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <Check className="w-3.5 h-3.5 text-teal-200" />
               ) : (
-                <Copy className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <Copy className="w-3.5 h-3.5 text-teal-200" />
               )}
-              <span>{copiedFull ? 'Copiado!' : 'Copiar SOAP Completo'}</span>
+              <span>{copiedFull ? 'Copiado!' : 'Copiar SOAP'}</span>
+            </button>
+
+            {/* Assistente de cópia para PEC (e-SUS APS) */}
+            <button
+              onClick={() => setShowPecModal(true)}
+              className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg font-sans text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Assistente de cópia estruturada para o Prontuário Eletrônico do Cidadão (PEC / e-SUS APS)"
+            >
+              <Building2 className="w-3.5 h-3.5 text-teal-700" />
+              <span>Assistente PEC</span>
             </button>
 
             {/* Limpar SOAP */}
@@ -142,7 +155,7 @@ ${soapState.plan || 'Sem registros.'}`;
           <span className="font-mono text-[11px] text-slate-500 font-bold uppercase tracking-wider">Itens Inseridos:</span>
           {soapState.importedItems.map((item, idx) => (
             <span
-              key={idx}
+              key={`imported-${item.targetSection}-${idx}`}
               className="bg-teal-50 text-teal-700 border border-teal-200 px-2.5 py-1 rounded-md font-mono text-xs flex items-center gap-1.5 font-medium shadow-2xs"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
@@ -346,6 +359,14 @@ ${soapState.plan || 'Sem registros.'}`;
           </div>
         </div>
       )}
+
+      {/* Modal de Exportação para o PEC (e-SUS APS) */}
+      <PecExportModal
+        isOpen={showPecModal}
+        onClose={() => setShowPecModal(false)}
+        soapState={soapState}
+        patient={patient}
+      />
     </div>
   );
 };

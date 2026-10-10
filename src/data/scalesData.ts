@@ -1,5 +1,6 @@
-import { ScaleDefinition, ScaleResult } from '../types';
+import { ScaleDefinition, ScaleResult, ScaleQuestionOption } from '../types';
 import { ADDITIONAL_SCALES } from './additionalScalesData';
+import { validateScaleAnswers, createIncompleteScaleResult } from '../utils/scaleValidation';
 
 export const PHQ9_SCALE: ScaleDefinition = {
   id: 'phq-9',
@@ -106,8 +107,16 @@ export const PHQ9_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(PHQ9_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(PHQ9_SCALE, validation);
+    }
+
     let totalScore = 0;
-    Object.values(answers).forEach((val) => {
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'].map(
+      (k) => Number(answers[k])
+    );
+    answersArray.forEach((val) => {
       totalScore += val;
     });
 
@@ -143,14 +152,18 @@ export const PHQ9_SCALE: ScaleDefinition = {
       recs.push('Iniciar farmacoterapia combinada/otimizada', 'Investigar ativamente ideação e planejamento suicida', 'Considerar discussão de caso em Apoio Matricial / Psiquiatria');
     }
 
+    const individualAlerts: string[] = [];
     if (answers['q9'] && answers['q9'] > 0) {
-      recs.unshift('⚠️ ALERTA: Resposta positiva na pergunta 9 (ideação suicida/autolesão). Aplicar imediatamente o protocolo C-SSRS e pactuar Plano de Segurança.');
+      const q9Val = answers['q9'];
+      const optLabel = PHQ9_SCALE.questions[8]?.options.find((o) => o.value === q9Val)?.label || `${q9Val} pts`;
+      const alertMsg = `⚠️ ALERTA DE SEGURANÇA (PHQ-9 - Pergunta 9): Resposta positiva ("${optLabel}"). Exige avaliação clínica direta e presencial do risco de ideação de morte/autolesão (investigar planos, meios, intencionalidade e fatores de proteção). Não classificar automaticamente como alto risco de suicídio antes da avaliação médica.`;
+      recs.unshift(alertMsg);
+      individualAlerts.push(alertMsg);
     }
 
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'].map(
-      (k) => answers[k] ?? 0
-    );
-    const soapText = `PHQ-9: ${totalScore}/27 pts (${classification}) | Respostas: [${answersArray.join(', ')}] | Fonte: Kroenke et al., 2001 (Validação BR: Osório, 2009)`;
+    const soapText = `PHQ-9: ${totalScore}/27 pts (${classification}) | Respostas: [${answersArray.join(', ')}] | Fonte: Kroenke et al., 2001 (Validação BR: Osório, 2009)${
+      individualAlerts.length > 0 ? `\n• ${individualAlerts[0]}` : ''
+    }`;
 
     return {
       scaleId: 'phq-9',
@@ -163,6 +176,12 @@ export const PHQ9_SCALE: ScaleDefinition = {
       recommendations: recs,
       soapText,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 9,
+      totalRequired: 9,
+      individualAlerts,
+      hasCriticalAlert: individualAlerts.length > 0,
     };
   },
   clinicalConductSteps: [
@@ -322,8 +341,16 @@ export const GAD7_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(GAD7_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(GAD7_SCALE, validation);
+    }
+
     let totalScore = 0;
-    Object.values(answers).forEach((val) => {
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'].map(
+      (k) => Number(answers[k])
+    );
+    answersArray.forEach((val) => {
       totalScore += val;
     });
 
@@ -354,9 +381,6 @@ export const GAD7_SCALE: ScaleDefinition = {
       recs.push('Pactuar plano terapêutico medicamentoso e psicoterápico', 'Reavaliação em 2 semanas', 'Considerar apoio matricial se refratário');
     }
 
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'].map(
-      (k) => answers[k] ?? 0
-    );
     const soapText = `GAD-7: ${totalScore}/21 pts (${classification}) | Respostas: [${answersArray.join(', ')}] | Fonte: Spitzer et al., 2006 (Validação BR: Moreno, 2016)`;
 
     return {
@@ -370,6 +394,10 @@ export const GAD7_SCALE: ScaleDefinition = {
       recommendations: recs,
       soapText,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 7,
+      totalRequired: 7,
     };
   },
   clinicalConductSteps: [
@@ -451,40 +479,45 @@ export const HCL32_SCALE: ScaleDefinition = {
   cutoffInfo: '0-13: Rastreio Negativo | 14-17: Traços Moderados de Hipomania | ≥ 18: Rastreio Positivo para Espectro Bipolar (Corte BR)',
   estimatedMinutes: 5,
   questions: [
-    { id: 'q1', text: '1. Preciso de menos sono.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q2', text: '2. Sinto-me com mais energia e mais ativo(a).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q3', text: '3. Sou mais autoconfiante.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q4', text: '4. Aprecio mais o meu trabalho / Trabalho com mais prazer.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q5', text: '5. Sou mais sociável (faço mais telefonemas, saio mais com as pessoas).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q6', text: '6. Tenho vontade de viajar e/ou viajo mais.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q7', text: '7. Tendo a dirigir mais rápido ou correr mais riscos na direção/trânsito.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q8', text: '8. Gasto mais dinheiro ou gasto dinheiro demais (compras impulsivas).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q9', text: '9. Corro mais riscos na minha vida diária (no trabalho e/ou em outras atividades).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q10', text: '10. Fico fisicamente mais ativo(a) (prática de esportes, caminhadas, etc.).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q11', text: '11. Planejo mais atividades ou projetos.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q12', text: '12. Tenho mais ideias, sou mais criativo(a).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q13', text: '13. Sou menos tímido(a) ou inibido(a).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q14', text: '14. Visto roupas mais coloridas, extravagantes ou uso mais maquiagem.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q15', text: '15. Quero conhecer ou de fato conheço mais pessoas.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q16', text: '16. Tenho mais interesse em sexo e/ou aumento do desejo sexual.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q17', text: '17. Sou mais paquerador(a) / sedutor(a) e/ou mais sexualmente ativo(a).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q18', text: '18. Falo mais / falo pelos cotovelos.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q19', text: '19. Penso mais rápido.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q20', text: '20. Faço mais piadas ou trocadilhos quando estou conversando.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q21', text: '21. Fico facilmente distraído(a).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q22', text: '22. Envolvo-me em muitas coisas novas.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q23', text: '23. Meus pensamentos pulam de um assunto para outro (fuga de ideias).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q24', text: '24. Faço as coisas com mais rapidez e/ou mais facilidade.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q25', text: '25. Fico mais impaciente e/ou me irrito mais facilmente.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q26', text: '26. Posso ser cansativo(a) ou irritante para os outros.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q27', text: '27. Entro em mais discussões, brigas ou conflitos.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q28', text: '28. Meu humor fica mais elevado, mais otimista.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'ativacao' },
-    { id: 'q29', text: '29. Bebo mais café ou cafeína.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q30', text: '30. Fumo mais cigarros ou derivados do tabaco.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q31', text: '31. Bebo mais bebidas alcoólicas.', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
-    { id: 'q32', text: '32. Uso mais medicamentos ou outras substâncias (sedativos, estimulantes, ansiolíticos).', options: [{ label: 'Não (0)', value: 0 }, { label: 'Sim (1)', value: 1 }], subscale: 'risco' },
+    { id: 'q1', text: '1. Preciso de menos sono.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q2', text: '2. Sinto-me com mais energia e mais ativo(a).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q3', text: '3. Sou mais autoconfiante.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q4', text: '4. Aprecio mais o meu trabalho / Trabalho com mais prazer.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q5', text: '5. Sou mais sociável (faço mais telefonemas, saio mais com as pessoas).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q6', text: '6. Tenho vontade de viajar e/ou viajo mais.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q7', text: '7. Tendo a dirigir mais rápido ou correr mais riscos na direção/trânsito.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q8', text: '8. Gasto mais dinheiro ou gasto dinheiro demais (compras impulsivas).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q9', text: '9. Corro mais riscos na minha vida diária (no trabalho e/ou em outras atividades).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q10', text: '10. Fico fisicamente mais ativo(a) (prática de esportes, caminhadas, etc.).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q11', text: '11. Planejo mais atividades ou projetos.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q12', text: '12. Tenho mais ideias, sou mais criativo(a).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q13', text: '13. Sou menos tímido(a) ou inibido(a).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q14', text: '14. Visto roupas mais coloridas, extravagantes ou uso mais maquiagem.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q15', text: '15. Quero conhecer ou de fato conheço mais pessoas.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q16', text: '16. Tenho mais interesse em sexo e/ou aumento do desejo sexual.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q17', text: '17. Sou mais paquerador(a) / sedutor(a) e/ou mais sexualmente ativo(a).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q18', text: '18. Falo mais / falo pelos cotovelos.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q19', text: '19. Penso mais rápido.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q20', text: '20. Faço mais piadas ou trocadilhos quando estou conversando.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q21', text: '21. Fico facilmente distraído(a).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q22', text: '22. Envolvo-me em muitas coisas novas.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q23', text: '23. Meus pensamentos pulam de um assunto para outro (fuga de ideias).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q24', text: '24. Faço as coisas com mais rapidez e/ou mais facilidade.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q25', text: '25. Fico mais impaciente e/ou me irrito mais facilmente.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q26', text: '26. Posso ser cansativo(a) ou irritante para os outros.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q27', text: '27. Entro em mais discussões, brigas ou conflitos.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q28', text: '28. Meu humor fica mais elevado, mais otimista.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'ativacao' },
+    { id: 'q29', text: '29. Bebo mais café ou cafeína.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q30', text: '30. Fumo mais cigarros ou derivados do tabaco.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q31', text: '31. Bebo mais bebidas alcoólicas.', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
+    { id: 'q32', text: '32. Uso mais medicamentos ou outras substâncias (sedativos, estimulantes, ansiolíticos).', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }], subscale: 'risco' },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(HCL32_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(HCL32_SCALE, validation);
+    }
+
     let totalScore = 0;
     let ativacaoScore = 0;
     let riscoScore = 0;
@@ -540,7 +573,7 @@ export const HCL32_SCALE: ScaleDefinition = {
       );
     }
 
-    const answersArray = Array.from({ length: 32 }, (_, i) => answers[`q${i + 1}`] ?? 0);
+    const answersArray = Array.from({ length: 32 }, (_, i) => Number(answers[`q${i + 1}`] ?? 0));
     const soapText = `HCL-32: ${totalScore}/32 pts (${classification}) [Ativação: ${ativacaoScore}/19 | Risco/Irritabilidade: ${riscoScore}/13] | Fonte: Angst et al., 2005 (Validação BR: Soares & Moreno, 2010 - Corte ≥18)`;
 
     return {
@@ -554,6 +587,10 @@ export const HCL32_SCALE: ScaleDefinition = {
       recommendations: recs,
       soapText,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 32,
+      totalRequired: 32,
     };
   },
   clinicalConductSteps: [
@@ -639,11 +676,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q1',
       text: '1. Com que frequência consome bebidas que contêm álcool?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Mensalmente ou menos (1)', value: 1 },
-        { label: '2 a 4 vezes por mês (2)', value: 2 },
-        { label: '2 a 3 vezes por semana (3)', value: 3 },
-        { label: '4 ou mais vezes por semana (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Mensalmente ou menos', value: 1 },
+        { label: '2 a 4 vezes por mês', value: 2 },
+        { label: '2 a 3 vezes por semana', value: 3 },
+        { label: '4 ou mais vezes por semana', value: 4 },
       ],
       subscale: 'consumo',
     },
@@ -651,11 +688,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q2',
       text: '2. Quantas doses de bebida alcoólica consome num dia normal em que bebe? (1 dose = 1 lata de cerveja, 1 taça de vinho ou 1 shot de destilado)',
       options: [
-        { label: '1 ou 2 doses (0)', value: 0 },
-        { label: '3 ou 4 doses (1)', value: 1 },
-        { label: '5 ou 6 doses (2)', value: 2 },
-        { label: '7 a 9 doses (3)', value: 3 },
-        { label: '10 ou mais doses (4)', value: 4 },
+        { label: '1 ou 2 doses', value: 0 },
+        { label: '3 ou 4 doses', value: 1 },
+        { label: '5 ou 6 doses', value: 2 },
+        { label: '7 a 9 doses', value: 3 },
+        { label: '10 ou mais doses', value: 4 },
       ],
       subscale: 'consumo',
     },
@@ -663,11 +700,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q3',
       text: '3. Com que frequência consome 6 ou mais doses de bebida alcoólica numa única ocasião ("binge drinking")?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'consumo',
     },
@@ -675,11 +712,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q4',
       text: '4. Com que frequência, durante o último ano, percebeu que não conseguia parar de beber uma vez que havia começado?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'dependencia',
     },
@@ -687,11 +724,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q5',
       text: '5. Com que frequência, durante o último ano, não conseguiu fazer o que era esperado de você devido à bebida?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'dependencia',
     },
@@ -699,11 +736,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q6',
       text: '6. Com que frequência, durante o último ano, precisou de uma primeira dose pela manhã para se recuperar após uma bebedeira anterior?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'dependencia',
     },
@@ -711,11 +748,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q7',
       text: '7. Com que frequência, durante o último ano, teve sentimentos de culpa ou remorso após ter bebido?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'problemas',
     },
@@ -723,11 +760,11 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q8',
       text: '8. Com que frequência, durante o último ano, não conseguiu se lembrar do que aconteceu na noite anterior por ter bebido?',
       options: [
-        { label: 'Nunca (0)', value: 0 },
-        { label: 'Menos de uma vez por mês (1)', value: 1 },
-        { label: 'Mensalmente (2)', value: 2 },
-        { label: 'Semanalmente (3)', value: 3 },
-        { label: 'Diariamente ou quase diariamente (4)', value: 4 },
+        { label: 'Nunca', value: 0 },
+        { label: 'Menos de uma vez por mês', value: 1 },
+        { label: 'Mensalmente', value: 2 },
+        { label: 'Semanalmente', value: 3 },
+        { label: 'Diariamente ou quase diariamente', value: 4 },
       ],
       subscale: 'problemas',
     },
@@ -735,9 +772,9 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q9',
       text: '9. Você ou outra pessoa já se machucou em consequência de você ter bebido?',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim, mas não no último ano (2)', value: 2 },
-        { label: 'Sim, durante o último ano (4)', value: 4 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim, mas não no último ano', value: 2 },
+        { label: 'Sim, durante o último ano', value: 4 },
       ],
       subscale: 'problemas',
     },
@@ -745,22 +782,36 @@ export const AUDIT_SCALE: ScaleDefinition = {
       id: 'q10',
       text: '10. Algum parente, amigo, médico ou outro profissional de saúde já se preocupou com seu hábito de beber ou sugeriu que você parasse?',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim, mas não no último ano (2)', value: 2 },
-        { label: 'Sim, durante o último ano (4)', value: 4 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim, mas não no último ano', value: 2 },
+        { label: 'Sim, durante o último ano', value: 4 },
       ],
       subscale: 'problemas',
     },
   ],
   calculateResult: (answers) => {
-    let totalScore = 0;
-    let consumoScore = (answers['q1'] || 0) + (answers['q2'] || 0) + (answers['q3'] || 0);
-    let dependenciaScore = (answers['q4'] || 0) + (answers['q5'] || 0) + (answers['q6'] || 0);
-    let problemasScore = (answers['q7'] || 0) + (answers['q8'] || 0) + (answers['q9'] || 0) + (answers['q10'] || 0);
+    const validation = validateScaleAnswers(AUDIT_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(AUDIT_SCALE, validation);
+    }
 
-    Object.values(answers).forEach((val) => {
-      totalScore += val;
-    });
+    let totalScore = 0;
+    const q1 = Number(answers['q1'] || 0);
+    const q2 = Number(answers['q2'] || 0);
+    const q3 = Number(answers['q3'] || 0);
+    const q4 = Number(answers['q4'] || 0);
+    const q5 = Number(answers['q5'] || 0);
+    const q6 = Number(answers['q6'] || 0);
+    const q7 = Number(answers['q7'] || 0);
+    const q8 = Number(answers['q8'] || 0);
+    const q9 = Number(answers['q9'] || 0);
+    const q10 = Number(answers['q10'] || 0);
+
+    const consumoScore = q1 + q2 + q3;
+    const dependenciaScore = q4 + q5 + q6;
+    const problemasScore = q7 + q8 + q9 + q10;
+
+    totalScore = consumoScore + dependenciaScore + problemasScore;
 
     let classification = '';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
@@ -802,7 +853,7 @@ export const AUDIT_SCALE: ScaleDefinition = {
       );
     }
 
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10'].map((k) => answers[k] ?? 0);
+    const answersArray = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10];
     const soapText = `AUDIT: ${totalScore}/40 pts (${classification}) [Consumo: ${consumoScore}/12 | Dependência: ${dependenciaScore}/12 | Problemas: ${problemasScore}/16] | Fonte: OMS (Babor et al., 2001 - Validação BR: Mendez, 1999)`;
 
     return {
@@ -816,6 +867,10 @@ export const AUDIT_SCALE: ScaleDefinition = {
       recommendations: recs,
       soapText,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 10,
+      totalRequired: 10,
     };
   },
   clinicalConductSteps: [
@@ -884,6 +939,14 @@ export const AUDIT_SCALE: ScaleDefinition = {
   ],
 };
 
+const ASRS18_OPTIONS: ScaleQuestionOption[] = [
+  { label: 'Nunca', value: 0 },
+  { label: 'Raramente', value: 1 },
+  { label: 'Às vezes', value: 2 },
+  { label: 'Frequentemente', value: 3 },
+  { label: 'Muito frequentemente', value: 4 },
+];
+
 export const ASRS18_SCALE: ScaleDefinition = {
   id: 'asrs-18',
   title: 'ASRS-18 (Adult ADHD Self-Report Scale v1.1)',
@@ -901,122 +964,141 @@ export const ASRS18_SCALE: ScaleDefinition = {
     {
       id: 'q1',
       text: '1. Com que frequência você comete erros por falta de atenção quando precisa trabalhar num projeto chato ou difícil?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q2',
       text: '2. Com que frequência você tem dificuldade para manter a atenção quando está fazendo um trabalho chato ou repetitivo?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q3',
       text: '3. Com que frequência você tem dificuldade para se concentrar no que as pessoas dizem, mesmo quando estão falando diretamente com você?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q4',
       text: '4. Com que frequência você tem dificuldade para finalizar os últimos detalhes de um projeto, depois de já ter feito as partes mais difíceis?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q5',
       text: '5. Com que frequência você tem dificuldade para organizar as coisas quando precisa fazer uma tarefa que exige organização?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q6',
       text: '6. Quando você tem uma tarefa que exige muito pensamento, com que frequência você evita ou adia o início?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q7',
       text: '7. Com que frequência você perde ou tem dificuldade para encontrar objetos necessários em casa ou no trabalho?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q8',
       text: '8. Com que frequência você se distrai com barulhos ou outras coisas que acontecem ao seu redor?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     {
       id: 'q9',
       text: '9. Com que frequência você se esquece de compromissos ou obrigações cotidianas?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'desatencao'
+      options: ASRS18_OPTIONS,
+      subscale: 'desatencao',
     },
     // Hiperatividade / Impulsividade (Itens 10-18)
     {
       id: 'q10',
       text: '10. Com que frequência você mexe as mãos ou os pés ou se contorce na cadeira quando precisa ficar sentado(a)?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q11',
       text: '11. Com que frequência você se levanta da cadeira em reuniões ou em outras situações nas quais deveria ficar sentado(a)?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q12',
       text: '12. Com que frequência você se sente inquieto(a) ou agitado(a) por dentro?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q13',
       text: '13. Com que frequência você tem dificuldade para relaxar e praticar atividades de lazer calmamente?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q14',
       text: '14. Com que frequência você se sente "a todo vapor" ou dirigido(a) por um motor?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q15',
       text: '15. Com que frequência você se pega falando demais em conversas?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q16',
       text: '16. Quando está conversando, com que frequência você termina as frases das pessoas antes delas?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q17',
       text: '17. Com que frequência você tem dificuldade para esperar sua vez em situações nas quais há fila ou espera?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
     {
       id: 'q18',
       text: '18. Com que frequência você interrompe os outros quando eles estão ocupados?',
-      options: [{ label: 'Nunca (0)', value: 0 }, { label: 'Raramente (0)', value: 0 }, { label: 'Às vezes (1)', value: 1 }, { label: 'Frequentemente (1)', value: 1 }, { label: 'Muito frequentemente (1)', value: 1 }],
-      subscale: 'hiperatividade'
+      options: ASRS18_OPTIONS,
+      subscale: 'hiperatividade',
     },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(ASRS18_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(ASRS18_SCALE, validation);
+    }
+
+    // Ponto de corte validado OMS / Mattos et al. (2006):
+    // Itens 1, 2, 3, 9, 12, 16, 18 são positivos se >= 2 ('Às vezes', 'Frequentemente', 'Muito frequentemente')
+    // Demais itens (4, 5, 6, 7, 8, 10, 11, 13, 14, 15, 17) são positivos se >= 3 ('Frequentemente', 'Muito frequentemente')
+    const AS_VEZES_THRESHOLD_ITEMS = new Set(['q1', 'q2', 'q3', 'q9', 'q12', 'q16', 'q18']);
+    const isPositiveItem = (qId: string, val: number) => {
+      return AS_VEZES_THRESHOLD_ITEMS.has(qId) ? val >= 2 : val >= 3;
+    };
+
     let desatencaoScore = 0;
     let hiperatividadeScore = 0;
 
     for (let i = 1; i <= 9; i++) {
-      if (answers[`q${i}`]) desatencaoScore += answers[`q${i}`];
+      const qId = `q${i}`;
+      if (answers[qId] !== undefined && isPositiveItem(qId, Number(answers[qId]))) {
+        desatencaoScore++;
+      }
     }
     for (let i = 10; i <= 18; i++) {
-      if (answers[`q${i}`]) hiperatividadeScore += answers[`q${i}`];
+      const qId = `q${i}`;
+      if (answers[qId] !== undefined && isPositiveItem(qId, Number(answers[qId]))) {
+        hiperatividadeScore++;
+      }
     }
 
     const totalPositive = desatencaoScore + hiperatividadeScore;
@@ -1052,6 +1134,7 @@ export const ASRS18_SCALE: ScaleDefinition = {
       recs.push('Investigar causas secundárias de queixa de desatenção (sobrecarga de trabalho, privação crônica de sono, estresse, ansiedade)');
     }
 
+    const answersArray = Array.from({ length: 18 }, (_, i) => Number(answers[`q${i + 1}`] ?? 0));
     const soapText = `ASRS-18 v1.1 (OMS): Desatenção ${desatencaoScore}/9 positivos | Hiperatividade ${hiperatividadeScore}/9 positivos (${classification}) | Fonte: Kessler et al., 2005 (Validação BR: Mattos et al., 2006)`;
 
     return {
@@ -1064,6 +1147,11 @@ export const ASRS18_SCALE: ScaleDefinition = {
       interpretation,
       recommendations: recs,
       soapText,
+      answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 18,
+      totalRequired: 18,
     };
   },
   clinicalConductSteps: [
@@ -1146,31 +1234,36 @@ export const SNAP_IV_SCALE: ScaleDefinition = {
   estimatedMinutes: 4,
   questions: [
     // 1-9 Desatenção
-    { id: 'q1', text: '1. Não consegue prestar muita atenção a detalhes ou comete erros por descuido nos trabalhos escolares ou tarefas.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q2', text: '2. Tem dificuldade para manter a atenção em tarefas ou jogos.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q3', text: '3. Parece não escutar quando se fala diretamente com ela.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q4', text: '4. Não segue instruções até o fim e não termina deveres escolares, tarefas domésticas ou deveres.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q5', text: '5. Tem dificuldade para organizar tarefas e atividades.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q6', text: '6. Evita, não gosta ou reluta em se envolver em tarefas que exigem esforço mental constante (como lição de casa).', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q7', text: '7. Perde coisas necessárias para tarefas ou atividades (brinquedos, lápis, livros, cadernos).', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q8', text: '8. É facilmente distraído(a) por estímulos externos.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q9', text: '9. É esquecido(a) em atividades do dia a dia.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
+    { id: 'q1', text: '1. Não consegue prestar muita atenção a detalhes ou comete erros por descuido nos trabalhos escolares ou tarefas.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q2', text: '2. Tem dificuldade para manter a atenção em tarefas ou jogos.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q3', text: '3. Parece não escutar quando se fala diretamente com ela.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q4', text: '4. Não segue instruções até o fim e não termina deveres escolares, tarefas domésticas ou deveres.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q5', text: '5. Tem dificuldade para organizar tarefas e atividades.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q6', text: '6. Evita, não gosta ou reluta em se envolver em tarefas que exigem esforço mental constante (como lição de casa).', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q7', text: '7. Perde coisas necessárias para tarefas ou atividades (brinquedos, lápis, livros, cadernos).', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q8', text: '8. É facilmente distraído(a) por estímulos externos.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q9', text: '9. É esquecido(a) em atividades do dia a dia.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
     // 10-18 Hiperatividade/Impulsividade
-    { id: 'q10', text: '10. Mexe com as mãos ou os pés ou se remexe na cadeira.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q11', text: '11. Sai da cadeira em sala de aula ou em outras situações em que se espera que fique sentado(a).', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q12', text: '12. Corre ou sobe nas coisas em demasia em situações nas quais isso é inapropriado.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q13', text: '13. Tem dificuldade para brincar ou se envolver silenciosamente em atividades de lazer.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q14', text: '14. Não para ou frequentemente age como se estivesse "a todo vapor" ou movido(a) por um motor.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q15', text: '15. Fala demais.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q16', text: '16. Responde precipitadamente antes de as perguntas terem sido terminadas.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q17', text: '17. Tem dificuldade para esperar a sua vez.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
-    { id: 'q18', text: '18. Interrompe os outros ou se intromete em conversas ou jogos.', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Só um pouco (1)', value: 1 }, { label: 'Bastante (2)', value: 2 }, { label: 'Demais (3)', value: 3 }] },
+    { id: 'q10', text: '10. Mexe com as mãos ou os pés ou se remexe na cadeira.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q11', text: '11. Sai da cadeira em sala de aula ou em outras situações em que se espera que fique sentado(a).', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q12', text: '12. Corre ou sobe nas coisas em demasia em situações nas quais isso é inapropriado.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q13', text: '13. Tem dificuldade para brincar ou se envolver silenciosamente em atividades de lazer.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q14', text: '14. Não para ou frequentemente age como se estivesse "a todo vapor" ou movido(a) por um motor.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q15', text: '15. Fala demais.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q16', text: '16. Responde precipitadamente antes de as perguntas terem sido terminadas.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q17', text: '17. Tem dificuldade para esperar a sua vez.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
+    { id: 'q18', text: '18. Interrompe os outros ou se intromete em conversas ou jogos.', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Só um pouco', value: 1 }, { label: 'Bastante', value: 2 }, { label: 'Demais', value: 3 }] },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(SNAP_IV_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(SNAP_IV_SCALE, validation);
+    }
+
     let desatencaoItems = 0;
     let desatencaoTotalScore = 0;
     for (let i = 1; i <= 9; i++) {
-      const val = answers[`q${i}`] || 0;
+      const val = Number(answers[`q${i}`] || 0);
       desatencaoTotalScore += val;
       if (val >= 2) desatencaoItems++;
     }
@@ -1178,7 +1271,7 @@ export const SNAP_IV_SCALE: ScaleDefinition = {
     let hiperTotalScore = 0;
     let hiperItems = 0;
     for (let i = 10; i <= 18; i++) {
-      const val = answers[`q${i}`] || 0;
+      const val = Number(answers[`q${i}`] || 0);
       hiperTotalScore += val;
       if (val >= 2) hiperItems++;
     }
@@ -1217,6 +1310,7 @@ export const SNAP_IV_SCALE: ScaleDefinition = {
       recs.push('Acompanhamento longitudinal de puericultura/APS');
     }
 
+    const answersArray = Array.from({ length: 18 }, (_, i) => Number(answers[`q${i + 1}`] ?? 0));
     const soapText = `SNAP-IV: Desatenção média ${meanDesatencao} (${desatencaoItems}/9 itens) | Hiperatividade média ${meanHiper} (${hiperItems}/9 itens) - ${classification} | Fonte: Swanson, 2001 (Validação BR: Mattos et al., 2006)`;
 
     return {
@@ -1229,6 +1323,11 @@ export const SNAP_IV_SCALE: ScaleDefinition = {
       interpretation,
       recommendations: recs,
       soapText,
+      answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 18,
+      totalRequired: 18,
     };
   },
   clinicalConductSteps: [
@@ -1314,11 +1413,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q1',
       text: '1. Tempo ocupado por pensamentos obsessivos por dia',
       options: [
-        { label: 'Nenhum (0)', value: 0 },
-        { label: 'Menos de 1h/dia (1)', value: 1 },
-        { label: '1h a 3h/dia (2)', value: 2 },
-        { label: '3h a 8h/dia (3)', value: 3 },
-        { label: 'Mais de 8h/dia (4)', value: 4 },
+        { label: 'Nenhum', value: 0 },
+        { label: 'Menos de 1h/dia', value: 1 },
+        { label: '1h a 3h/dia', value: 2 },
+        { label: '3h a 8h/dia', value: 3 },
+        { label: 'Mais de 8h/dia', value: 4 },
       ],
       subscale: 'obsessoes'
     },
@@ -1326,11 +1425,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q2',
       text: '2. Interferência das obsessões nas atividades sociais ou ocupacionais',
       options: [
-        { label: 'Nenhuma (0)', value: 0 },
-        { label: 'Leve (1)', value: 1 },
-        { label: 'Moderada (2)', value: 2 },
-        { label: 'Grave (3)', value: 3 },
-        { label: 'Extrema / Incapacitante (4)', value: 4 },
+        { label: 'Nenhuma', value: 0 },
+        { label: 'Leve', value: 1 },
+        { label: 'Moderada', value: 2 },
+        { label: 'Grave', value: 3 },
+        { label: 'Extrema / Incapacitante', value: 4 },
       ],
       subscale: 'obsessoes'
     },
@@ -1338,11 +1437,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q3',
       text: '3. Sofrimento/angústia causado pelas obsessões',
       options: [
-        { label: 'Nenhum (0)', value: 0 },
-        { label: 'Pouco / Leve (1)', value: 1 },
-        { label: 'Moderado (2)', value: 2 },
-        { label: 'Grave (3)', value: 3 },
-        { label: 'Insuportável (4)', value: 4 },
+        { label: 'Nenhum', value: 0 },
+        { label: 'Pouco / Leve', value: 1 },
+        { label: 'Moderado', value: 2 },
+        { label: 'Grave', value: 3 },
+        { label: 'Insuportável', value: 4 },
       ],
       subscale: 'obsessoes'
     },
@@ -1350,11 +1449,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q4',
       text: '4. Resistência contra as obsessões (tentativa de ignorar ou afastar)',
       options: [
-        { label: 'Sempre tenta resistir (0)', value: 0 },
-        { label: 'Muitas vezes resiste (1)', value: 1 },
-        { label: 'Alguma resistência (2)', value: 2 },
-        { label: 'Raramente resiste (3)', value: 3 },
-        { label: 'Entrega-se completamente (4)', value: 4 },
+        { label: 'Sempre tenta resistir', value: 0 },
+        { label: 'Muitas vezes resiste', value: 1 },
+        { label: 'Alguma resistência', value: 2 },
+        { label: 'Raramente resiste', value: 3 },
+        { label: 'Entrega-se completamente', value: 4 },
       ],
       subscale: 'obsessoes'
     },
@@ -1362,11 +1461,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q5',
       text: '5. Grau de controle sobre os pensamentos obsessivos',
       options: [
-        { label: 'Controle total (0)', value: 0 },
-        { label: 'Muito controle (1)', value: 1 },
-        { label: 'Controle moderado (2)', value: 2 },
-        { label: 'Pouco controle (3)', value: 3 },
-        { label: 'Nenhum controle (4)', value: 4 },
+        { label: 'Controle total', value: 0 },
+        { label: 'Muito controle', value: 1 },
+        { label: 'Controle moderado', value: 2 },
+        { label: 'Pouco controle', value: 3 },
+        { label: 'Nenhum controle', value: 4 },
       ],
       subscale: 'obsessoes'
     },
@@ -1374,11 +1473,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q6',
       text: '6. Tempo gasto executando comportamentos compulsivos ou rituais por dia',
       options: [
-        { label: 'Nenhum (0)', value: 0 },
-        { label: 'Menos de 1h/dia (1)', value: 1 },
-        { label: '1h a 3h/dia (2)', value: 2 },
-        { label: '3h a 8h/dia (3)', value: 3 },
-        { label: 'Mais de 8h/dia (4)', value: 4 },
+        { label: 'Nenhum', value: 0 },
+        { label: 'Menos de 1h/dia', value: 1 },
+        { label: '1h a 3h/dia', value: 2 },
+        { label: '3h a 8h/dia', value: 3 },
+        { label: 'Mais de 8h/dia', value: 4 },
       ],
       subscale: 'compulsoes'
     },
@@ -1386,11 +1485,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q7',
       text: '7. Interferência das compulsões na rotina diária e atividades',
       options: [
-        { label: 'Nenhuma (0)', value: 0 },
-        { label: 'Leve (1)', value: 1 },
-        { label: 'Moderada (2)', value: 2 },
-        { label: 'Grave (3)', value: 3 },
-        { label: 'Incapacitante (4)', value: 4 },
+        { label: 'Nenhuma', value: 0 },
+        { label: 'Leve', value: 1 },
+        { label: 'Moderada', value: 2 },
+        { label: 'Grave', value: 3 },
+        { label: 'Incapacitante', value: 4 },
       ],
       subscale: 'compulsoes'
     },
@@ -1398,11 +1497,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q8',
       text: '8. Ansiedade gerada caso as compulsões sejam impedidas de serem realizadas',
       options: [
-        { label: 'Nenhuma ansiedade (0)', value: 0 },
-        { label: 'Ansiedade leve (1)', value: 1 },
-        { label: 'Ansiedade moderada (2)', value: 2 },
-        { label: 'Ansiedade grave (3)', value: 3 },
-        { label: 'Ansiedade extrema / pânico (4)', value: 4 },
+        { label: 'Nenhuma ansiedade', value: 0 },
+        { label: 'Ansiedade leve', value: 1 },
+        { label: 'Ansiedade moderada', value: 2 },
+        { label: 'Ansiedade grave', value: 3 },
+        { label: 'Ansiedade extrema / pânico', value: 4 },
       ],
       subscale: 'compulsoes'
     },
@@ -1410,11 +1509,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q9',
       text: '9. Resistência contra a realização dos rituais compulsivos',
       options: [
-        { label: 'Tenta resistir sempre (0)', value: 0 },
-        { label: 'Resiste na maioria das vezes (1)', value: 1 },
-        { label: 'Tenta resistir às vezes (2)', value: 2 },
-        { label: 'Raramente resiste (3)', value: 3 },
-        { label: 'Rende-se totalmente (4)', value: 4 },
+        { label: 'Tenta resistir sempre', value: 0 },
+        { label: 'Resiste na maioria das vezes', value: 1 },
+        { label: 'Tenta resistir às vezes', value: 2 },
+        { label: 'Raramente resiste', value: 3 },
+        { label: 'Rende-se totalmente', value: 4 },
       ],
       subscale: 'compulsoes'
     },
@@ -1422,25 +1521,30 @@ export const YBOCS_SCALE: ScaleDefinition = {
       id: 'q10',
       text: '10. Grau de controle sobre os comportamentos compulsivos',
       options: [
-        { label: 'Controle total (0)', value: 0 },
-        { label: 'Muito controle (1)', value: 1 },
-        { label: 'Controle moderado (2)', value: 2 },
-        { label: 'Pouco controle (3)', value: 3 },
-        { label: 'Nenhum controle (4)', value: 4 },
+        { label: 'Controle total', value: 0 },
+        { label: 'Muito controle', value: 1 },
+        { label: 'Controle moderado', value: 2 },
+        { label: 'Pouco controle', value: 3 },
+        { label: 'Nenhum controle', value: 4 },
       ],
       subscale: 'compulsoes'
     },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(YBOCS_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(YBOCS_SCALE, validation);
+    }
+
     let totalScore = 0;
     let obsScore = 0;
     let compScore = 0;
 
     for (let i = 1; i <= 5; i++) {
-      obsScore += answers[`q${i}`] || 0;
+      obsScore += Number(answers[`q${i}`] || 0);
     }
     for (let i = 6; i <= 10; i++) {
-      compScore += answers[`q${i}`] || 0;
+      compScore += Number(answers[`q${i}`] || 0);
     }
     totalScore = obsScore + compScore;
 
@@ -1476,6 +1580,7 @@ export const YBOCS_SCALE: ScaleDefinition = {
       recs.push('Apoio Matricial urgente e considerar encaminhamento para CAPS / Ambulatório Especializado de TOC');
     }
 
+    const answersArray = Array.from({ length: 10 }, (_, i) => Number(answers[`q${i + 1}`] ?? 0));
     const soapText = `Y-BOCS: ${totalScore}/40 pts (${classification}) [Obsessões: ${obsScore}/20 | Compulsões: ${compScore}/20] | Fonte: Goodman et al., 1989 (Validação BR: Cordioli, 1998)`;
 
     return {
@@ -1488,6 +1593,11 @@ export const YBOCS_SCALE: ScaleDefinition = {
       interpretation,
       recommendations: recs,
       soapText,
+      answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 10,
+      totalRequired: 10,
     };
   },
   clinicalConductSteps: [
@@ -1572,121 +1682,155 @@ export const CSSRS_SCALE: ScaleDefinition = {
   instructions: 'Pergunte diretamente ao paciente de forma empática e sem tabus. Se a resposta for SIM, investigue o detalhamento de plano, meios e histórico prévio.',
   referenceCitation: 'Posner K, Brown GK, Stanley B, et al. Am J Psychiatry. 2011; 168(12):1266-77. Recomendado pelo Ministério da Saúde e Associação Brasileira de Psiquiatria (ABP).',
   validationInfo: 'Instrumento padrão-ouro global com alta confiabilidade preditiva para comportamento e ideação suicida.',
-  cutoffInfo: '0: Sem ideação | 1-2: Risco Baixo | 3: Risco Moderado | 4-5: Risco Alto / Emergência',
+  cutoffInfo: 'Gravidade da Ideação (Itens 1-5): Nível 0 a 5 | Comportamento Suicida (Item 6): Presença / Ausência | Avaliação Clínica Direta Indicada',
   estimatedMinutes: 2,
   questions: [
     {
       id: 'q1',
       text: '1. Desejo passivo de estar morto(a) (Ex: "Teve pensamentos de que gostaria de dormir e não acordar mais?")',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (1)', value: 1 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
     {
       id: 'q2',
       text: '2. Pensamentos suicidas ativos não específicos (Ex: "Pensou em se matar, mesmo sem ter um método definido?")',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (2)', value: 2 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
     {
       id: 'q3',
       text: '3. Ideação suicida ativa com método em mente (sem plano estruturado nem intenção de agir)',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (3)', value: 3 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
     {
       id: 'q4',
       text: '4. Ideação suicida ativa com alguma intenção de agir (sem plano totalmente elaborado)',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (4)', value: 4 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
     {
       id: 'q5',
       text: '5. Ideação suicida com plano elaborado e intenção específica de agir',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (5)', value: 5 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
     {
       id: 'q6',
-      text: '6. Comportamento suicida prévio ou recente (tentativa prévia ao longo da vida ou atos preparatórios nos últimos 3 meses)',
+      text: '6. Comportamento suicida prévio ou recente (tentativas prévias ao longo da vida, atos preparatórios ou tentativas abortadas/interrompidas)',
       options: [
-        { label: 'Não (0)', value: 0 },
-        { label: 'Sim (5)', value: 5 },
+        { label: 'Não', value: 0 },
+        { label: 'Sim', value: 1 },
       ],
     },
   ],
   calculateResult: (answers) => {
-    const q1 = answers['q1'] || 0;
-    const q2 = answers['q2'] || 0;
-    const q3 = answers['q3'] || 0;
-    const q4 = answers['q4'] || 0;
-    const q5 = answers['q5'] || 0;
-    const q6 = answers['q6'] || 0;
+    const validation = validateScaleAnswers(CSSRS_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(CSSRS_SCALE, validation);
+    }
 
-    const maxVal = Math.max(q1, q2, q3, q4, q5, q6);
+    const q1 = answers['q1'] ? 1 : 0;
+    const q2 = answers['q2'] ? 1 : 0;
+    const q3 = answers['q3'] ? 1 : 0;
+    const q4 = answers['q4'] ? 1 : 0;
+    const q5 = answers['q5'] ? 1 : 0;
+    const q6 = answers['q6'] ? 1 : 0;
 
-    let classification = '';
+    // 1. Gravidade da Ideação Suicida (Itens 1 a 5 da Columbia)
+    let ideationSeverityNumber = 0;
+    let ideationSeverityText = 'Nenhuma ideação suicida relatada na avaliação atual';
+    if (q5 === 1) {
+      ideationSeverityNumber = 5;
+      ideationSeverityText = 'Ideação suicida ativa com plano elaborado e intenção de agir (Nível 5)';
+    } else if (q4 === 1) {
+      ideationSeverityNumber = 4;
+      ideationSeverityText = 'Ideação suicida ativa com intenção de agir, sem plano totalmente elaborado (Nível 4)';
+    } else if (q3 === 1) {
+      ideationSeverityNumber = 3;
+      ideationSeverityText = 'Ideação suicida ativa com método em mente, sem intenção de agir (Nível 3)';
+    } else if (q2 === 1) {
+      ideationSeverityNumber = 2;
+      ideationSeverityText = 'Pensamentos suicidas ativos não específicos (Nível 2)';
+    } else if (q1 === 1) {
+      ideationSeverityNumber = 1;
+      ideationSeverityText = 'Desejo passivo de estar morto(a) (Nível 1)';
+    }
+
+    // 2. Comportamento Suicida (Dimensão separada da ideação)
+    const hasSuicidalBehavior = q6 === 1;
+    const behaviorText = hasSuicidalBehavior
+      ? 'Presença de comportamento suicida relatado (tentativa prévia, atos preparatórios ou tentativa abortada/interrompida)'
+      : 'Nega comportamento suicida prévio ou recente';
+
+    // 3. Necessidade de Avaliação Clínica e Condutas de Segurança
+    const clinicalActionRequired = q4 === 1 || q5 === 1 || hasSuicidalBehavior;
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
-    let interpretation = '';
     const recs: string[] = [];
 
-    if (maxVal === 0) {
-      classification = 'Sem ideação suicida ativa identificada na consulta atual';
-      severityLevel = 'low';
-      interpretation = 'Paciente nega ideação ou pensamentos de autolesão na avaliação atual.';
-      recs.push('Acompanhamento longitudinal de rotina', 'Manter canal aberto de escuta e acolhimento');
-    } else if (maxVal <= 2) {
-      classification = 'Risco Baixo de Suicídio';
-      severityLevel = 'low';
-      interpretation = 'Presença de desejo passivo ou pensamentos não específicos sem plano ou intenção.';
+    if (clinicalActionRequired) {
+      severityLevel = 'severe';
       recs.push(
-        'Pactuar Plano de Segurança Pessoal e rede de suporte familiar',
-        'Fornecer contatos de emergência (CVV 188, SAMU 192, UBS de referência)',
-        'Agendar retorno em curto prazo na APS (1 a 2 semanas)'
+        '⚠️ AVALIAÇÃO CLÍNICA DIRETA E IMEDIATA: Presença de ideação com intenção/plano ou relato de comportamento suicida.',
+        'Manter acompanhamento acolhedor na unidade sem deixar o paciente desacompanhado durante a consulta.',
+        'Restringir e bloquear imediatamente o acesso a quaisquer meios potencialmente letais (medicamentos no domicílio, objetos perfurocortantes, armas).',
+        'Construir ou atualizar o Plano de Segurança Pessoal estruturado (Stanley & Brown) em parceria com o paciente.',
+        'Envolver familiar ou pessoa de confiança da rede de apoio de forma compartilhada (com consentimento).',
+        'A definição de encaminhamento para atenção especializada (CAPS / emergência) ou acompanhamento intensificado na UBS é decisão exclusivamente médica baseada no julgamento clínico presencial e fatores protetores.'
       );
-    } else if (maxVal <= 3) {
-      classification = 'Risco Moderado de Suicídio';
-      severityLevel = 'moderate';
-      interpretation = 'Ideação ativa com método considerado, porém sem intenção imediata formulada.';
+    } else if (ideationSeverityNumber >= 1) {
+      severityLevel = ideationSeverityNumber >= 3 ? 'moderate' : 'low';
       recs.push(
-        'Envolver familiar ou pessoa de confiança imediatamente (com consentimento)',
-        'Restringir acesso a meios letais (medicamentos estocados, armas, objetos perfurocortantes)',
-        'Pactuar retorno em 24-48h ou contato telefônico com a equipe de APS',
-        'Discutir caso com Apoio Matricial / Saúde Mental'
+        'Avaliação clínica detalhada da ideação na APS: investigar sofrimento emocional subjacente, precipitantes e rede de apoio.',
+        'Pactuar Plano de Segurança Pessoal e fornecer contatos de emergência (CVV 188, UBS, SAMU 192).',
+        'Agendar retorno em curto prazo e pactuar canal aberto de escuta na UBS.'
       );
     } else {
-      classification = 'Risco Alto de Suicídio / Emergência em Saúde Mental';
-      severityLevel = 'severe';
-      interpretation = 'Ideação com plano elaborado, intenção de agir ou ato preparatório recente. Exige intervenção de segurança imediata!';
+      severityLevel = 'low';
       recs.push(
-        '⚠️ NUNCA deixar o paciente desacompanhado',
-        'Acolhimento imediato na unidade de saúde com equipe multidisciplinar',
-        'Remoção e bloqueio imediato de quaisquer meios letais',
-        'Avaliar necessidade de encaminhamento para emergência psiquiátrica (CAPS III / UPA / Hospital de referência) conforme pactuação da RAPS local'
+        'Manter acompanhamento de rotina na APS com postura de acolhimento e escuta empática.',
+        'Reforçar fatores protetores pessoais e sociais.'
       );
     }
 
-    const soapText = `C-SSRS (Columbia): ${classification} (Nível ${maxVal}/5) | Fonte: Posner et al., 2011 (Recomendações ABP/MS)`;
+    const classification = `${ideationSeverityText} | Comportamento: ${hasSuicidalBehavior ? 'Positivo' : 'Negativo'}`;
+    const interpretation = `C-SSRS (Versão de Triagem APS):
+• Gravidade da Ideação: ${ideationSeverityText}
+• Comportamento Suicida: ${behaviorText}
+• Necessidade de Avaliação Clínica: ${clinicalActionRequired ? 'Avaliação clínica presencial imediata indicada' : ideationSeverityNumber > 0 ? 'Avaliação clínica ambulatorial da ideação indicada' : 'Acompanhamento longitudinal habitual'}
+• Nota de Governança: O C-SSRS descreve os achados semiológicos e não substitui o julgamento clínico médico integral, nem determina automaticamente internação ou alta.`;
+
+    const soapText = `C-SSRS (Columbia APS): Ideação: ${ideationSeverityText} | Comportamento: ${hasSuicidalBehavior ? 'Positivo' : 'Negativo'} | Necessidade de Avaliação Clínica: ${clinicalActionRequired ? 'Imediata/Prioritária' : 'Ambulatorial de Rotina'} | Fonte: Posner et al., 2011 (Recomendações ABP/MS)`;
 
     return {
       scaleId: 'cssrs',
       scaleTitle: 'Triagem C-SSRS / Suicídio',
-      totalScore: maxVal,
+      totalScore: ideationSeverityNumber,
       maxScore: 5,
       classification,
       severityLevel,
       interpretation,
       recommendations: recs,
       soapText,
+      answersArray: [q1, q2, q3, q4, q5, q6],
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 6,
+      totalRequired: 6,
+      ideationSeverityText,
+      behaviorText,
+      clinicalActionRequired,
+      hasCriticalAlert: clinicalActionRequired,
     };
   },
   clinicalConductSteps: [
@@ -1771,61 +1915,61 @@ export const MEEM_SCALE: ScaleDefinition = {
     {
       id: 'q1_ano',
       text: '1. Orientação Temporal: Em que ano estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_temporal'
     },
     {
       id: 'q1_semestre',
       text: '2. Orientação Temporal: Em que semestre ou estação do ano estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_temporal'
     },
     {
       id: 'q1_mes',
       text: '3. Orientação Temporal: Em que mês estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_temporal'
     },
     {
       id: 'q1_diasemana',
       text: '4. Orientação Temporal: Em que dia da semana estamos hoje? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_temporal'
     },
     {
       id: 'q1_diames',
       text: '5. Orientação Temporal: Em que dia do mês estamos hoje? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_temporal'
     },
     {
       id: 'q2_estado',
       text: '6. Orientação Espacial: Em que estado estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_espacial'
     },
     {
       id: 'q2_cidade',
       text: '7. Orientação Espacial: Em que cidade ou município estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_espacial'
     },
     {
       id: 'q2_bairro',
       text: '8. Orientação Espacial: Em que bairro estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_espacial'
     },
     {
       id: 'q2_local',
       text: '9. Orientação Espacial: Que local é este aqui? (ex: Posto de Saúde, Clínica, Hospital) (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_espacial'
     },
     {
       id: 'q2_andar',
       text: '10. Orientação Espacial: Em que sala ou andar estamos? (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'orientacao_espacial'
     },
     {
@@ -1833,10 +1977,10 @@ export const MEEM_SCALE: ScaleDefinition = {
       text: '11. Registro de Memória Imediata: Diga 3 palavras ("Carro, Vaso, Tijolo"). Quantas repetiu corretamente de primeira? (0 a 3 pontos)',
       instruction: 'Fale pausadamente. Repita até 6 vezes se necessário para fixação, mas pontue apenas a primeira tentativa.',
       options: [
-        { label: '0 palavras (0)', value: 0 },
-        { label: '1 palavra (1)', value: 1 },
-        { label: '2 palavras (2)', value: 2 },
-        { label: '3 palavras (3)', value: 3 },
+        { label: '0 palavras', value: 0 },
+        { label: '1 palavra', value: 1 },
+        { label: '2 palavras', value: 2 },
+        { label: '3 palavras', value: 3 },
       ],
       subscale: 'memoria_imediata'
     },
@@ -1844,12 +1988,12 @@ export const MEEM_SCALE: ScaleDefinition = {
       id: 'q4_atencao',
       text: '12. Atenção e Cálculo: Subtrair 7 de 100 sucessivamente (93, 86, 79, 72, 65) ou soletrar "M-U-N-D-O" de trás para frente (O-D-N-U-M). (0 a 5 pontos)',
       options: [
-        { label: '0 acertos (0)', value: 0 },
-        { label: '1 acerto (1)', value: 1 },
-        { label: '2 acertos (2)', value: 2 },
-        { label: '3 acertos (3)', value: 3 },
-        { label: '4 acertos (4)', value: 4 },
-        { label: '5 acertos (5)', value: 5 },
+        { label: '0 acertos', value: 0 },
+        { label: '1 acerto', value: 1 },
+        { label: '2 acertos', value: 2 },
+        { label: '3 acertos', value: 3 },
+        { label: '4 acertos', value: 4 },
+        { label: '5 acertos', value: 5 },
       ],
       subscale: 'atencao_calculo'
     },
@@ -1857,10 +2001,10 @@ export const MEEM_SCALE: ScaleDefinition = {
       id: 'q5_evocacao',
       text: '13. Evocação Tardia de Memória: Pergunte novamente as 3 palavras ditas anteriormente. (0 a 3 pontos)',
       options: [
-        { label: '0 palavras (0)', value: 0 },
-        { label: '1 palavra (1)', value: 1 },
-        { label: '2 palavras (2)', value: 2 },
-        { label: '3 palavras (3)', value: 3 },
+        { label: '0 palavras', value: 0 },
+        { label: '1 palavra', value: 1 },
+        { label: '2 palavras', value: 2 },
+        { label: '3 palavras', value: 3 },
       ],
       subscale: 'evocacao_tardia'
     },
@@ -1868,52 +2012,57 @@ export const MEEM_SCALE: ScaleDefinition = {
       id: 'q6_nomeacao',
       text: '14. Linguagem - Nomeação: Apresente um Relógio e uma Caneta e peça para o paciente nomear. (0 a 2 pontos)',
       options: [
-        { label: '0 acertos (0)', value: 0 },
-        { label: '1 acerto (1)', value: 1 },
-        { label: '2 acertos (2)', value: 2 },
+        { label: '0 acertos', value: 0 },
+        { label: '1 acerto', value: 1 },
+        { label: '2 acertos', value: 2 },
       ],
       subscale: 'linguagem'
     },
     {
       id: 'q7_repeticao',
       text: '15. Linguagem - Repetição: Peça para repetir exatamente: "Nem aqui, nem ali, nem lá". (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'linguagem'
     },
     {
       id: 'q8_comando',
       text: '16. Comando de 3 estágios: "Pegue este papel com a mão direita, dobre-o ao meio e coloque-o no chão". (0 a 3 pontos)',
       options: [
-        { label: '0 passos (0)', value: 0 },
-        { label: '1 passo (1)', value: 1 },
-        { label: '2 passos (2)', value: 2 },
-        { label: '3 passos completos (3)', value: 3 },
+        { label: '0 passos', value: 0 },
+        { label: '1 passo', value: 1 },
+        { label: '2 passos', value: 2 },
+        { label: '3 passos completos', value: 3 },
       ],
       subscale: 'linguagem'
     },
     {
       id: 'q9_leitura',
       text: '17. Leitura e Execução: Mostre a frase "FECHE OS OLHOS" escrita em papel e peça para o paciente ler e fazer o que está escrito. (1 ponto)',
-      options: [{ label: 'Não executou (0)', value: 0 }, { label: 'Executou corretamente (1)', value: 1 }],
+      options: [{ label: 'Não executou', value: 0 }, { label: 'Executou corretamente', value: 1 }],
       subscale: 'linguagem'
     },
     {
       id: 'q10_frase',
       text: '18. Redação: Peça para escrever uma frase completa com sujeito e verbo e com sentido lógico. (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'linguagem'
     },
     {
       id: 'q11_desenho',
       text: '19. Praxia Construtiva: Peça para copiar o desenho de dois pentágonos intersectados formando um quadrilátero na interseção. (1 ponto)',
-      options: [{ label: 'Incorreto (0)', value: 0 }, { label: 'Correto (1)', value: 1 }],
+      options: [{ label: 'Incorreto', value: 0 }, { label: 'Correto', value: 1 }],
       subscale: 'praxia_construtiva'
     },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(MEEM_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(MEEM_SCALE, validation);
+    }
+
     let totalScore = 0;
-    Object.values(answers).forEach((val) => {
-      totalScore += val;
+    MEEM_SCALE.questions.forEach((q) => {
+      totalScore += Number(answers[q.id] || 0);
     });
 
     // Análise detalhada por estrato de escolaridade segundo Sônia Maria Brucki et al. (2003) e TelessaúdeRS
@@ -1980,6 +2129,11 @@ O MEEM é uma ferramenta de triagem e não fecha diagnóstico isoladamente. O re
       interpretation,
       recommendations: recs,
       soapText,
+      answersArray: MEEM_SCALE.questions.map((q) => Number(answers[q.id])),
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 19,
+      totalRequired: 19,
     };
   },
   clinicalConductSteps: [
@@ -2061,18 +2215,24 @@ export const EUROHIS_QOL_SCALE: ScaleDefinition = {
   cutoffInfo: '≥ 32: Boa/Preservada | 24-31: Moderada | < 24: Comprometida',
   estimatedMinutes: 2,
   questions: [
-    { id: 'q1', text: '1. Como você avalia sua qualidade de vida global?', options: [{ label: 'Muito ruim (1)', value: 1 }, { label: 'Ruim (2)', value: 2 }, { label: 'Nem boa/nem ruim (3)', value: 3 }, { label: 'Boa (4)', value: 4 }, { label: 'Muito boa (5)', value: 5 }] },
-    { id: 'q2', text: '2. Quão satisfeito(a) você está com a sua saúde?', options: [{ label: 'Muito insatisfeito (1)', value: 1 }, { label: 'Insatisfeito (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Satisfeito (4)', value: 4 }, { label: 'Muito satisfeito (5)', value: 5 }] },
-    { id: 'q3', text: '3. Você tem energia suficiente para seu dia a dia?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Média (3)', value: 3 }, { label: 'Muita (4)', value: 4 }, { label: 'Total (5)', value: 5 }] },
-    { id: 'q4', text: '4. Quão satisfeito(a) está com sua capacidade para realizar as atividades do cotidiano?', options: [{ label: 'Muito insatisfeito (1)', value: 1 }, { label: 'Insatisfeito (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Satisfeito (4)', value: 4 }, { label: 'Muito satisfeito (5)', value: 5 }] },
-    { id: 'q5', text: '5. Quão satisfeito(a) você está consigo mesmo(a)?', options: [{ label: 'Muito insatisfeito (1)', value: 1 }, { label: 'Insatisfeito (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Satisfeito (4)', value: 4 }, { label: 'Muito satisfeito (5)', value: 5 }] },
-    { id: 'q6', text: '6. Quão satisfeito(a) está com suas relações pessoais e familiares?', options: [{ label: 'Muito insatisfeito (1)', value: 1 }, { label: 'Insatisfeito (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Satisfeito (4)', value: 4 }, { label: 'Muito satisfeito (5)', value: 5 }] },
-    { id: 'q7', text: '7. Você tem dinheiro suficiente para satisfazer suas necessidades básicas?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Bastante (4)', value: 4 }, { label: 'Total (5)', value: 5 }] },
-    { id: 'q8', text: '8. Quão satisfeito(a) você está com as condições do local onde mora?', options: [{ label: 'Muito insatisfeito (1)', value: 1 }, { label: 'Insatisfeito (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Satisfeito (4)', value: 4 }, { label: 'Muito satisfeito (5)', value: 5 }] },
+    { id: 'q1', text: '1. Como você avalia sua qualidade de vida global?', options: [{ label: 'Muito ruim', value: 1 }, { label: 'Ruim', value: 2 }, { label: 'Nem boa/nem ruim', value: 3 }, { label: 'Boa', value: 4 }, { label: 'Muito boa', value: 5 }] },
+    { id: 'q2', text: '2. Quão satisfeito(a) você está com a sua saúde?', options: [{ label: 'Muito insatisfeito', value: 1 }, { label: 'Insatisfeito', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Satisfeito', value: 4 }, { label: 'Muito satisfeito', value: 5 }] },
+    { id: 'q3', text: '3. Você tem energia suficiente para seu dia a dia?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Média', value: 3 }, { label: 'Muita', value: 4 }, { label: 'Total', value: 5 }] },
+    { id: 'q4', text: '4. Quão satisfeito(a) está com sua capacidade para realizar as atividades do cotidiano?', options: [{ label: 'Muito insatisfeito', value: 1 }, { label: 'Insatisfeito', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Satisfeito', value: 4 }, { label: 'Muito satisfeito', value: 5 }] },
+    { id: 'q5', text: '5. Quão satisfeito(a) você está consigo mesmo(a)?', options: [{ label: 'Muito insatisfeito', value: 1 }, { label: 'Insatisfeito', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Satisfeito', value: 4 }, { label: 'Muito satisfeito', value: 5 }] },
+    { id: 'q6', text: '6. Quão satisfeito(a) está com suas relações pessoais e familiares?', options: [{ label: 'Muito insatisfeito', value: 1 }, { label: 'Insatisfeito', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Satisfeito', value: 4 }, { label: 'Muito satisfeito', value: 5 }] },
+    { id: 'q7', text: '7. Você tem dinheiro suficiente para satisfazer suas necessidades básicas?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Bastante', value: 4 }, { label: 'Total', value: 5 }] },
+    { id: 'q8', text: '8. Quão satisfeito(a) você está com as condições do local onde mora?', options: [{ label: 'Muito insatisfeito', value: 1 }, { label: 'Insatisfeito', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Satisfeito', value: 4 }, { label: 'Muito satisfeito', value: 5 }] },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(EUROHIS_QOL_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(EUROHIS_QOL_SCALE, validation);
+    }
+
     let totalScore = 0;
-    Object.values(answers).forEach((val) => {
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8'].map((k) => Number(answers[k]));
+    answersArray.forEach((val) => {
       totalScore += val;
     });
 
@@ -2103,6 +2263,11 @@ export const EUROHIS_QOL_SCALE: ScaleDefinition = {
       interpretation: `Qualidade de vida global avaliada com média ${meanScore}/5 pontos por item (${totalScore}/40 total).`,
       recommendations: ['Identificar dimensões prioritárias de suporte social, atividade física e autonomia'],
       soapText,
+      answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 8,
+      totalRequired: 8,
     };
   },
   clinicalConductSteps: [
@@ -2163,14 +2328,20 @@ export const WHOQOL_SRPB_SCALE: ScaleDefinition = {
   cutoffInfo: 'Mede recursos existenciais de enfrentamento e resiliência pessoal.',
   estimatedMinutes: 2,
   questions: [
-    { id: 'q1', text: '1. O quanto suas crenças e valores dão sentido à sua vida?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Bastante (4)', value: 4 }, { label: 'Extremamente (5)', value: 5 }] },
-    { id: 'q2', text: '2. O quanto você sente paz interior em momentos de estresse?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Bastante (4)', value: 4 }, { label: 'Extremamente (5)', value: 5 }] },
-    { id: 'q3', text: '3. Suas crenças pessoais servem como fonte de força nos momentos difíceis?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Bastante (4)', value: 4 }, { label: 'Extremamente (5)', value: 5 }] },
-    { id: 'q4', text: '4. O quanto você se sente conectado(a) com o mundo e com os outros?', options: [{ label: 'Nada (1)', value: 1 }, { label: 'Pouco (2)', value: 2 }, { label: 'Médio (3)', value: 3 }, { label: 'Bastante (4)', value: 4 }, { label: 'Extremamente (5)', value: 5 }] },
+    { id: 'q1', text: '1. O quanto suas crenças e valores dão sentido à sua vida?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Bastante', value: 4 }, { label: 'Extremamente', value: 5 }] },
+    { id: 'q2', text: '2. O quanto você sente paz interior em momentos de estresse?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Bastante', value: 4 }, { label: 'Extremamente', value: 5 }] },
+    { id: 'q3', text: '3. Suas crenças pessoais servem como fonte de força nos momentos difíceis?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Bastante', value: 4 }, { label: 'Extremamente', value: 5 }] },
+    { id: 'q4', text: '4. O quanto você se sente conectado(a) com o mundo e com os outros?', options: [{ label: 'Nada', value: 1 }, { label: 'Pouco', value: 2 }, { label: 'Médio', value: 3 }, { label: 'Bastante', value: 4 }, { label: 'Extremamente', value: 5 }] },
   ],
   calculateResult: (answers) => {
+    const validation = validateScaleAnswers(WHOQOL_SRPB_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(WHOQOL_SRPB_SCALE, validation);
+    }
+
     let totalScore = 0;
-    Object.values(answers).forEach((val) => {
+    const answersArray = ['q1', 'q2', 'q3', 'q4'].map((k) => Number(answers[k]));
+    answersArray.forEach((val) => {
       totalScore += val;
     });
 
@@ -2186,6 +2357,11 @@ export const WHOQOL_SRPB_SCALE: ScaleDefinition = {
       interpretation: `Escore de ${totalScore}/20 pontos. Recursos pessoais, sentido de vida e fé identificados como fatores protetores de resiliência.`,
       recommendations: ['Respeitar a autonomia do paciente e considerar apoio de suas redes comunitárias habituais'],
       soapText,
+      answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 4,
+      totalRequired: 4,
     };
   },
   clinicalConductSteps: [

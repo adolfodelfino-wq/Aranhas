@@ -72,7 +72,8 @@ export const WhatsappShareModal: React.FC<WhatsappShareModalProps> = ({
   };
 
   const currentAppUrl = getBaseUrl();
-  const patientFillUrl = `${currentAppUrl}?mode=patient&scale=${selectedScaleId}&p=${encodeURIComponent(customName || 'Paciente')}`;
+  // Privacy shielding: Never put patient name, CPF, CNS or clinical responses in URL
+  const patientFillUrl = `${currentAppUrl}?mode=patient&scale=${selectedScaleId}`;
 
   // Formatted Message Presets for WhatsApp
   const getMessageText = () => {

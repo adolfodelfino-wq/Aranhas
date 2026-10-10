@@ -82,15 +82,15 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
       <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="bg-blue-50 text-[#0A3B74] border border-blue-200 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
+            <span className="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase">
               Diretrizes Maudsley (14th Ed) & Hayasaka (2015)
             </span>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-500 font-normal">
               Meta-Análise RCTs
             </span>
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-[#0F172A] flex items-center gap-2">
-            <Pill className="w-5 h-5 text-[#0A3B74]" />
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-900 flex items-center gap-2">
+            <Pill className="w-5 h-5 text-teal-700" />
             <span>Guia de Troca de Antidepressivos</span>
           </h2>
           <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
@@ -101,9 +101,9 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowFullEquivalenceTable(!showFullEquivalenceTable)}
-            className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <TableIcon className="w-4 h-4 text-[#0A3B74]" />
+            <TableIcon className="w-4 h-4 text-teal-700" />
             <span>{showFullEquivalenceTable ? 'Ocultar Tabela' : 'Ver Tabela de Equivalências'}</span>
             {showFullEquivalenceTable ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
@@ -112,18 +112,18 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
 
       {/* Tabela de Equivalência Geral Expansível */}
       {showFullEquivalenceTable && (
-        <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 shadow-sm animate-in fade-in">
+        <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 shadow-xs animate-in fade-in">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#0A3B74]" />
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-teal-700" />
                 <span>Tabela Geral de Doses Equivalentes de Antidepressivos</span>
               </h3>
               <p className="text-xs text-slate-500">
                 Baseado em <strong>Hayasaka Y et al. (J Affect Disord, 2015)</strong> e Maudsley Prescribing Guidelines.
               </p>
             </div>
-            <span className="text-[11px] bg-blue-50 text-[#0A3B74] border border-blue-200 px-2.5 py-1 rounded font-mono font-bold">
+            <span className="text-xs bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-1 rounded font-mono font-semibold">
               Ref: Fluoxetina 40 mg/d
             </span>
           </div>
@@ -132,24 +132,24 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                  <th className="py-2.5 px-3 font-bold">Antidepressivo</th>
-                  <th className="py-2.5 px-3 font-bold">Classe</th>
-                  <th className="py-2.5 px-3 font-bold text-[#0A3B74]">Eq. Fluoxetina 40mg</th>
-                  <th className="py-2.5 px-3 font-bold">Eq. Fluoxetina 20mg</th>
-                  <th className="py-2.5 px-3 font-bold">Meia-vida Plasmática</th>
-                  <th className="py-2.5 px-3 font-bold">Base Científica</th>
+                  <th className="py-2.5 px-3 font-semibold">Antidepressivo</th>
+                  <th className="py-2.5 px-3 font-semibold">Classe</th>
+                  <th className="py-2.5 px-3 font-semibold text-teal-800">Eq. Fluoxetina 40mg</th>
+                  <th className="py-2.5 px-3 font-semibold">Eq. Fluoxetina 20mg</th>
+                  <th className="py-2.5 px-3 font-semibold">Meia-vida Plasmática</th>
+                  <th className="py-2.5 px-3 font-semibold">Base Científica</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {EQUIVALENCE_REFERENCE_TABLE.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-2 px-3 font-bold text-slate-900">{row.drug}</td>
+                  <tr key={`ad-row-${idx}`} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2 px-3 font-semibold text-slate-900">{row.drug}</td>
                     <td className="py-2 px-3">
                       <span className="bg-slate-100 px-2 py-0.5 rounded text-[11px] text-slate-600 border border-slate-200">
                         {row.class}
                       </span>
                     </td>
-                    <td className="py-2 px-3 font-extrabold text-[#0A3B74] font-mono">{row.dose40Eq}</td>
+                    <td className="py-2 px-3 font-semibold text-teal-900 font-mono">{row.dose40Eq}</td>
                     <td className="py-2 px-3 font-medium text-slate-600 font-mono">{row.dose20Eq}</td>
                     <td className="py-2 px-3 text-slate-500">{row.halfLife}</td>
                     <td className="py-2 px-3">
@@ -222,10 +222,10 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
                     key={d}
                     type="button"
                     onClick={() => setSourceDose(d)}
-                    className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       sourceDose === d
-                        ? 'bg-[#0A3B74] text-white shadow-xs'
-                        : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
+                        ? 'bg-teal-700 text-white shadow-xs'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
                     }`}
                   >
                     {d} mg
@@ -239,7 +239,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
                   max={600}
                   value={sourceDose}
                   onChange={(e) => setSourceDose(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-white border border-slate-300 text-slate-900 rounded px-3 py-1.5 text-xs font-mono focus:border-blue-600 outline-none"
+                  className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg px-3 py-1.5 text-xs font-mono focus:border-teal-700 outline-none"
                   placeholder="Ou digite outra dose em mg"
                 />
               </div>
@@ -250,7 +250,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
           <div className="lg:col-span-1 flex justify-center py-2 lg:py-0">
             <button
               onClick={handleSwap}
-              className="p-2.5 bg-slate-100 hover:bg-[#0A3B74] text-slate-600 hover:text-white rounded-full border border-slate-300 transition-colors shadow-xs cursor-pointer group"
+              className="p-2.5 bg-slate-100 hover:bg-teal-700 text-slate-600 hover:text-white rounded-full border border-slate-200 transition-colors shadow-xs cursor-pointer group"
               title="Inverter Medicações"
             >
               <ArrowLeftRight className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
@@ -260,11 +260,11 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
           {/* Drug 2 (Target) */}
           <div className="lg:col-span-5 space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <label className="text-xs font-semibold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-600"></span>
                 <span>2. Nova Medicação (Introdução)</span>
               </label>
-              <span className="text-[11px] text-blue-800 font-semibold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+              <span className="text-[11px] text-teal-800 font-medium bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
                 {plan.targetDrug.class}
               </span>
             </div>
@@ -273,7 +273,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
               <select
                 value={targetDrugId}
                 onChange={(e) => setTargetDrugId(e.target.value)}
-                className="w-full bg-white border border-slate-300 text-slate-900 rounded p-2.5 text-xs font-semibold focus:border-blue-600 outline-none"
+                className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs font-medium focus:border-teal-700 outline-none"
               >
                 {drugKeys.map((key) => {
                   const drug = ANTIDEPRESSANTS_DB[key];
@@ -290,12 +290,12 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
             <div className="space-y-1.5 pt-1">
               <div className="text-[11px] text-slate-500 font-medium flex justify-between">
                 <span>Doses Comerciais:</span>
-                <span className="text-[#0A3B74] font-bold font-mono">
+                <span className="text-teal-800 font-semibold font-mono">
                   {plan.targetDrug.standardDoses.join(', ')} mg
                 </span>
               </div>
               <div className="text-[11px] text-slate-600 bg-white p-2 rounded border border-slate-200">
-                <strong className="text-slate-800">Meia-vida:</strong> {plan.targetDrug.halfLifeHours}
+                <strong className="text-slate-800 font-medium">Meia-vida:</strong> {plan.targetDrug.halfLifeHours}
               </div>
             </div>
           </div>
@@ -305,33 +305,43 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
         <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase tracking-wider">
                 Pareamento Farmacológico Calculado
               </span>
-              <div className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <div className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <span>{plan.sourceDrug.name} {plan.sourceDoseMg} mg/dia</span>
-                <ArrowRight className="w-4 h-4 text-[#0A3B74] shrink-0" />
-                <span className="text-[#0A3B74] font-black">{plan.targetDrug.name} ~{plan.recommendedTargetDoseMg} mg/dia</span>
+                <ArrowRight className="w-4 h-4 text-teal-700 shrink-0" />
+                <span className="text-teal-900 font-semibold">{plan.targetDrug.name} ~{plan.recommendedTargetDoseMg} mg/dia</span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-white border border-slate-300 text-slate-700 px-3 py-1 rounded text-xs font-semibold">
-                Dose Exata Calculada: <strong className="text-[#0A3B74] font-mono">{plan.calculatedEquivalentDoseMg.toFixed(1)} mg</strong>
+              <span className="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-md text-xs font-medium">
+                Equivalência estimada: <strong className="text-teal-800 font-mono">{plan.calculatedEquivalentDoseMg.toFixed(1)} mg</strong>
               </span>
-              <span className="px-3 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+              <span className="px-3 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
                 {plan.evidenceSource}
               </span>
+              {onOpenEvidenceModal && (
+                <button
+                  type="button"
+                  onClick={onOpenEvidenceModal}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-teal-700" />
+                  <span>Ver evidências</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Strategy Box */}
-          <div className={`p-4 rounded-md border flex items-start gap-3 ${
+          <div className={`p-4 rounded-lg border flex items-start gap-3 ${
             plan.strategyType === 'washout'
               ? 'bg-rose-50 border-rose-300 text-rose-950'
               : plan.strategyType === 'direct'
               ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-              : 'bg-blue-50 border-blue-300 text-blue-950'
+              : 'bg-teal-50/60 border-teal-200 text-teal-950'
           }`}>
             <div className="mt-0.5 shrink-0">
               {plan.strategyType === 'washout' ? (
@@ -339,15 +349,15 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
               ) : plan.strategyType === 'direct' ? (
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
               ) : (
-                <Activity className="w-5 h-5 text-[#0A3B74]" />
+                <Activity className="w-5 h-5 text-teal-700" />
               )}
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xs sm:text-sm">
+                <span className="font-semibold text-xs sm:text-sm">
                   Estratégia Recomendada: {plan.strategyTitle}
                 </span>
-                <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded border border-slate-300 font-mono font-bold">
+                <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-mono font-medium">
                   ~{plan.durationWeeks} semanas
                 </span>
               </div>
@@ -363,8 +373,8 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
       <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="space-y-0.5">
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#0A3B74]" />
+            <h3 className="font-semibold text-slate-900 text-base flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-teal-700" />
               <span>Cronograma Semanal de Transição</span>
             </h3>
             <p className="text-xs text-slate-500">
@@ -375,7 +385,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyPlan}
-              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-300 cursor-pointer"
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors border border-slate-200 cursor-pointer"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? 'Copiado!' : 'Copiar Cronograma'}</span>
@@ -384,9 +394,9 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
             {onImportToSoap && (
               <button
                 onClick={handleExportSoap}
-                className="px-3.5 py-1.5 bg-[#0A3B74] hover:bg-[#07284F] text-white rounded text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
               >
-                <FileCheck className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <FileCheck className="w-3.5 h-3.5 text-teal-200" />
                 <span>{imported ? 'Inserido no SOAP!' : 'Inserir no SOAP (Plano)'}</span>
               </button>
             )}
@@ -439,15 +449,15 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
         {/* Racional */}
         <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-3 shadow-xs">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-            <Activity className="w-4 h-4 text-[#0A3B74]" />
-            <h3 className="font-bold text-slate-900 text-xs uppercase font-mono">
+            <Activity className="w-4 h-4 text-teal-700" />
+            <h3 className="font-semibold text-slate-900 text-xs uppercase font-mono">
               Racional Farmacocinético & Dinâmico
             </h3>
           </div>
           <ul className="space-y-2 text-xs text-slate-700 leading-relaxed">
             {plan.pharmacologicalRationale.map((rat, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-[#0A3B74] font-bold">•</span>
+              <li key={`rat-${i}`} className="flex items-start gap-2">
+                <span className="text-teal-700 font-bold">•</span>
                 <span>{rat}</span>
               </li>
             ))}

@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
+    }
+
+    function isValidPatient(data) {
+      return data.keys().hasAll(['prontuario', 'scaleHistory', 'lastUpdated'])
+        && data.keys().hasOnly(['prontuario', 'name', 'age', 'scaleHistory', 'lastUpdated', 'consultationsCount'])
+        && data.prontuario is string
+        && data.prontuario.size() > 0
+        && data.prontuario.size() <= 64
+        && (!('name' in data) || (data.name is string && data.name.size() <= 128))
+        && (!('age' in data) || (data.age is number && data.age >= 0 && data.age <= 130))
+        && data.scaleHistory is list
+        && data.scaleHistory.size() <= 500
+        && data.lastUpdated is string
+        && data.lastUpdated.size() <= 64
+        && (!('consultationsCount' in data) || (data.consultationsCount is number && data.consultationsCount >= 0));
+    }
+
+    match /patients/{patientId} {
+      allow get: if isValidId(patientId);
+      allow list: if false; // Disallow blind global scraping, retrieval is direct by known medical record ID
+      allow create: if isValidId(patientId) && isValidPatient(request.resource.data);
+      allow update: if isValidId(patientId) && isValidPatient(request.resource.data);
+      allow delete: if false; // Protect clinical longitudinal integrity from deletion
+    }
+
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

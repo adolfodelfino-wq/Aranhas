@@ -83,6 +83,17 @@ export interface ScaleResult {
   soapText: string;
   answersSummary?: { questionText: string; answerLabel: string; value: number }[];
   answersArray?: number[];
+  // Clinical safety and validation fields
+  isSelfAdministered?: boolean;
+  isComplete?: boolean;
+  completionStatus?: 'complete' | 'incomplete' | 'invalid';
+  answeredCount?: number;
+  totalRequired?: number;
+  individualAlerts?: string[];
+  hasCriticalAlert?: boolean;
+  ideationSeverityText?: string;
+  behaviorText?: string;
+  clinicalActionRequired?: boolean;
 }
 
 export interface EemDomainOption {

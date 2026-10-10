@@ -27,6 +27,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { AntidepressantSwitchCalculator } from './AntidepressantSwitchCalculator';
+import { BenzodiazepineTaperCalculator } from './BenzodiazepineTaperCalculator';
 
 interface CalculatorsViewProps {
   onImportToSoap?: (text: string, title: string) => void;
@@ -174,27 +175,27 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
       <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0A3B74] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-              Calculadoras Clínicas Determinísticas
+            <span className="font-mono text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+              Calculadoras Clínicas
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
             Calculadoras Médicas
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
-            Suporte para troca segura de psicofármacos, equivalência de doses antipsicóticas, monitoramento renal para lítio e estratificação de risco cardiovascular (SBC / Framingham) com vigilância metabólica na APS.
+            Suporte para troca segura de psicofármacos, desmame gradual, equivalência antipsicótica, monitoramento de função renal e estratificação de risco cardiovascular na APS.
           </p>
         </div>
 
         {/* Tabs Navigation */}
-        <nav aria-label="Abas de calculadoras médicas" className="flex border-b border-slate-200 pt-1 gap-2 text-xs font-semibold overflow-x-auto no-scrollbar">
+        <nav aria-label="Abas de calculadoras médicas" className="flex border-b border-slate-200 pt-1 gap-2 text-xs font-medium overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => handleTabChange('antidepressant')}
             aria-selected={activeTab === 'antidepressant'}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'antidepressant'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -204,11 +205,25 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
 
           <button
             type="button"
+            onClick={() => handleTabChange('benzodiazepine')}
+            aria-selected={activeTab === 'benzodiazepine'}
+            className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
+              activeTab === 'benzodiazepine'
+                ? 'border-teal-700 text-teal-800 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Pill className="w-4 h-4 text-amber-600" />
+            <span>Desmame Benzodiazepínicos (Maudsley/Ashton)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange('antipsychotic')}
             aria-selected={activeTab === 'antipsychotic'}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'antipsychotic'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -222,7 +237,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             aria-selected={activeTab === 'egfr'}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'egfr'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -236,7 +251,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             aria-selected={activeTab === 'cv'}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'cv'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
@@ -249,6 +264,14 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
       {/* Tab 1: Antidepressant Switching Calculator */}
       {activeTab === 'antidepressant' && (
         <AntidepressantSwitchCalculator
+          onImportToSoap={handleImportPlan}
+          onOpenEvidenceModal={onOpenEvidenceModal}
+        />
+      )}
+
+      {/* Tab: Benzodiazepine Ashton Tapering Calculator */}
+      {activeTab === 'benzodiazepine' && (
+        <BenzodiazepineTaperCalculator
           onImportToSoap={handleImportPlan}
           onOpenEvidenceModal={onOpenEvidenceModal}
         />
@@ -313,22 +336,22 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
               </span>
             </div>
 
-            <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="font-mono text-4xl sm:text-5xl font-black text-[#0A3B74] tracking-tight">
+            <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200/80">
+              <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
                 {apResult.value}
                 <span className="text-base text-slate-400 font-normal"> mg/dia</span>
               </div>
-              <div className="text-xs font-mono font-semibold text-slate-500">
+              <div className="text-xs font-sans font-medium text-slate-500">
                 Equivalente em Clorpromazina (CPZE)
               </div>
             </div>
 
-            <div className="bg-emerald-50 text-emerald-800 border border-emerald-300 p-3 rounded text-center text-xs font-bold">
+            <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 p-3 rounded text-center text-xs font-medium">
               {apResult.interpretation}
             </div>
 
             <div className="space-y-1.5 text-xs text-slate-700 bg-slate-50 p-3 rounded border border-slate-200">
-              <span className="font-mono font-bold uppercase text-[11px] block">
+              <span className="font-sans font-semibold uppercase text-[11px] block text-slate-600">
                 Texto para Prontuário:
               </span>
               <p className="leading-relaxed">{apResult.soapText}</p>
@@ -337,17 +360,17 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => handleExport(apResult)}
-                className="w-full py-2.5 bg-[#0A3B74] hover:bg-[#07284F] text-white font-mono font-bold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
               >
-                <FileCheck className="w-4 h-4 text-[#38BDF8]" />
+                <FileCheck className="w-4 h-4 text-teal-200" />
                 <span>{imported[apResult.id] ? 'Importado!' : 'Copiar para Prontuário (SOAP)'}</span>
               </button>
 
               <button
                 onClick={() => handleCopy(apResult)}
-                className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-mono font-semibold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                {copied[apResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied[apResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                 <span>{copied[apResult.id] ? 'Copiado!' : 'Copiar Texto Simples'}</span>
               </button>
             </div>
@@ -398,10 +421,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setEgfrGender('female')}
-                    className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                    className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                       egfrGender === 'female'
-                        ? 'bg-[#0A3B74] text-white border-[#0A3B74]'
-                        : 'bg-slate-50 text-slate-700 border-slate-300'
+                        ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
                     Feminino
@@ -409,10 +432,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setEgfrGender('male')}
-                    className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                    className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                       egfrGender === 'male'
-                        ? 'bg-[#0A3B74] text-white border-[#0A3B74]'
-                        : 'bg-slate-50 text-slate-700 border-slate-300'
+                        ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
                     Masculino
@@ -420,39 +443,39 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 p-3 rounded border border-blue-200 text-blue-900 text-[11px] leading-relaxed">
-                <strong>Relevância na Saúde Mental:</strong> A taxa de filtração glomerular estimada (eGFR) é fundamental antes do início ou titulação de <strong>Carbonato de Lítio</strong>, <strong>Pregabalina</strong>, <strong>Gabapentina</strong> e <strong>Topiramato</strong>.
+              <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-slate-700 text-xs leading-relaxed">
+                <strong className="text-slate-900 font-semibold">Relevância na APS:</strong> A taxa de filtração glomerular estimada (eGFR) é fundamental antes do início ou titulação de <strong>Carbonato de Lítio</strong>, <strong>Pregabalina</strong>, <strong>Gabapentina</strong> e <strong>Topiramato</strong>.
               </div>
             </div>
           </div>
 
           {/* Right Column: Sticky Result (lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-md space-y-5 lg:sticky lg:top-20">
+          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-5 lg:sticky lg:top-20">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="font-sans text-xs font-medium uppercase tracking-wider text-slate-500">
                 Resultado do Escore
               </span>
               <span className="font-mono text-xs text-slate-400">
-                CKD-EPI
+                CKD-EPI 2021
               </span>
             </div>
 
-            <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="font-mono text-4xl sm:text-5xl font-black text-[#0A3B74] tracking-tight">
+            <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200/80">
+              <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
                 {egfrResult.value}
                 <span className="text-base text-slate-400 font-normal"> mL/min/1.73m²</span>
               </div>
-              <div className="text-xs font-mono font-semibold text-slate-500">
+              <div className="text-xs font-sans font-medium text-slate-500">
                 Taxa de Filtração Glomerular Estimada
               </div>
             </div>
 
-            <div className="bg-emerald-50 text-emerald-800 border border-emerald-300 p-3 rounded text-center text-xs font-bold">
+            <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 p-3 rounded text-center text-xs font-medium">
               {egfrResult.interpretation}
             </div>
 
             <div className="space-y-1.5 text-xs text-slate-700 bg-slate-50 p-3 rounded border border-slate-200">
-              <span className="font-mono font-bold uppercase text-[11px] block">
+              <span className="font-sans font-semibold uppercase text-[11px] block text-slate-600">
                 Texto para Prontuário:
               </span>
               <p className="leading-relaxed">{egfrResult.soapText}</p>
@@ -461,17 +484,17 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => handleExport(egfrResult)}
-                className="w-full py-2.5 bg-[#0A3B74] hover:bg-[#07284F] text-white font-mono font-bold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
               >
-                <FileCheck className="w-4 h-4 text-[#38BDF8]" />
+                <FileCheck className="w-4 h-4 text-teal-200" />
                 <span>{imported[egfrResult.id] ? 'Importado!' : 'Copiar para Prontuário (SOAP)'}</span>
               </button>
 
               <button
                 onClick={() => handleCopy(egfrResult)}
-                className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-mono font-semibold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                {copied[egfrResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied[egfrResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                 <span>{copied[egfrResult.id] ? 'Copiado!' : 'Copiar Texto Simples'}</span>
               </button>
             </div>
@@ -494,13 +517,13 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-md text-xs font-semibold">
+              <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-lg text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => setCvCalcMode('lipid')}
-                  className={`py-1.5 px-3 rounded transition-all cursor-pointer text-center ${
+                  className={`py-1.5 px-3 rounded-md transition-all cursor-pointer text-center ${
                     cvCalcMode === 'lipid'
-                      ? 'bg-white text-[#0A3B74] font-bold shadow-xs border border-slate-200'
+                      ? 'bg-white text-teal-800 font-semibold shadow-xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -509,9 +532,9 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setCvCalcMode('bmi')}
-                  className={`py-1.5 px-3 rounded transition-all cursor-pointer text-center ${
+                  className={`py-1.5 px-3 rounded-md transition-all cursor-pointer text-center ${
                     cvCalcMode === 'bmi'
-                      ? 'bg-white text-[#0A3B74] font-bold shadow-xs border border-slate-200'
+                      ? 'bg-white text-teal-800 font-semibold shadow-xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -520,9 +543,9 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setCvCalcMode('direct')}
-                  className={`py-1.5 px-3 rounded transition-all cursor-pointer text-center ${
+                  className={`py-1.5 px-3 rounded-md transition-all cursor-pointer text-center ${
                     cvCalcMode === 'direct'
-                      ? 'bg-white text-[#0A3B74] font-bold shadow-xs border border-slate-200'
+                      ? 'bg-white text-teal-800 font-semibold shadow-xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -538,8 +561,8 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
               {/* Section 1: Base Demographic & Clinical Parameters */}
               <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Stethoscope className="w-4 h-4 text-[#0A3B74]" />
+                  <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-teal-700" />
                     <span>1. Parâmetros Clínicos Basais</span>
                   </h2>
                   <span className="font-mono text-[11px] text-slate-500">
@@ -571,10 +594,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setCvGender('male')}
-                          className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                          className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                             cvGender === 'male'
-                              ? 'bg-[#0A3B74] text-white border-[#0A3B74]'
-                              : 'bg-slate-50 text-slate-700 border-slate-300'
+                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           Masculino
@@ -582,10 +605,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setCvGender('female')}
-                          className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                          className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                             cvGender === 'female'
-                              ? 'bg-[#0A3B74] text-white border-[#0A3B74]'
-                              : 'bg-slate-50 text-slate-700 border-slate-300'
+                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           Feminino
@@ -615,10 +638,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setIsBpTreated(false)}
-                          className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                          className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                             !isBpTreated
-                              ? 'bg-slate-800 text-white border-slate-800'
-                              : 'bg-slate-50 text-slate-700 border-slate-300'
+                              ? 'bg-slate-800 text-white border-slate-800 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           Não tratado
@@ -626,10 +649,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setIsBpTreated(true)}
-                          className={`py-2 rounded text-xs font-semibold border cursor-pointer ${
+                          className={`py-2 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${
                             isBpTreated
-                              ? 'bg-[#0A3B74] text-white border-[#0A3B74]'
-                              : 'bg-slate-50 text-slate-700 border-slate-300'
+                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           Em tratamento (HAS)
@@ -1003,28 +1026,28 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
               </div>
 
               {/* Numerical Score Block */}
-              <div className="text-center space-y-1 py-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="font-mono text-4xl sm:text-5xl font-black text-[#0A3B74] tracking-tight">
+              <div className="text-center space-y-1 py-4 bg-slate-50 rounded-lg border border-slate-200/80">
+                <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
                   {cvResult.value}
                 </div>
-                <div className="text-xs font-mono font-semibold text-slate-500">
-                  Probabilidade de Evento Aterosclerótico Fatal / Não Fatal em 10 Anos
+                <div className="text-xs font-sans font-medium text-slate-500">
+                  Probabilidade de Evento Aterosclerótico em 10 Anos
                 </div>
               </div>
 
               {/* Status Banner with Clinical Severity Colors */}
               <div
-                className={`p-3.5 rounded-lg border text-xs font-bold space-y-1 text-center ${
+                className={`p-3.5 rounded-lg border text-xs font-medium space-y-1 text-center ${
                   cvResult.riskCategory === 'very_high'
-                    ? 'bg-red-50 text-red-900 border-red-500'
+                    ? 'bg-red-50 text-red-900 border-red-300'
                     : cvResult.riskCategory === 'high'
-                    ? 'bg-orange-50 text-orange-900 border-orange-400'
+                    ? 'bg-orange-50 text-orange-900 border-orange-300'
                     : cvResult.riskCategory === 'intermediate'
                     ? 'bg-amber-50 text-amber-900 border-amber-300'
                     : 'bg-emerald-50 text-emerald-900 border-emerald-300'
                 }`}
               >
-                <div className="uppercase tracking-wider font-extrabold text-sm">
+                <div className="uppercase tracking-wider font-semibold text-sm">
                   {cvResult.riskLabel}
                 </div>
                 <p className="font-normal text-[11px] leading-relaxed opacity-90">
@@ -1034,14 +1057,14 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
 
               {/* Reclassification Badges */}
               {cvResult.isReclassified && (
-                <div className="bg-amber-100 border border-amber-400 text-amber-900 p-2.5 rounded text-[11px] font-semibold flex items-center gap-2">
+                <div className="bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded text-[11px] font-medium flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
                   <span>Reclassificado para <strong>ALTO RISCO</strong> por fatores agravantes da SBC.</span>
                 </div>
               )}
 
               {cvResult.isDirectRisk && (
-                <div className="bg-red-100 border border-red-400 text-red-900 p-2.5 rounded text-[11px] font-semibold flex items-center gap-2">
+                <div className="bg-red-50 border border-red-300 text-red-900 p-2.5 rounded text-[11px] font-medium flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-red-700 shrink-0" />
                   <span>Classificação por <strong>Estratificação Direta da SBC</strong>.</span>
                 </div>
@@ -1049,7 +1072,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
 
               {/* Clinical Targets Table (SBC) */}
               <div className="space-y-2 border border-slate-200 rounded-lg p-3.5 bg-slate-50/70 text-xs">
-                <span className="font-mono text-[11px] font-bold uppercase text-[#0A3B74] block border-b border-slate-200 pb-1">
+                <span className="font-sans text-[11px] font-semibold uppercase text-slate-700 block border-b border-slate-200 pb-1">
                   Metas Terapêuticas & Condutas (SBC):
                 </span>
 
@@ -1093,7 +1116,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
 
                   <ul className="space-y-1.5 text-[11px] text-slate-800 list-disc list-inside leading-tight">
                     {cvResult.metabolicMonitoringPlan.map((step, idx) => (
-                      <li key={idx} className="pl-1 font-medium">{step}</li>
+                      <li key={`cv-step-${idx}`} className="pl-1 font-medium">{step}</li>
                     ))}
                   </ul>
                 </div>
@@ -1113,17 +1136,17 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <button
                   onClick={() => handleExport(cvResult)}
-                  className="w-full py-2.5 bg-[#0A3B74] hover:bg-[#07284F] text-white font-mono font-bold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
-                  <FileCheck className="w-4 h-4 text-[#38BDF8]" />
+                  <FileCheck className="w-4 h-4 text-teal-200" />
                   <span>{imported[cvResult.id] ? 'Importado para o SOAP!' : 'Importar para Prontuário (SOAP)'}</span>
                 </button>
 
                 <button
                   onClick={() => handleCopy(cvResult)}
-                  className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-mono font-semibold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  {copied[cvResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied[cvResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                   <span>{copied[cvResult.id] ? 'Copiado!' : 'Copiar Texto'}</span>
                 </button>
 

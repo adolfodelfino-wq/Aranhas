@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "PatientRecord": {
+      "title": "PatientRecord",
+      "description": "Longitudinal record of patient clinical measurements and consultations keyed by sanitized prontuario.",
+      "type": "object",
+      "properties": {
+        "prontuario": {
+          "type": "string",
+          "description": "Medical record number or identifier for patient tracking.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "description": "Patient full name or initials.",
+          "maxLength": 128
+        },
+        "age": {
+          "type": "number",
+          "description": "Patient age in years."
+        },
+        "scaleHistory": {
+          "type": "array",
+          "description": "List of longitudinal scale evaluations."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "ISO timestamp of last update."
+        },
+        "consultationsCount": {
+          "type": "number",
+          "description": "Total number of consultations with scale results recorded."
+        }
+      },
+      "required": ["prontuario", "scaleHistory", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "/patients/{patientId}": {
+      "schema": "PatientRecord",
+      "description": "Longitudinal patient records and scale history indexed by sanitized medical record number."
+    }
+  }
+}

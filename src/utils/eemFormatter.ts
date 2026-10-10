@@ -89,3 +89,36 @@ export const generateEemSummary = (eem: EemState): string => {
 
 // Clinical alias for compatibility
 export const generateEemNarrative = generateEemSummary;
+
+/**
+ * Removes duplicate or repeated EEM headers (e.g. uppercase header stacked immediately above mixed-case header)
+ */
+export const sanitizeDuplicateEemHeader = (text: string): string => {
+  if (!text) return text;
+  return text.replace(
+    /(?:(?:EXAME DO ESTADO MENTAL|Exame do Estado Mental)\s*\(EEM\):?\s*\n+)+(?=(?:EXAME DO ESTADO MENTAL|Exame do Estado Mental)\s*\(EEM\):?)/gi,
+    ''
+  );
+};
+
+/**
+ * Seamlessly integrates or replaces the EEM block within SOAP Objective without duplicating headers.
+ */
+export const formatEemIntoObjective = (currentObjective: string, eemNarrative: string): string => {
+  const trimmed = (currentObjective || '').trim();
+  if (!trimmed) return eemNarrative;
+
+  const eemBlockRegex = /(?:EXAME DO ESTADO MENTAL \(EEM\):?\s*\n*)?(?:Exame do Estado Mental \(EEM\):?)(?:[^\n\r]|\n(?!\n))*/i;
+  const eemUpperRegex = /(?:EXAME DO ESTADO MENTAL \(EEM\):?)(?:[^\n\r]|\n(?!\n))*/i;
+
+  let result = '';
+  if (eemBlockRegex.test(trimmed)) {
+    result = trimmed.replace(eemBlockRegex, eemNarrative);
+  } else if (eemUpperRegex.test(trimmed)) {
+    result = trimmed.replace(eemUpperRegex, eemNarrative);
+  } else {
+    result = `${trimmed}\n\n${eemNarrative}`;
+  }
+
+  return sanitizeDuplicateEemHeader(result);
+};

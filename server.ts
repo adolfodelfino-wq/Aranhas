@@ -7,7 +7,25 @@ import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+// Resolve server port: AI Studio Cloud Run uses port 8080 for nginx reverse proxy.
+// The backend / Vite dev server must always bind to port 3000 to avoid EADDRINUSE on 8080.
+function resolvePort(): number {
+  const portArgIndex = process.argv.findIndex((arg) => arg === "--port" || arg === "-p");
+  if (portArgIndex !== -1 && process.argv[portArgIndex + 1]) {
+    const parsed = parseInt(process.argv[portArgIndex + 1], 10);
+    if (!isNaN(parsed)) return parsed;
+  }
+  if (process.env.APP_PORT) {
+    const parsed = parseInt(process.env.APP_PORT, 10);
+    if (!isNaN(parsed)) return parsed;
+  }
+  if (process.env.PORT && process.env.PORT !== "8080") {
+    const parsed = parseInt(process.env.PORT, 10);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return 3000;
+}
+const PORT = resolvePort();
 
 app.use(express.json());
 
@@ -72,73 +90,27 @@ app.post("/api/ai/soap-draft", async (req, res) => {
       return res.json(validated);
     }
 
-    // Live AI mode using server-side Gemini 3.6 Flash
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY!,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build'
-        }
-      }
-    });
-
-    const systemPrompt = `Você é um assistente especializado em Medicina de Família e Comunidade (MFC) e Saúde Mental na Atenção Primária à Saúde (APS) no Brasil (padrão GHC/SUS).
-Sua tarefa é organizar as notas brutas fornecidas no formato SOAP (Subjetivo, Objetivo, Avaliação, Plano).
-
-DIRETRIZES RÍGIDAS DE SEGURANÇA E QUALIDADE CLÍNICA (promptVersion: soap-draft-v1):
-1. PROIBIDO inventar fatos ou exames que não constem na entrada.
-2. PROIBIDO automatizar diagnóstico definitivo. Formule a Avaliação como hipótese ou síndrome sob acompanhamento longitudinal na APS.
-3. Se houver lacunas clínicas importantes (ex: ideação suicida não pesquisada, hipotireoidismo não descartado), OBRIGATÓRIO listar em missingInformation.
-4. Respeite o tom natural e humanizado do registro médico em APS (evite formatações robóticas como "Resultado:", "Classificação:").
-5. O Plano deve conter apenas condutas pactuadas e seguimento realista da APS.`;
-
-    const userPrompt = `Anotações fornecidas:
-- Subjetivo bruto: ${subjectiveNotes || "Não informado"}
-- Dados objetivos / escalas / EEM: ${objectiveData || "Não informado"}
-- Contexto adicional: ${clinicalContext || "Consulta de rotina em APS"}
-
-Por favor, gere uma resposta estritamente no seguinte formato JSON:
-{
-  "subjective": "texto do S",
-  "objective": "texto do O",
-  "assessment": "texto do A",
-  "plan": "texto do P",
-  "warnings": ["alerta 1", "alerta 2"],
-  "missingInformation": ["lacuna 1", "lacuna 2"],
-  "mock": false,
-  "promptVersion": "soap-draft-v1"
-}`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: "application/json"
-      }
-    });
-
-    const text = response.text || "{}";
-    const parsed = JSON.parse(text);
-    const validated = SoapDraftSchema.parse({
-      ...parsed,
-      mock: false,
-      promptVersion: "soap-draft-v1"
-    });
-
-    return res.json(validated);
-  } catch (err: any) {
-    console.error("Erro no SOAP draft:", err);
-    // Fallback safe mock response in case of error
+    // Privacy and Clinical Safety Shielding:
+    // In this academic/validation phase, transmission of clinical patient notes to external AI services
+    // is disabled. Furthermore, the Subjective field is strictly human-authored and cannot be generated or overwritten by AI.
     return res.json({
-      subjective: req.body?.subjectiveNotes || "Queixa registrada em atendimento na APS.",
-      objective: req.body?.objectiveData || "Exame físico e EEM dentro dos parâmetros habituais.",
-      assessment: "Quadro mental em avaliação longitudinal na APS.",
-      plan: "Acompanhamento pactuado com retorno agendado.",
-      warnings: ["Falha ao contatar serviço de IA. Retornado rascunho de segurança."],
-      missingInformation: ["Validação clínica obrigatória."],
+      subjective: subjectiveNotes || "Registro clínico exclusivo do médico assistente.",
+      objective: objectiveData || "Dados objetivos estruturados.",
+      assessment: "Avaliação longitudinal a cargo do médico assistente.",
+      plan: "Plano terapêutico singular pactuado na APS.",
+      warnings: [
+        "Blindagem P0: Geração automática de Subjetivo desabilitada. O Subjetivo é estritamente de autoria médica.",
+        "Envio de dados clínicos reais a serviços externos desabilitado nesta fase acadêmica."
+      ],
+      missingInformation: [],
       mock: true,
-      promptVersion: "soap-draft-v1"
+      promptVersion: "soap-shielded-v1"
+    });
+  } catch (err: any) {
+    // Sanitized log: Never log req.body or clinical notes to server logs
+    console.error("Erro interno no endpoint /api/ai/soap-draft");
+    return res.status(500).json({
+      error: "Serviço indisponível ou desabilitado para proteção de dados clínicos."
     });
   }
 });

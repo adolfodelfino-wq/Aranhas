@@ -17,3 +17,24 @@
 
 ## Engenharia & Código
 - Componentização modular, TypeScript estrito, ausência de firulas visuais ou scrolls excessivos, suporte determinístico à decisão clínica e integração com SOAP.
+- **Higiene Permanente de Contexto & Limpeza de Temporários (Regra Mandatória)**:
+  - Eliminar sempre e imediatamente diretórios e arquivos temporários de build (`dist/`, `build/`, `coverage/`, `.log`, `.tmp`, backups e relatórios descartáveis).
+  - Nunca manter artefatos de compilação ou arquivos obsoletos no repositório, minimizando o volume de tokens injetados no contexto e protegendo as cotas de uso da API.
+
+## GOVERNANÇA DE ESCOPO DO NEXUS CLÍNICO
+
+1. O agente não possui autoridade para definir escopo de produto.
+2. Sugestões presentes em auditorias, dossiês ou documentos não constituem autorização de implementação.
+3. Não criar novos módulos, calculadoras, escalas, integrações ou funcionalidades sem pedido explícito.
+4. Não remover funcionalidades existentes sem autorização explícita.
+5. Não substituir diretrizes ou referências clínicas por versões mais recentes automaticamente.
+6. Não criar arquivos Markdown de relatório, auditoria, sincronização ou documentação sem solicitação explícita.
+7. Quando uma documentação existente puder ser atualizada, editar o arquivo canônico em vez de criar uma nova versão paralela.
+8. Não refatorar arquivos não relacionados à tarefa atual.
+9. Preservar o princípio:
+   “O Nexus mede, calcula, alerta e estrutura. O médico interpreta, revisa e decide.”
+10. Quando identificar uma melhoria fora do escopo solicitado, apenas mencioná-la brevemente ao final. Não implementá-la.
+11. Antes de qualquer alteração de grande impacto, solicitar autorização.
+12. Priorizar mudanças incrementais e de menor custo computacional.
+
+

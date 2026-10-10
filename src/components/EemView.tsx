@@ -464,9 +464,9 @@ export const EemView: React.FC<EemViewProps> = ({
             <button
               type="button"
               onClick={handleExportToSoap}
-              className="px-4 py-2.5 bg-[#0A3B74] hover:bg-[#07284F] text-white font-mono font-bold uppercase tracking-wider rounded-md text-xs flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
+              className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
             >
-              <FileCheck className="w-4 h-4 text-[#38BDF8]" />
+              <FileCheck className="w-4 h-4 text-teal-200" />
               <span>{imported ? 'Inserido no SOAP!' : 'Inserir EEM no SOAP (O)'}</span>
             </button>
           </div>

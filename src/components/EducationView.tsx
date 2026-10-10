@@ -153,7 +153,7 @@ export const EducationView: React.FC<EducationViewProps> = ({
                   </div>
                   <ul className="space-y-1 text-slate-300 text-[11px]">
                     {mat.practicalActions.slice(0, 3).map((act, idx) => (
-                      <li key={idx} className="flex items-start space-x-1.5">
+                      <li key={`act-${mat.id}-${idx}`} className="flex items-start space-x-1.5">
                         <span className="text-teal-400 font-bold">•</span>
                         <span>{act}</span>
                       </li>

@@ -32,3 +32,16 @@ O sistema maneja rastreio de condições agudas, crônicas e saúde mental. Os c
 - **Código Limpo, Modular e Tipado**: Todos os componentes devem ser modularizados com TypeScript estrito, interfaces claras em `/src/types.ts` ou arquivos dedicados.
 - **Anti-Slop / Foco Funcional**: Proibido adicionar firulas visuais, gradientes extravagantes, animações complexas desnecessárias ou layouts que exijam rolagem excessiva.
 - **Integração SOAP Direta**: Todas as ferramentas determinísticas devem oferecer opção de exportação instantânea e contextualizada (Subjetivo, Objetivo, Avaliação ou Plano) para o prontuário clínico.
+
+---
+
+## Protocolo Permanente de Higiene de Contexto & Economia de Cotas (Obrigatório e Contínuo)
+1. **Limpeza e Exclusão Imediata de Arquivos Temporários**:
+   - Manter o ambiente limpo de arquivos transitórios. Diretórios e arquivos gerados em builds, testes ou depurações (`dist/`, `build/`, `coverage/`, `*.log`, `*.tmp`, backups e rascunhos) devem ser eliminados logo após a verificação.
+   - É expressamente proibido deixar resíduos de compilação ou arquivos obsoletos que inflam a contagem de tokens de contexto nas chamadas da LLM.
+2. **Eliminação de Arquivos Redundantes na Raiz**:
+   - Proibido manter lockfiles secundários conflitantes (ex: `bun.lock` quando o projeto usa npm) ou arquivos de auditoria descartados.
+3. **Armazenamento de Documentos Extensos**:
+   - Documentos e manuais devem ser concisos ou mantidos fora do fluxo ativo de leitura do agente, evitando que dezenas de milhares de tokens desnecessários sejam reinjetados a cada turno.
+4. **Economia Rígida de Tokens de Contexto**:
+   - Sempre priorizar leituras cirúrgicas com recortes de linhas (`StartLine`/`EndLine`) e manter a memória de projeto limpa para prevenir exaustão da cota diária (`tokens_per_model_per_user` / TPM / RPD).

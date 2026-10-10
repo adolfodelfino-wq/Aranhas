@@ -30,7 +30,17 @@ import {
   LayoutGrid,
   ListOrdered,
   TrendingUp,
+  X,
 } from 'lucide-react';
+
+/**
+ * Cleans score annotations (e.g. '(0)', '(1 pt)', '(3 pontos)') from option labels
+ * to prevent inducing/biasing the patient during scale administration.
+ */
+export const cleanOptionLabel = (label: string): string => {
+  if (!label) return '';
+  return label.replace(/\s*\(\d+\s*(?:pts?|pontos?)?\)$/i, '').trim();
+};
 
 interface ScalesViewProps {
   onImportToSoap: (text: string, title: string) => void;
@@ -70,30 +80,64 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
   // WhatsApp and Self-Fill Modals State
   const [showWhatsappModal, setShowWhatsappModal] = useState<boolean>(false);
   const [showSelfFillModal, setShowSelfFillModal] = useState<boolean>(false);
+  const [patientAutoAppliedNotification, setPatientAutoAppliedNotification] = useState<{
+    scaleAcronym: string;
+    score: number;
+    maxScore: number;
+    classification: string;
+    timestamp: string;
+  } | null>(null);
+
+  const handlePatientSelfFillComplete = (res: ScaleResult, rawAnswers?: Record<string, number>) => {
+    if (rawAnswers && Object.keys(rawAnswers).length > 0) {
+      setAnswers(rawAnswers);
+    } else if (res.answersArray && res.answersArray.length > 0) {
+      const recoveredAnswers: Record<string, number> = {};
+      scale.questions.forEach((q, idx) => {
+        if (res.answersArray && res.answersArray[idx] !== undefined) {
+          recoveredAnswers[q.id] = res.answersArray[idx];
+        }
+      });
+      setAnswers(recoveredAnswers);
+    }
+
+    const enrichedResult: ScaleResult = {
+      ...res,
+      scaleId: scale.id,
+      scaleTitle: scale.title,
+      isSelfAdministered: true,
+      soapText: res.soapText || `${scale.acronym}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no PC/Tablet]`,
+    };
+
+    if (onSaveScaleResult) {
+      onSaveScaleResult(enrichedResult);
+    }
+
+    const answersArr = enrichedResult.answersArray || scale.questions.map((q) => (rawAnswers ? rawAnswers[q.id] : 0) ?? 0);
+    const soapEntry = `[Autoaplicação pelo Paciente no PC/Tablet - ${scale.acronym}] ${scale.title}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Itens: [${answersArr.join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    onImportToSoap(soapEntry, `Autoaplicação: ${scale.acronym}`);
+
+    setPatientAutoAppliedNotification({
+      scaleAcronym: scale.acronym,
+      score: res.totalScore,
+      maxScore: res.maxScore,
+      classification: res.classification,
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    });
+
+    setShowSelfFillModal(false);
+  };
 
   const scale: ScaleDefinition =
     ALL_SCALES.find((s) => s.id === selectedScaleId) || ALL_SCALES[0];
 
-  // Reset or initialize answers when switching scales
+  // Reset answers when switching scales or when patient is reset
   useEffect(() => {
-    // Check if there is a recent result in scaleHistory for this scale
-    const prevResult = scaleHistory.find((r) => r.scaleId === scale.id);
-    if (prevResult && prevResult.answersArray && prevResult.answersArray.length > 0) {
-      const initAnswers: Record<string, number> = {};
-      scale.questions.forEach((q, idx) => {
-        if (prevResult.answersArray && prevResult.answersArray[idx] !== undefined) {
-          initAnswers[q.id] = prevResult.answersArray[idx];
-        }
-      });
-      setAnswers(initAnswers);
-    } else {
-      // Do not pre-fill with 0: start with clean, unselected state so options are not biased or pre-marked
-      setAnswers({});
-    }
+    setAnswers({});
     setCurrentStepIndex(0);
     setImported(false);
     setCopied(false);
-  }, [selectedScaleId, scale]);
+  }, [selectedScaleId, patientName]);
 
   // Compute result in real time
   const computedResult: ScaleResult = React.useMemo(() => {
@@ -103,7 +147,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
       const matchedOpt = val !== undefined ? q.options.find((o) => o.value === val) : undefined;
       return {
         questionText: q.text,
-        answerLabel: matchedOpt ? matchedOpt.label : 'Não respondido',
+        answerLabel: matchedOpt ? cleanOptionLabel(matchedOpt.label) : 'Não respondido',
         value: val ?? 0,
       };
     });
@@ -130,7 +174,9 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
       setCurrentStepIndex((prev) => prev + 1);
     }
 
-    if (onSaveScaleResult) {
+    // Only save to clinical history when all questions are answered
+    const isComplete = scale.questions.every((q) => updated[q.id] !== undefined);
+    if (onSaveScaleResult && isComplete) {
       const computed = scale.calculateResult(updated);
       const answersArray = scale.questions.map((q) => updated[q.id] ?? 0);
       const soapText = computed.soapText || `${scale.acronym}: ${computed.totalScore}/${computed.maxScore} pts (${computed.classification}) | Itens: [${answersArray.join(', ')}]`;
@@ -186,13 +232,13 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
 
   return (
     <div className="w-full min-w-0 max-w-7xl mx-auto space-y-4 sm:space-y-6 py-1 font-sans">
-      {/* Top Scale Selector & Header */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-4">
-        {/* Dropdown Selector Bar */}
+      {/* Top Scale Selector & Header Editorial */}
+      <div className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+        {/* Selector Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-mono font-bold uppercase text-slate-500">
-              Escala Selecionada:
+            <label className="text-xs font-semibold text-slate-600">
+              Instrumento Clínico:
             </label>
             <select
               value={selectedScaleId}
@@ -201,11 +247,11 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                 setSelectedScaleId(newId);
                 if (onSelectScaleId) onSelectScaleId(newId);
               }}
-              className="bg-slate-50 border border-slate-300 rounded px-3 py-1.5 text-xs font-bold text-[#0A3B74] focus:outline-none focus:border-blue-600 cursor-pointer"
+              className="bg-slate-50/80 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-hidden focus:border-teal-700 cursor-pointer"
             >
               {ALL_SCALES.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.acronym} - {s.title} ({s.questions.length} itens)
+                  {s.acronym} — {s.title} ({s.questions.length} itens)
                 </option>
               ))}
             </select>
@@ -213,109 +259,169 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setShowWhatsappModal(true)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-emerald-700 border border-emerald-300 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
               <span>Enviar WhatsApp</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setShowSelfFillModal(true)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#0A3B74] border border-blue-200 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Abrir escala para o paciente responder neste computador ou tablet"
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Autoaplicação</span>
+              <Smartphone className="w-3.5 h-3.5 text-slate-500" />
+              <span>Autoaplicação (PC / Tablet)</span>
             </button>
           </div>
         </div>
 
-        {/* Scale Title & Metadata Header */}
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono font-bold text-sm bg-blue-50 text-[#0A3B74] border border-blue-200 px-2.5 py-0.5 rounded">
-              {scale.acronym}
-            </span>
-            <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-              {scale.questions.length} itens
-            </span>
-            <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-              ~{scale.estimatedMinutes || 2} min
-            </span>
-            <span className="text-xs font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
-              Validação APS / SUS
-            </span>
+        {/* Scale Title & Editorial Header */}
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 pt-1">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">
+                {scale.acronym}
+              </h1>
+              {(scaleHistory.some((r) => r.scaleId === scale.id && r.isSelfAdministered) ||
+                patientAutoAppliedNotification?.scaleAcronym === scale.acronym) && (
+                <span className="text-emerald-700 text-xs font-medium flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                  <Check className="w-3 h-3" />
+                  Autoaplicação registrada
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-600 font-normal">
+              {(() => {
+                const map: Record<string, string> = {
+                  'phq-9': 'Sintomas depressivos · 9 questões · Últimas 2 semanas',
+                  'gad-7': 'Sintomas ansiosos · 7 questões · Últimas 2 semanas',
+                  'audit': 'Padrão de uso de álcool · 10 questões · Últimos 12 meses',
+                  'audit-c': 'Rastreio rápido de álcool · 3 questões · Últimos 12 meses',
+                  'c-ssrs': 'Risco de suicídio · 6 questões · Triagem clínica',
+                  'meem': 'Rastreio cognitivo · 11 tarefas · Avaliação no momento',
+                  'mdq': 'Espectro bipolar · 15 itens · Histórico de vida',
+                  'epds': 'Depressão pós-parto e gestacional · 10 questões · Últimos 7 dias',
+                  'pc-ptsd-5': 'Estresse pós-traumático · 5 itens · Último mês',
+                  'isi': 'Gravidade da insônia · 7 questões · Últimas 2 semanas',
+                  'asrs': 'Rastreio de TDAH em adultos · 6 questões · Últimos 6 meses',
+                  'gds-15': 'Depressão geriátrica · 15 questões · Última semana',
+                  'cage': 'Rastreio de uso nocivo de álcool · 4 questões · Histórico',
+                  'hama': 'Gravidade da ansiedade · 14 itens · Avaliação atual',
+                  'hamd': 'Gravidade da depressão · 17 itens · Última semana',
+                  'panss-6': 'Sintomas psicóticos breves · 6 itens · Última semana',
+                  'ymrs': 'Sintomas de mania · 11 itens · Últimas 48 horas',
+                };
+                return map[scale.id] || `${scale.title} · ${scale.questions.length} itens · ~${scale.estimatedMinutes || 2} min`;
+              })()}
+            </p>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">
-            {scale.title}
-          </h1>
-
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            {scale.description}
-          </p>
+          <button
+            type="button"
+            onClick={() => setActiveTab('evidence')}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-teal-700 cursor-pointer transition-colors self-start sm:self-auto"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Ver evidências e validação</span>
+          </button>
         </div>
 
+        {/* Patient Autoapplied Clinical Banner */}
+        {patientAutoAppliedNotification && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-950 p-4 rounded-xl flex items-start justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-emerald-100 border border-emerald-200 rounded-lg text-emerald-800 shrink-0 mt-0.5">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-sm text-emerald-900">
+                    Autoaplicação no PC/Tablet registrada no sistema com sucesso!
+                  </span>
+                  <span className="text-xs bg-emerald-100 text-emerald-800 font-mono px-2 py-0.5 rounded">
+                    {patientAutoAppliedNotification.timestamp}
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  O paciente preencheu a escala no dispositivo ({patientAutoAppliedNotification.scaleAcronym}: {patientAutoAppliedNotification.score}/{patientAutoAppliedNotification.maxScore} pts · {patientAutoAppliedNotification.classification}). As respostas foram carregadas automaticamente na tela e o registro foi incorporado ao prontuário SOAP da consulta.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setPatientAutoAppliedNotification(null)}
+              className="text-emerald-700 hover:text-emerald-900 p-1.5 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer shrink-0"
+              title="Fechar aviso"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Tabs Navigation */}
-        <div className="flex border-b border-slate-200 pt-1 gap-2 text-xs font-semibold overflow-x-auto no-scrollbar">
+        <div className="flex border-b border-slate-200 pt-1 gap-2 text-xs font-medium overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('calculator')}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'calculator'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <ClipboardList className="w-4 h-4" />
-            <span>Calculadora / Formulário</span>
+            <span>Formulário</span>
           </button>
 
           <button
             onClick={() => setActiveTab('charts')}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'charts'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold bg-blue-50/50 rounded-t'
-                : 'border-transparent text-blue-700 hover:text-blue-900 hover:bg-slate-50 rounded-t font-semibold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-            <span>📈 Gráficos & Evolução Longitudinal</span>
+            <TrendingUp className="w-4 h-4 text-teal-600" />
+            <span>Evolução longitudinal</span>
           </button>
 
           <button
             onClick={() => setActiveTab('next_steps')}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'next_steps'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Conduta & Próximos Passos</span>
+            <span>Orientações clínicas</span>
           </button>
 
           <button
             onClick={() => setActiveTab('evidence')}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'evidence'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Evidência & Pérolas</span>
+            <span>Evidências</span>
           </button>
 
           <button
             onClick={() => setActiveTab('creator')}
             className={`py-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[44px] ${
               activeTab === 'creator'
-                ? 'border-[#0A3B74] text-[#0A3B74] font-bold'
+                ? 'border-teal-700 text-teal-800 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Info className="w-4 h-4" />
-            <span>Sobre o Criador</span>
+            <span>Autores & Referências</span>
           </button>
         </div>
       </div>
@@ -340,17 +446,17 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
             <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold uppercase text-[#0A3B74] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
                     Item {currentStepIndex + 1} de {scale.questions.length}
                   </span>
-                  <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                  <span className="text-xs text-slate-500 font-normal hidden sm:inline">
                     {Math.round(((currentStepIndex + 1) / scale.questions.length) * 100)}% concluído
                   </span>
                 </div>
 
                 <button
                   onClick={handleReset}
-                  className="text-slate-500 hover:text-slate-800 text-xs font-mono font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-slate-500 hover:text-slate-800 text-xs font-sans font-medium flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Limpar Respostas</span>
@@ -358,9 +464,9 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               </div>
 
               {/* Smooth Progress Bar */}
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-[#0A3B74] h-full transition-all duration-300 rounded-full"
+                  className="bg-teal-700 h-full transition-all duration-300 rounded-full"
                   style={{
                     width: `${((currentStepIndex + 1) / scale.questions.length) * 100}%`,
                   }}
@@ -408,12 +514,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                 {/* Question Text & Critical Alert */}
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-mono font-bold uppercase text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                      Questão #{currentStepIndex + 1}
+                    <span className="text-xs font-semibold text-slate-600">
+                      Questão {currentStepIndex + 1}
                     </span>
                     {scale.questions[currentStepIndex].id === 'q9' && scale.id === 'phq-9' && answers['q9'] !== undefined && answers['q9'] > 0 && (
-                      <span className="bg-red-50 text-red-700 border border-red-200 text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3 text-red-600" />
+                      <span className="bg-red-50 text-red-700 border border-red-200 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
                         <span>Item Crítico (Risco de Autoextermínio)</span>
                       </span>
                     )}
@@ -432,12 +538,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
 
                 {/* Response Options (Neutral multiple-choice layout without dark boxes or point badges) */}
                 <div className="space-y-2.5">
-                  {scale.questions[currentStepIndex].options.map((opt) => {
+                  {scale.questions[currentStepIndex].options.map((opt, optIdx) => {
                     const isSelected = answers[scale.questions[currentStepIndex].id] === opt.value;
 
                     return (
                       <button
-                        key={opt.value}
+                        key={`opt-${scale.questions[currentStepIndex].id}-${optIdx}-${opt.value}`}
                         type="button"
                         onClick={() =>
                           handleSelectOption(scale.questions[currentStepIndex].id, opt.value)
@@ -459,7 +565,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                             {isSelected && <div className="w-2 h-2 rounded-full bg-teal-600" />}
                           </div>
                           <span className={`text-xs sm:text-sm leading-tight ${isSelected ? 'text-teal-950 font-bold' : 'text-slate-800'}`}>
-                            {opt.label}
+                            {cleanOptionLabel(opt.label)}
                           </span>
                         </div>
                       </button>
@@ -502,43 +608,86 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           {/* RIGHT COLUMN: Sticky Clinical Result Panel (lg:col-span-5) */}
           <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
             {/* Real-time Clinical Result Box */}
-            <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-md space-y-5">
+            <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-5">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Resultado em Tempo Real
+                <span className="font-sans text-xs font-semibold text-slate-700">
+                  Resultado
                 </span>
-                <span className="font-mono text-xs font-bold text-[#0A3B74] bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                <span className="text-xs font-medium text-teal-800 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded">
                   {scale.acronym}
                 </span>
               </div>
 
-              {/* Big Score Card */}
-              <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="font-mono text-4xl sm:text-5xl font-black text-[#0A3B74] tracking-tight">
-                  {computedResult.totalScore}
-                  <span className="text-xl sm:text-2xl text-slate-400 font-normal">
-                    {' '}/ {computedResult.maxScore}
-                  </span>
-                </div>
-                <div className="text-xs font-mono font-semibold text-slate-500">
-                  Pontos Totais
-                </div>
+              {/* Score Display Card */}
+              <div className="text-center space-y-1 py-4 bg-slate-50/80 rounded-lg border border-slate-200/80">
+                {scale.questions.filter((q) => answers[q.id] !== undefined).length === 0 ? (
+                  <>
+                    <div className="font-mono text-3xl sm:text-4xl font-normal text-slate-400 tracking-tight">
+                      —{' '}
+                      <span className="text-sm font-normal text-slate-400">
+                        / {computedResult.maxScore} pts
+                      </span>
+                    </div>
+                    <div className="text-xs font-sans text-slate-500">
+                      Aguardando início do preenchimento
+                    </div>
+                  </>
+                ) : !scale.questions.every((q) => answers[q.id] !== undefined) ? (
+                  <>
+                    <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-700 tracking-tight">
+                      {computedResult.totalScore}
+                      <span className="text-sm text-slate-400 font-normal"> pts (provisório)</span>
+                    </div>
+                    <div className="text-xs font-sans text-slate-500">
+                      Pontuação parcial · {scale.questions.filter((q) => answers[q.id] !== undefined).length} de {scale.questions.length} respondidas
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
+                      {computedResult.totalScore}
+                      <span className="text-xl sm:text-2xl text-slate-400 font-normal">
+                        {' '}
+                        / {computedResult.maxScore} pts
+                      </span>
+                    </div>
+                    <div className="text-xs font-sans font-medium text-slate-500">
+                      Escore clínico total
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Severity Banner */}
-              <div
-                className={`p-3.5 rounded-md border text-center font-bold text-xs sm:text-sm ${getSeverityBadgeClass(
-                  computedResult.severityLevel
-                )}`}
-              >
-                {computedResult.classification}
-              </div>
+              {/* Severity / Completion Status Banner */}
+              {scale.questions.filter((q) => answers[q.id] !== undefined).length === 0 ? (
+                <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-center text-xs space-y-0.5">
+                  <span className="font-semibold text-slate-700 block">Ainda não respondido</span>
+                  <span className="text-slate-500 block text-[11px]">
+                    Selecione as opções dos itens para iniciar a avaliação.
+                  </span>
+                </div>
+              ) : !scale.questions.every((q) => answers[q.id] !== undefined) ? (
+                <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-center text-xs space-y-1">
+                  <span className="font-semibold text-slate-700 block">Preenchimento em andamento</span>
+                  <span className="text-[11px] text-slate-500 block leading-relaxed">
+                    Pontuação e classificação definitiva retidas. Faltam {scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length} {scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length === 1 ? 'questão' : 'questões'} para o resultado final.
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className={`p-3.5 rounded-lg border text-center font-semibold text-xs sm:text-sm ${getSeverityBadgeClass(
+                    computedResult.severityLevel
+                  )}`}
+                >
+                  {computedResult.classification}
+                </div>
+              )}
 
               {/* MEEM Dimensions Breakdown */}
               {scale.id === 'meem' && (
                 <div className="space-y-2 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
-                  <span className="font-mono text-[11px] uppercase font-bold text-[#0A3B74] block">
-                    Desempenho por Dimensão Cognitiva:
+                  <span className="font-sans text-xs font-semibold text-slate-700 block">
+                    Desempenho por dimensão cognitiva:
                   </span>
                   <div className="space-y-1.5 font-sans">
                     {(() => {
@@ -565,9 +714,9 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                           {dims.map((d, i) => {
                             const isFull = d.score === d.max;
                             return (
-                              <div key={i} className="flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded border border-slate-200">
+                              <div key={`dim-${i}`} className="flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded border border-slate-200">
                                 <span className="text-slate-700 font-medium">{d.name}</span>
-                                <span className={`font-mono font-bold ${isFull ? 'text-emerald-700' : 'text-[#0A3B74]'}`}>
+                                <span className={`font-mono font-semibold ${isFull ? 'text-emerald-700' : 'text-slate-800'}`}>
                                   {d.score}/{d.max} pts
                                 </span>
                               </div>
@@ -582,12 +731,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
 
               {/* Critical Item Alert (e.g. Suicidal Ideation in PHQ-9) */}
               {hasCriticalItem && (
-                <div className="bg-red-50 border border-red-300 text-red-950 p-3.5 rounded-md space-y-1 text-xs">
-                  <div className="font-bold text-red-900 flex items-center gap-1.5 uppercase font-mono text-[11px]">
+                <div className="bg-red-50 border border-red-300 text-red-950 p-3.5 rounded-lg space-y-1 text-xs">
+                  <div className="font-semibold text-red-900 flex items-center gap-1.5 text-xs">
                     <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
                     <span>Alerta Crítico: Item 9 Positivo</span>
                   </div>
-                  <p className="text-red-900/90 leading-relaxed text-[11px]">
+                  <p className="text-red-900/90 leading-relaxed text-xs">
                     O paciente pontuou positivamente para pensamentos de autoextermínio. Realize anamnese ativa de segurança e risco imediato.
                   </p>
                 </div>
@@ -595,35 +744,76 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
 
               {/* Clinical Next Steps Summary Box */}
               <div className="space-y-2 text-xs">
-                <span className="font-mono text-[11px] uppercase font-bold text-slate-700 block">
-                  Conduta Sugerida na APS:
+                <span className="font-sans text-xs font-semibold text-slate-700 block">
+                  Orientações clínicas
                 </span>
-                <ul className="space-y-1.5 text-slate-700 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">
-                  {computedResult.recommendations.map((rec, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
+                {scale.questions.every((q) => answers[q.id] !== undefined) ? (
+                  <ul className="space-y-1.5 text-slate-700 bg-slate-50/80 p-3 rounded-lg border border-slate-200/80 leading-relaxed">
+                    {computedResult.recommendations.map((rec, idx) => (
+                      <li key={`rec-${idx}`} className="flex items-start gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-3 bg-slate-50/70 border border-slate-200/70 rounded-lg text-slate-500 text-xs leading-relaxed">
+                    {scale.questions.filter((q) => answers[q.id] !== undefined).length === 0
+                      ? 'As orientações clínicas serão ativadas após a conclusão de todos os itens da escala.'
+                      : `Aguardando conclusão de ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length} ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length === 1 ? 'item restante' : 'itens restantes'} para orientações clínicas.`}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons (Export to SOAP & Copy) */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <button
+                  type="button"
                   onClick={handleExportToSoap}
-                  className="w-full py-3 bg-[#0A3B74] hover:bg-[#07284F] text-white font-mono font-bold uppercase tracking-wider rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
+                  disabled={scale.questions.filter((q) => answers[q.id] !== undefined).length === 0}
+                  className={`w-full py-2.5 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                    scale.questions.every((q) => answers[q.id] !== undefined)
+                      ? 'bg-teal-700 hover:bg-teal-800 text-white shadow-xs'
+                      : scale.questions.filter((q) => answers[q.id] !== undefined).length > 0
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                      : 'bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                  }`}
+                  title={
+                    scale.questions.every((q) => answers[q.id] !== undefined)
+                      ? 'Copiar escala completa para o prontuário SOAP'
+                      : 'Copiar registro parcial com aviso de incompletude para o prontuário SOAP'
+                  }
                 >
-                  <FileCheck className="w-4 h-4 text-[#38BDF8]" />
-                  <span>{imported ? 'Importado com Sucesso!' : 'Copiar para Prontuário (SOAP)'}</span>
+                  <FileCheck className={`w-4 h-4 ${scale.questions.every((q) => answers[q.id] !== undefined) ? 'text-teal-200' : 'text-slate-400'}`} />
+                  <span>
+                    {imported
+                      ? 'Importado para o SOAP!'
+                      : scale.questions.every((q) => answers[q.id] !== undefined)
+                      ? 'Copiar para Prontuário (SOAP)'
+                      : scale.questions.filter((q) => answers[q.id] !== undefined).length > 0
+                      ? 'Copiar Registro Parcial para SOAP'
+                      : 'Aguardando Respostas'}
+                  </span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleCopyResult}
-                  className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-mono font-semibold uppercase tracking-wider rounded text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  disabled={scale.questions.filter((q) => answers[q.id] !== undefined).length === 0}
+                  className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? 'Copiado!' : 'Copiar Texto Resumo'}</span>
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                  <span>
+                    {copied
+                      ? 'Copiado!'
+                      : scale.questions.every((q) => answers[q.id] !== undefined)
+                      ? 'Copiar Texto Simples'
+                      : 'Copiar Texto Parcial'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -637,7 +827,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-teal-600" />
-              <span>Conduta Clínica e Manejo Escalonado — {scale.acronym}</span>
+              <span>Orientações clínicas e manejo — {scale.acronym}</span>
             </h2>
             <p className="text-xs text-slate-600">
               Diretrizes de manejo e estratificação baseadas em evidências científicas e protocolos da Atenção Primária / SUS.
@@ -647,13 +837,13 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           {/* Conduct Steps */}
           {scale.clinicalConductSteps && scale.clinicalConductSteps.length > 0 ? (
             <div className="space-y-3">
-              <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
-                1. Estratificação de Risco & Intervenções Escalonadas
+              <h3 className="text-xs font-semibold text-slate-700">
+                1. Estratificação de risco e intervenções
               </h3>
               <div className="space-y-2.5">
                 {scale.clinicalConductSteps.map((step, idx) => (
                   <div
-                    key={idx}
+                    key={`conduct-${idx}`}
                     className={`p-3.5 rounded-md border text-xs leading-relaxed space-y-1.5 transition-colors ${
                       step.badgeType === 'danger'
                         ? 'bg-red-50/70 border-red-200 text-red-950'
@@ -663,12 +853,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-bold font-mono text-[11px] text-slate-900">
+                      <span className="font-semibold text-xs text-slate-900">
                         {step.title}
                       </span>
                       {step.badge && (
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                             step.badgeType === 'danger'
                               ? 'bg-red-200/70 text-red-800'
                               : step.badgeType === 'warning'
@@ -694,12 +884,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           {/* Monitoring Goals */}
           {scale.monitoringGoals && scale.monitoringGoals.length > 0 && (
             <div className="space-y-3 pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-700">
-                2. Metas Terapêuticas & Monitoramento Longitudinal
+              <h3 className="text-xs font-semibold text-slate-700">
+                2. Metas terapêuticas e acompanhamento longitudinal
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 {scale.monitoringGoals.map((goal, idx) => (
-                  <div key={idx} className="bg-slate-50 border border-slate-200 p-3.5 rounded-md space-y-1">
+                  <div key={`goal-${idx}`} className="bg-slate-50 border border-slate-200 p-3.5 rounded-md space-y-1">
                     <span className="font-bold text-slate-900 font-mono text-[11px] block">
                       • {goal.title}
                     </span>
@@ -718,18 +908,38 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-600" />
-              <span>Evidências & Pérolas Clínicas — {scale.acronym}</span>
+              <span>Evidências e validação — {scale.acronym}</span>
             </h2>
             <p className="text-xs text-slate-600">
-              Dicas práticas de aplicação para aprimorar a precisão diagnóstica e evitar erros comuns na Atenção Primária.
+              Metodologia, validação científica no Brasil e pontos de corte clínicos.
             </p>
+          </div>
+
+          {/* Scientific Overview & Validation */}
+          <div className="bg-slate-50 border border-slate-200/90 rounded-lg p-4 space-y-2 text-xs">
+            <div className="font-semibold text-slate-800 text-sm">
+              {scale.title}
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              {scale.description}
+            </p>
+            {scale.validationInfo && (
+              <div className="pt-2 border-t border-slate-200/60 text-slate-600">
+                <strong className="text-slate-700">Validação e acurácia:</strong> {scale.validationInfo}
+              </div>
+            )}
+            {scale.cutoffInfo && (
+              <div className="text-slate-600">
+                <strong className="text-slate-700">Pontos de corte:</strong> {scale.cutoffInfo}
+              </div>
+            )}
           </div>
 
           {scale.clinicalPearls && scale.clinicalPearls.length > 0 ? (
             <div className="space-y-3 text-xs">
               {scale.clinicalPearls.map((pearl, idx) => (
                 <div
-                  key={idx}
+                  key={`pearl-${idx}`}
                   className={`p-4 rounded-md border space-y-1.5 leading-relaxed ${
                     pearl.type === 'pitfall'
                       ? 'bg-amber-50 border-amber-200 text-amber-950'
@@ -755,11 +965,11 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
             </div>
           ) : (
             <div className="space-y-3 text-xs">
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded-md space-y-1 text-blue-950">
-                <span className="font-bold font-mono text-[11px] uppercase text-[#0A3B74] block">
-                  💡 Acurácia Diagnóstica
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-md space-y-1 text-slate-800">
+                <span className="font-semibold text-xs text-slate-800 block">
+                  Acurácia Diagnóstica
                 </span>
-                <p className="leading-relaxed text-blue-900/90">
+                <p className="leading-relaxed text-slate-600 text-xs">
                   {scale.validationInfo || 'Instrumento padronizado para rastreio clínico na Atenção Primária.'}
                 </p>
               </div>
@@ -823,7 +1033,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           scaleId={scale.id}
           patientName={patientName}
           onClose={() => setShowSelfFillModal(false)}
-          onSaveResult={onSaveScaleResult}
+          onSaveResult={handlePatientSelfFillComplete}
         />
       )}
       {/* Clinical Disclaimer Footer */}

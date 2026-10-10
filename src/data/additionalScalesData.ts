@@ -1,4 +1,5 @@
 import { ScaleDefinition, ScaleResult } from '../types';
+import { validateScaleAnswers, createIncompleteScaleResult } from '../utils/scaleValidation';
 
 export const AUDITC_SCALE: ScaleDefinition = {
   id: 'audit-c',
@@ -48,8 +49,12 @@ export const AUDITC_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(AUDITC_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(AUDITC_SCALE, validation);
+    }
+    const answersArray = ['q1', 'q2', 'q3'].map((k) => Number(answers[k]));
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3'].map((k) => answers[k] ?? 0);
     answersArray.forEach((v) => { totalScore += v; });
     const isHighRisk = totalScore >= 4;
     return {
@@ -65,6 +70,10 @@ export const AUDITC_SCALE: ScaleDefinition = {
         : ['Reforçar orientações preventivas de saúde'],
       soapText: `AUDIT-C: ${totalScore}/12 pts (${isHighRisk ? 'Positivo / Consumo de risco' : 'Negativo / Baixo risco'}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 3,
+      totalRequired: 3,
     };
   },
   clinicalConductSteps: [
@@ -108,8 +117,12 @@ export const CAGE_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(CAGE_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(CAGE_SCALE, validation);
+    }
+    const answersArray = ['q1', 'q2', 'q3', 'q4'].map((k) => Number(answers[k]));
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4'].map((k) => answers[k] ?? 0);
     answersArray.forEach((v) => { totalScore += v; });
     const isPositive = totalScore >= 2;
     return {
@@ -125,6 +138,10 @@ export const CAGE_SCALE: ScaleDefinition = {
         : ['Orientações preventivas habituais'],
       soapText: `CAGE: ${totalScore}/4 respostas afirmativas (${isPositive ? 'Positivo ≥ 2' : 'Negativo'}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 4,
+      totalRequired: 4,
     };
   },
   clinicalConductSteps: [
@@ -247,10 +264,16 @@ export const EPDS_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(EPDS_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(EPDS_SCALE, validation);
+    }
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10'].map((k) => Number(answers[k]));
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10'].map((k) => answers[k] ?? 0);
     answersArray.forEach((v) => { totalScore += v; });
-    const item10 = answers['q10'] || 0;
+    const item10 = Number(answers['q10'] || 0);
+
+    // Estratificação de gravidade depressiva global baseada no escore total (Cox et al., 1987)
     let classification = '';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
 
@@ -265,10 +288,35 @@ export const EPDS_SCALE: ScaleDefinition = {
       severityLevel = 'high';
     }
 
+    // Alerta clínico individual do item 10 mantido estritamente separado da interpretação do escore total
+    const individualAlerts: string[] = [];
     if (item10 > 0) {
-      classification += ' | ⚠️ ALERTA: Resposta positiva para ideação de autoagressão (Item 10)';
-      severityLevel = 'severe';
+      const q10Opt = EPDS_SCALE.questions[9]?.options.find((o) => o.value === item10)?.label || `${item10} pts`;
+      individualAlerts.push(
+        `⚠️ ALERTA CLÍNICO INDIVIDUAL (EPDS - Item 10): Resposta afirmativa para ideação de autoagressão ("${q10Opt}"). Requer acolhimento imediato na unidade e avaliação clínica médica presencial de segurança.`
+      );
     }
+
+    const recs: string[] = [
+      totalScore >= 10 ? 'Avaliação clínica médica aprofundada da puérpera' : 'Reforço do suporte de puericultura e acolhimento na APS',
+      'Avaliar vínculo mãe-bebê, rede de apoio familiar e amamentação',
+    ];
+
+    if (individualAlerts.length > 0) {
+      recs.unshift(...individualAlerts);
+    }
+
+    const interpretation = `Escore de ${totalScore}/30 pontos na EPDS. ${
+      totalScore < 10
+        ? 'Pontuação abaixo do ponto de corte (sintomas depressivos puerperais improváveis).'
+        : totalScore < 12
+        ? 'Pontuação limítrofe (10-11 pontos): recomenda-se reavaliação em 2 semanas e suporte emocional.'
+        : 'Pontuação sugestiva de episódio depressivo puerperal (≥ 12 pontos): necessária propedêutica clínica diagnóstica.'
+    }${individualAlerts.length > 0 ? `\n\n${individualAlerts.join('\n')}` : ''}`;
+
+    const soapText = `EPDS: ${totalScore}/30 pts (${classification}) | Respostas: [${answersArray.join(', ')}]${
+      individualAlerts.length > 0 ? `\n• ${individualAlerts[0]}` : ''
+    } | Fonte: Cox et al., 1987 (Validação BR: Santos et al., 2007)`;
 
     return {
       scaleId: 'epds',
@@ -277,14 +325,16 @@ export const EPDS_SCALE: ScaleDefinition = {
       maxScore: 30,
       classification,
       severityLevel,
-      interpretation: `Escore de ${totalScore}/30 pontos na EPDS. ${item10 > 0 ? 'ATENÇÃO: Resposta positiva no item 10 referente a autoagressão requer avaliação médica presencial imediata.' : ''}`,
-      recommendations: [
-        totalScore >= 10 ? 'Avaliação clínica médica aprofundada da puérpera' : 'Reforço do suporte de puericultura e acolhimento na APS',
-        'Avaliar vínculo mãe-bebê, rede de apoio familiar e amamentação',
-        ...(item10 > 0 ? ['Realizar avaliação direta de risco de suicídio / segurança'] : []),
-      ],
-      soapText: `EPDS: ${totalScore}/30 pts (${classification}) | Item 10 (Autoagressão): ${item10} pts | Itens: [${answersArray.join(', ')}]`,
+      interpretation,
+      recommendations: recs,
+      soapText,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 10,
+      totalRequired: 10,
+      individualAlerts,
+      hasCriticalAlert: individualAlerts.length > 0,
     };
   },
   clinicalConductSteps: [
@@ -384,8 +434,12 @@ export const ISI_SCALE: ScaleDefinition = {
     },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(ISI_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(ISI_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     let classification = '';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
@@ -419,6 +473,10 @@ export const ISI_SCALE: ScaleDefinition = {
       ],
       soapText: `ISI (Índice de Insônia): ${totalScore}/28 pts (${classification}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 7,
+      totalRequired: 7,
     };
   },
   clinicalConductSteps: [
@@ -439,24 +497,28 @@ export const HAMA_SCALE: ScaleDefinition = {
   cutoffInfo: '< 14: Ansiedade leve/normal | 14-17: Ansiedade leve a moderada | 18-24: Ansiedade moderada a grave | 25-30: Ansiedade grave | > 30: Muito grave',
   estimatedMinutes: 5,
   questions: [
-    { id: 'q1', text: '1. Humor Ansioso (preocupações, antecipação do pior, apreensão, irritabilidade)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q2', text: '2. Tensão Psíquica (fadiga fácil, tremores, incapacidade de relaxar, choro fácil)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q3', text: '3. Medos / Fobias (escuro, estranhos, multidão, trânsito, ficar sozinho)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q4', text: '4. Insônia (dificuldade de adormecer, sono agitado, pesadelos, acordar cansado)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q5', text: '5. Cognição / Intelectual (dificuldade de concentração, lapsos de memória)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q6', text: '6. Humor Deprimido (perda de interesse, anedonia, variação diurna do humor)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q7', text: '7. Somático Muscular (dores, mialgias, rigidez, bruxismo, voz trêmula)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q8', text: '8. Somático Sensorial (zumbidos, visão turva, ondas de calor/frio, parestesias)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q9', text: '9. Cardiovascular (taquicardia, palpitações, dor precordial, sensação de desmaio)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q10', text: '10. Respiratório (aperto torácico, sensação de sufocamento, suspiros, dispneia)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q11', text: '11. Gastrointestinal (disfagia, dor epigástrica, empachamento, náusea, diarreia)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q12', text: '12. Genitourinário (polaciúria, urgência, alterações menstruais, perda de libido)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q13', text: '13. Sintomas Autonômicos (boca seca, rubor facial, palidez, sudorese, tonturas)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
-    { id: 'q14', text: '14. Comportamento na Entrevista (inquietação, tremor de mãos, suspiros, palidez)', options: [{ label: 'Ausente (0)', value: 0 }, { label: 'Leve (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Grave (3)', value: 3 }, { label: 'Muito Grave (4)', value: 4 }] },
+    { id: 'q1', text: '1. Humor Ansioso (preocupações, antecipação do pior, apreensão, irritabilidade)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q2', text: '2. Tensão Psíquica (fadiga fácil, tremores, incapacidade de relaxar, choro fácil)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q3', text: '3. Medos / Fobias (escuro, estranhos, multidão, trânsito, ficar sozinho)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q4', text: '4. Insônia (dificuldade de adormecer, sono agitado, pesadelos, acordar cansado)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q5', text: '5. Cognição / Intelectual (dificuldade de concentração, lapsos de memória)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q6', text: '6. Humor Deprimido (perda de interesse, anedonia, variação diurna do humor)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q7', text: '7. Somático Muscular (dores, mialgias, rigidez, bruxismo, voz trêmula)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q8', text: '8. Somático Sensorial (zumbidos, visão turva, ondas de calor/frio, parestesias)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q9', text: '9. Cardiovascular (taquicardia, palpitações, dor precordial, sensação de desmaio)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q10', text: '10. Respiratório (aperto torácico, sensação de sufocamento, suspiros, dispneia)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q11', text: '11. Gastrointestinal (disfagia, dor epigástrica, empachamento, náusea, diarreia)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q12', text: '12. Genitourinário (polaciúria, urgência, alterações menstruais, perda de libido)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q13', text: '13. Sintomas Autonômicos (boca seca, rubor facial, palidez, sudorese, tonturas)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
+    { id: 'q14', text: '14. Comportamento na Entrevista (inquietação, tremor de mãos, suspiros, palidez)', options: [{ label: 'Ausente', value: 0 }, { label: 'Leve', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Grave', value: 3 }, { label: 'Muito Grave', value: 4 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(HAMA_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(HAMA_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     let classification = '';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
@@ -489,6 +551,10 @@ export const HAMA_SCALE: ScaleDefinition = {
       ],
       soapText: `HAM-A: ${totalScore}/56 pts (${classification}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 14,
+      totalRequired: 14,
     };
   },
   clinicalConductSteps: [
@@ -509,25 +575,29 @@ export const PHQ15_SCALE: ScaleDefinition = {
   cutoffInfo: '0-4: Gravidade somática mínima | 5-9: Gravidade somática baixa | 10-14: Gravidade somática média | 15-30: Gravidade somática alta',
   estimatedMinutes: 3,
   questions: [
-    { id: 'q1', text: '1. Dores de estômago ou abdominais', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q2', text: '2. Dor nas costas ou coluna', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q3', text: '3. Dor nos braços, pernas ou articulações', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q4', text: '4. Dores ou cólicas menstruais (ou outros problemas no período)', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q5', text: '5. Dores de cabeça', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q6', text: '6. Dor no peito ou aperto precordial', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q7', text: '7. Tonturas ou instabilidade', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q8', text: '8. Desmaios ou sensação de apagar', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q9', text: '9. Coração batendo rápido ou acelerado (palpitações)', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q10', text: '10. Falta de ar ou respiração curta', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q11', text: '11. Dor ou desconforto durante a relação sexual', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q12', text: '12. Prisão de ventre ou intestino solto (diarreia)', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q13', text: '13. Náuseas, indigestão ou empachamento', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q14', text: '14. Sentir-se cansado(a) ou com pouca energia', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
-    { id: 'q15', text: '15. Problemas para dormir', options: [{ label: 'Nem um pouco (0)', value: 0 }, { label: 'Incomodou um pouco (1)', value: 1 }, { label: 'Incomodou muito (2)', value: 2 }] },
+    { id: 'q1', text: '1. Dores de estômago ou abdominais', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q2', text: '2. Dor nas costas ou coluna', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q3', text: '3. Dor nos braços, pernas ou articulações', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q4', text: '4. Dores ou cólicas menstruais (ou outros problemas no período)', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q5', text: '5. Dores de cabeça', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q6', text: '6. Dor no peito ou aperto precordial', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q7', text: '7. Tonturas ou instabilidade', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q8', text: '8. Desmaios ou sensação de apagar', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q9', text: '9. Coração batendo rápido ou acelerado (palpitações)', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q10', text: '10. Falta de ar ou respiração curta', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q11', text: '11. Dor ou desconforto durante a relação sexual', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q12', text: '12. Prisão de ventre ou intestino solto (diarreia)', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q13', text: '13. Náuseas, indigestão ou empachamento', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q14', text: '14. Sentir-se cansado(a) ou com pouca energia', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
+    { id: 'q15', text: '15. Problemas para dormir', options: [{ label: 'Nem um pouco', value: 0 }, { label: 'Incomodou um pouco', value: 1 }, { label: 'Incomodou muito', value: 2 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(PHQ15_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(PHQ15_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     let classification = '';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = 'low';
@@ -561,6 +631,10 @@ export const PHQ15_SCALE: ScaleDefinition = {
       ],
       soapText: `PHQ-15: ${totalScore}/30 pts (${classification}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 15,
+      totalRequired: 15,
     };
   },
   clinicalConductSteps: [
@@ -603,18 +677,33 @@ export const SRQ20_SCALE: ScaleDefinition = {
     { id: 'q20', text: '20. Você se cansa com facilidade?', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(SRQ20_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(SRQ20_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     const isPositive = totalScore >= 7;
-    const item17 = answers['q17'] || 0;
+    const item17 = Number(answers['q17'] || 0);
 
     let classification = isPositive ? 'SRQ-20 Positivo (Suspeita de Transtorno Mental Comum)' : 'SRQ-20 Negativo (Sem sofrimento psíquico evidente)';
     let severityLevel: 'low' | 'moderate' | 'high' | 'severe' = isPositive ? 'moderate' : 'low';
 
+    const individualAlerts: string[] = [];
     if (item17 > 0) {
-      classification += ' | ⚠️ ALERTA: Resposta positiva para ideação de morte (Item 17)';
+      const alertMsg = '⚠️ ALERTA CLÍNICO INDIVIDUAL (SRQ-20 - Item 17): Resposta afirmativa para pensamentos de acabar com a própria vida. Exige acolhimento prioritário e avaliação clínica direta de segurança.';
+      individualAlerts.push(alertMsg);
       severityLevel = 'severe';
+    }
+
+    const recs: string[] = [
+      isPositive ? 'Consulta clínica e escuta qualificada na APS' : 'Ações preventivas e promoção de saúde mental',
+      'Explorar fatores psicossociais e rede de apoio',
+    ];
+
+    if (individualAlerts.length > 0) {
+      recs.unshift(...individualAlerts);
     }
 
     return {
@@ -624,13 +713,16 @@ export const SRQ20_SCALE: ScaleDefinition = {
       maxScore: 20,
       classification,
       severityLevel,
-      interpretation: `Escore de ${totalScore}/20 no SRQ-20. ${isPositive ? 'Rastreio positivo sugerindo sofrimento psíquico relevante (TMC).' : 'Rastreio negativo.'} ${item17 > 0 ? 'ATENÇÃO: Item 17 afirmativo exige acolhimento e avaliação direta de segurança.' : ''}`,
-      recommendations: [
-        isPositive ? 'Consulta clínica e escuta qualificada na APS' : 'Ações preventivas e promoção de saúde mental',
-        'Explorar fatores psicossociais e rede de apoio',
-      ],
-      soapText: `SRQ-20: ${totalScore}/20 pts (${classification}) | Item 17: ${item17} | Itens: [${answersArray.join(', ')}]`,
+      interpretation: `Escore de ${totalScore}/20 no SRQ-20. ${isPositive ? 'Rastreio positivo sugerindo sofrimento psíquico relevante (TMC).' : 'Rastreio negativo.'} ${item17 > 0 ? '\n\nATENÇÃO: Item 17 afirmativo exige acolhimento e avaliação direta de segurança.' : ''}`,
+      recommendations: recs,
+      soapText: `SRQ-20: ${totalScore}/20 pts (${classification})${individualAlerts.length > 0 ? `\n• ${individualAlerts[0]}` : ''} | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 20,
+      totalRequired: 20,
+      individualAlerts,
+      hasCriticalAlert: individualAlerts.length > 0,
     };
   },
   clinicalConductSteps: [
@@ -666,8 +758,12 @@ export const MDQ_SCALE: ScaleDefinition = {
     { id: 'q13', text: '13. Gastar dinheiro causou problemas para você ou para sua família?', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(MDQ_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(MDQ_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     const isPositive = totalScore >= 7;
 
@@ -685,6 +781,10 @@ export const MDQ_SCALE: ScaleDefinition = {
       ],
       soapText: `MDQ: ${totalScore}/13 itens afirmativos (${isPositive ? 'Positivo ≥ 7' : 'Negativo'}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 13,
+      totalRequired: 13,
     };
   },
   clinicalConductSteps: [
@@ -712,8 +812,12 @@ export const PCPTSD5_SCALE: ScaleDefinition = {
     { id: 'q5', text: '5. Sentiu culpa ou não conseguiu parar de culpar a si mesmo(a) ou a terceiros pelo evento?', options: [{ label: 'Não', value: 0 }, { label: 'Sim', value: 1 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(PCPTSD5_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(PCPTSD5_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5'].map((k) => Number(answers[k] ?? 0));
     answersArray.forEach((v) => { totalScore += v; });
     const isPositive = totalScore >= 3;
 
@@ -731,6 +835,10 @@ export const PCPTSD5_SCALE: ScaleDefinition = {
       ],
       soapText: `PC-PTSD-5: ${totalScore}/5 afirmativos (${isPositive ? 'Positivo ≥ 3' : 'Negativo'}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 5,
+      totalRequired: 5,
     };
   },
   clinicalConductSteps: [
@@ -751,30 +859,34 @@ export const PCL5_SCALE: ScaleDefinition = {
   cutoffInfo: '0-30: Sintomas abaixo do limiar de TEPT | 31-80: Provável diagnóstico de TEPT (Corte ≥ 33)',
   estimatedMinutes: 6,
   questions: [
-    { id: 'q1', text: '1. Memórias indesejadas e perturbadoras do evento estressante', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q2', text: '2. Sonhos perturbadores ou pesadelos sobre o evento estressante', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q3', text: '3. Reviver o evento como se estivesse acontecendo de novo (flashbacks)', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q4', text: '4. Sentir-se muito chateado(a) quando algo lembra o evento', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q5', text: '5. Reações físicas fortes (taquicardia, suor) quando lembrado do evento', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q6', text: '6. Evitar memórias, pensamentos ou sentimentos ligados ao evento', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q7', text: '7. Evitar lembretes externos (pessoas, lugares, conversas, objetos)', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q8', text: '8. Dificuldade de lembrar partes importantes do evento estressante', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q9', text: '9. Crenças muito negativas sobre si mesmo(a), os outros ou o mundo', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q10', text: '10. Culpar a si mesmo(a) ou a terceiros de forma distorcida pelo evento', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q11', text: '11. Ter sentimentos negativos constantes (medo, horror, raiva, culpa, vergonha)', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q12', text: '12. Perda de interesse em atividades que costumava gostar', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q13', text: '13. Sentir-se distante ou isolado(a) de outras pessoas', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q14', text: '14. Dificuldade de sentir sentimentos positivos (alegria, afeto)', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q15', text: '15. Comportamento irritável, explosões de raiva ou agressividade', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q16', text: '16. Correr riscos desnecessários ou agir de forma autodestrutiva', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q17', text: '17. Ficar "em guarda" constante ou hipervigilante', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q18', text: '18. Assustar-se com muita facilidade (sobressalto exagerado)', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q19', text: '19. Ter dificuldade de concentração', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
-    { id: 'q20', text: '20. Ter problemas para adormecer ou manter o sono', options: [{ label: 'Nada (0)', value: 0 }, { label: 'Pouco (1)', value: 1 }, { label: 'Moderado (2)', value: 2 }, { label: 'Muito (3)', value: 3 }, { label: 'Extremamente (4)', value: 4 }] },
+    { id: 'q1', text: '1. Memórias indesejadas e perturbadoras do evento estressante', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q2', text: '2. Sonhos perturbadores ou pesadelos sobre o evento estressante', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q3', text: '3. Reviver o evento como se estivesse acontecendo de novo (flashbacks)', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q4', text: '4. Sentir-se muito chateado(a) quando algo lembra o evento', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q5', text: '5. Reações físicas fortes (taquicardia, suor) quando lembrado do evento', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q6', text: '6. Evitar memórias, pensamentos ou sentimentos ligados ao evento', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q7', text: '7. Evitar lembretes externos (pessoas, lugares, conversas, objetos)', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q8', text: '8. Dificuldade de lembrar partes importantes do evento estressante', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q9', text: '9. Crenças muito negativas sobre si mesmo(a), os outros ou o mundo', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q10', text: '10. Culpar a si mesmo(a) ou a terceiros de forma distorcida pelo evento', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q11', text: '11. Ter sentimentos negativos constantes (medo, horror, raiva, culpa, vergonha)', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q12', text: '12. Perda de interesse em atividades que costumava gostar', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q13', text: '13. Sentir-se distante ou isolado(a) de outras pessoas', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q14', text: '14. Dificuldade de sentir sentimentos positivos (alegria, afeto)', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q15', text: '15. Comportamento irritável, explosões de raiva ou agressividade', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q16', text: '16. Correr riscos desnecessários ou agir de forma autodestrutiva', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q17', text: '17. Ficar "em guarda" constante ou hipervigilante', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q18', text: '18. Assustar-se com muita facilidade (sobressalto exagerado)', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q19', text: '19. Ter dificuldade de concentração', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
+    { id: 'q20', text: '20. Ter problemas para adormecer ou manter o sono', options: [{ label: 'Nada', value: 0 }, { label: 'Pouco', value: 1 }, { label: 'Moderado', value: 2 }, { label: 'Muito', value: 3 }, { label: 'Extremamente', value: 4 }] },
   ],
   calculateResult: (answers): ScaleResult => {
+    const validation = validateScaleAnswers(PCL5_SCALE, answers);
+    if (!validation.isComplete) {
+      return createIncompleteScaleResult(PCL5_SCALE, validation);
+    }
     let totalScore = 0;
-    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20'].map((k) => answers[k] ?? 0);
+    const answersArray = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20'].map((k) => Number(answers[k]));
     answersArray.forEach((v) => { totalScore += v; });
     const isProbablePTSD = totalScore >= 33;
 
@@ -792,6 +904,10 @@ export const PCL5_SCALE: ScaleDefinition = {
       ],
       soapText: `PCL-5: ${totalScore}/80 pts (${isProbablePTSD ? 'Positivo ≥ 33' : 'Negativo'}) | Itens: [${answersArray.join(', ')}]`,
       answersArray,
+      isComplete: true,
+      completionStatus: 'complete',
+      answeredCount: 20,
+      totalRequired: 20,
     };
   },
   clinicalConductSteps: [

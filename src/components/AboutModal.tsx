@@ -64,11 +64,11 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <NexusLogo variant="icon" size="md" />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-sans text-lg sm:text-xl font-black text-[#0A3B74] tracking-tight">
-                  NEXUS <span className="text-teal-700">CLÍNICO</span>
+                <h2 className="font-sans text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+                  Nexus <span className="text-teal-700">Clínico</span>
                 </h2>
-                <span className="font-mono bg-[#0A3B74] text-white text-[10px] font-bold px-2 py-0.5 rounded-[2px] uppercase">
-                  v2.2.0-APS
+                <span className="font-mono bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium px-2 py-0.5 rounded">
+                  v2.4.0-APS
                 </span>
               </div>
               <p className="font-sans text-xs text-slate-600 mt-0.5">
@@ -337,7 +337,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                         <span className="font-bold text-[#115E59] block">Pontos-Chave:</span>
                         <ul className="list-disc list-inside space-y-0.5 text-[#1A1C1E]/80">
                           {ref.keyPoints.map((pt, idx) => (
-                            <li key={idx}>{pt}</li>
+                            <li key={`kp-${ref.id}-${idx}`}>{pt}</li>
                           ))}
                         </ul>
                       </div>
