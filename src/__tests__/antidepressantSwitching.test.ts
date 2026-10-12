@@ -13,17 +13,26 @@ describe('Módulo Psicofarmacológico - Transição e Equivalência de Antidepre
     expect(ANTIDEPRESSANTS_DB['desvenlafaxina']).toBeDefined();
   });
 
-  it('calcula a equivalência estimada para Sertralina 100 mg/dia -> Desvenlafaxina', () => {
-    const plan = calculateAntidepressantTransition('sertralina', 100, 'desvenlafaxina');
+  it('calcula a equivalência estimada para fármacos com coeficientes de Hayasaka (Sertralina 100 mg/dia -> Paroxetina)', () => {
+    const plan = calculateAntidepressantTransition('sertralina', 100, 'paroxetina');
     expect(plan).toBeDefined();
     expect(plan.sourceDrug.id).toBe('sertralina');
     expect(plan.sourceDoseMg).toBe(100);
-    expect(plan.targetDrug.id).toBe('desvenlafaxina');
+    expect(plan.targetDrug.id).toBe('paroxetina');
+    expect(plan.estimatedEquivalence.available).toBe(true);
     expect(plan.calculatedEquivalentDoseMg).toBeGreaterThan(0);
     expect(plan.recommendedTargetDoseMg).toBeGreaterThan(0);
     // Verifica que não utiliza terminologia proibida de dose exata
     expect(plan.soapPrescriptionText).not.toContain('Dose exata');
     expect(plan.soapPrescriptionText).toContain('PLANO DE TRANSIÇÃO');
+  });
+
+  it('informa ausência de equivalência primária de Hayasaka para fármacos sem coeficiente (Sertralina -> Desvenlafaxina)', () => {
+    const plan = calculateAntidepressantTransition('sertralina', 100, 'desvenlafaxina');
+    expect(plan).toBeDefined();
+    expect(plan.estimatedEquivalence.available).toBe(false);
+    expect(plan.calculatedEquivalentDoseMg).toBe(0);
+    expect(plan.recommendedTargetDoseMg).toBe(50); // Dose recomendada de introdução
   });
 
   it('aplica o período de washout obrigatório de 5 semanas (35 dias) para Fluoxetina -> Tranilcipromina', () => {

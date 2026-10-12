@@ -41,6 +41,8 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
   const [currentDose, setCurrentDose] = useState<number>(2.0);
   const [strategy, setStrategy] = useState<BzdTaperStrategy>('maudsley_hyperbolic');
   const [pace, setPace] = useState<BzdTaperPace>('standard');
+  const [reductionPct, setReductionPct] = useState<number>(15);
+  const [stepWeeks, setStepWeeks] = useState<number>(2);
 
   const [copiedPlan, setCopiedPlan] = useState(false);
   const [copiedPatient, setCopiedPatient] = useState(false);
@@ -55,7 +57,8 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
     sourceDrugId,
     currentDose,
     strategy,
-    pace
+    pace,
+    { reductionPercentage: reductionPct, stepDurationWeeks: stepWeeks }
   );
 
   const handleCopyPlan = () => {
@@ -111,21 +114,21 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                Diretrizes Maudsley 15ª Ed. (2025)
+                Diretrizes ASAM (2025)
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Horowitz & Taylor (2024)
+                Maudsley Deprescribing (Horowitz & Taylor, 2024)
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                Desmame Hiperbólico & APS
+                Desmame Centrado no Paciente
               </span>
             </div>
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               <Pill className="w-5 h-5 text-teal-600" />
-              Calculadora de Desmame Hiperbólico de Benzodiazepínicos e Drogas Z
+              Calculadora de Desmame de Benzodiazepínicos e Drogas Z
             </h2>
             <p className="text-xs text-slate-600 leading-relaxed max-w-4xl">
-              Protocolo farmacocinético atualizado pelas <strong>Diretrizes Maudsley de Desprescrição (15ª ed. 2025 / Horowitz & Taylor 2024)</strong>. Baseado na curva hiperbólica de ocupação de receptores GABA-A e no <em>Desmame Guiado pelo Paciente</em>, prevenindo a falha do desmame nos últimos miligramas (&quot;the difficult last mile&quot;) e quedas em idosos.
+              Protocolo farmacocinético e clínico estruturado pelas <strong>Diretrizes ASAM (2025)</strong> e <strong>Maudsley Deprescribing Guidelines (2024)</strong>. Baseado em reduções proporcionais à dose atual guiadas pelo paciente, prevenindo a falha nos últimos degraus e estabilizando na menor dose tolerável sem forçar término artificial em zero.
             </p>
           </div>
 
@@ -387,7 +390,7 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
               </div>
             </div>
 
-            {/* Calculated Receptor Occupancy & Equivalent Highlight */}
+            {/* Parâmetros do Protocolo e Equivalente Diazepam */}
             <div className="bg-teal-50/60 border border-teal-200 rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-teal-900 font-medium">Equivalente em Diazepam Oral:</span>
@@ -396,22 +399,13 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs pt-1 border-t border-teal-100">
-                <span className="text-teal-900 font-medium flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5 text-teal-700" />
-                  Ocupação Estimada de GABA-A (PET):
+                <span className="text-teal-900 font-medium">Ritmo Programado (ASAM 2025):</span>
+                <span className="text-xs font-bold text-teal-900 font-mono">
+                  {plan.reductionPercentage}% a cada {plan.stepDurationWeeks} {plan.stepDurationWeeks === 1 ? 'sem.' : 'sem.'}
                 </span>
-                <span className="text-sm font-extrabold text-teal-900">
-                  ~{plan.baselineGabaReceptorOccupancy}%
-                </span>
-              </div>
-              <div className="w-full bg-teal-100 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-teal-600 h-full rounded-full transition-all"
-                  style={{ width: `${plan.baselineGabaReceptorOccupancy}%` }}
-                />
               </div>
               <p className="text-[10px] text-teal-700 leading-tight">
-                Estudos de neuroimagem PET confirmam que a relação entre dose e ligação ao receptor segue curva hiperbólica; por isso, a fase final exige passos em microdoses.
+                Diretrizes ASAM (2025) e Maudsley (2024): Reduções percentuais proporcionais à dose remanescente. A etapa final consolida na menor dose viável para reavaliação clínica, sem forçar término para zero.
               </p>
             </div>
           </div>
@@ -514,17 +508,22 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
             </div>
           </div>
 
-          {/* Step 3: Pace Selection */}
+          {/* Step 3: Pace & Individualization Selection */}
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
-              <span>3. Ritmo de Desmame (Maudsley 2025)</span>
+              <span>3. Ritmo Individualizado (ASAM 2025)</span>
               <span className="text-xs font-normal text-slate-500">Etapa 3 de 3</span>
             </h3>
 
+            {/* Presets ASAM */}
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => setPace('conservative')}
+                onClick={() => {
+                  setPace('conservative');
+                  setReductionPct(10);
+                  setStepWeeks(3);
+                }}
                 className={`p-2.5 text-left rounded-lg border transition-all cursor-pointer ${
                   pace === 'conservative'
                     ? 'border-teal-600 bg-teal-50/50 font-bold ring-1 ring-teal-600'
@@ -532,13 +531,17 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
                 }`}
               >
                 <div className="text-xs text-slate-900">Conservador</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">8 degraus (~24 sem.)</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">10% a cada 3 sem.</div>
                 <div className="text-[10px] text-teal-700 font-medium mt-1">Uso &gt; 1 ano / Idosos</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setPace('standard')}
+                onClick={() => {
+                  setPace('standard');
+                  setReductionPct(15);
+                  setStepWeeks(2);
+                }}
                 className={`p-2.5 text-left rounded-lg border transition-all cursor-pointer ${
                   pace === 'standard'
                     ? 'border-teal-600 bg-teal-50/50 font-bold ring-1 ring-teal-600'
@@ -546,13 +549,17 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
                 }`}
               >
                 <div className="text-xs text-slate-900">Padrão</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">6 degraus (~12 sem.)</div>
-                <div className="text-[10px] text-teal-700 font-medium mt-1">Maudsley Padrão</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">15% a cada 2 sem.</div>
+                <div className="text-[10px] text-teal-700 font-medium mt-1">ASAM Padrão</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setPace('accelerated')}
+                onClick={() => {
+                  setPace('accelerated');
+                  setReductionPct(20);
+                  setStepWeeks(1);
+                }}
                 className={`p-2.5 text-left rounded-lg border transition-all cursor-pointer ${
                   pace === 'accelerated'
                     ? 'border-teal-600 bg-teal-50/50 font-bold ring-1 ring-teal-600'
@@ -560,16 +567,63 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
                 }`}
               >
                 <div className="text-xs text-slate-900">Acelerado</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">4 degraus (~4 sem.)</div>
-                <div className="text-[10px] text-amber-700 font-medium mt-1">Uso recente &lt; 3 meses</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">20% a cada 1 sem.</div>
+                <div className="text-[10px] text-amber-700 font-medium mt-1">Uso &lt; 3 meses</div>
               </button>
+            </div>
+
+            {/* Ajustes Finos Individualizáveis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-700 block">
+                  Redução por Etapa (ASAM: 5% a 25%):
+                </span>
+                <div className="flex flex-wrap items-center gap-1">
+                  {[5, 10, 15, 20, 25].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setReductionPct(pct)}
+                      className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
+                        reductionPct === pct
+                          ? 'bg-teal-700 text-white border-teal-700 font-bold'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-700 block">
+                  Duração de Cada Etapa:
+                </span>
+                <div className="flex flex-wrap items-center gap-1">
+                  {[1, 2, 3, 4].map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => setStepWeeks(w)}
+                      className={`px-2.5 py-1 text-xs rounded border transition-colors cursor-pointer ${
+                        stepWeeks === w
+                          ? 'bg-teal-700 text-white border-teal-700 font-bold'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {w} {w === 1 ? 'sem.' : 'sem.'}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Patient-Led Tapering Callout */}
             <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-lg flex items-start gap-2">
               <PauseCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
               <div className="text-[11px] text-amber-900 leading-relaxed">
-                <strong>Regra de Ouro Maudsley (Patient-Led Tapering):</strong> Se o paciente apresentar sintomas de abstinência moderados, <strong>PAUSAR</strong> a redução no degrau atual por 2 a 4 semanas até estabilização biológica. Nunca regredir para a dose cheia inicial.
+                <strong>Regra de Ouro (Patient-Led Tapering / ASAM 2025):</strong> Em caso de sintomas moderados de abstinência, <strong>PAUSAR</strong> a redução no degrau atual por 2 a 4 semanas até estabilização biológica. Nunca acelerar ou regredir para a dose cheia inicial.
               </div>
             </div>
           </div>

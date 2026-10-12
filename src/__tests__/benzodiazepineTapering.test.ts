@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   BZD_DATABASE,
   calculateDiazepamEquivalent,
-  calculateGabaOccupancyPercent,
   generateBzdTaperPlan,
   MAUDSLEY_WITHDRAWAL_VS_RELAPSE_DIFF,
 } from '../utils/benzodiazepineTapering';
@@ -27,30 +26,17 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
       expect(res.equivalentDiazepamMg).toBe(20);
     });
 
-    it('calculates 5mg Diazepam equivalent for Zolpidem 10mg (Z-drug)', () => {
+    it('calculates 10mg Diazepam equivalent for Zolpidem 10mg (Z-drug)', () => {
       const res = calculateDiazepamEquivalent('zolpidem', 10.0);
-      expect(res.equivalentDiazepamMg).toBe(5);
-    });
-
-    it('calculates non-linear hyperbolic GABA-A receptor occupancy according to Hill model', () => {
-      // 0 mg -> 0%
-      expect(calculateGabaOccupancyPercent(0)).toBe(0);
-      // 4.5 mg (ED50) -> ~50%
-      expect(calculateGabaOccupancyPercent(4.5)).toBe(50);
-      // 10 mg -> ~69%
-      expect(calculateGabaOccupancyPercent(10)).toBeGreaterThan(65);
-      expect(calculateGabaOccupancyPercent(10)).toBeLessThan(75);
-      // 40 mg -> ~89.9%
-      expect(calculateGabaOccupancyPercent(40)).toBeGreaterThan(85);
+      expect(res.equivalentDiazepamMg).toBe(10);
     });
   });
 
-  describe('Maudsley Hyperbolic Tapering Strategy (15ª Ed., 2025)', () => {
-    it('generates proportional reductions with progressively smaller micro-steps down to 0mg', () => {
+  describe('ASAM (2025) & Maudsley Deprescribing (2024) Tapering Strategy', () => {
+    it('generates proportional reductions with progressively smaller micro-steps terminating in stabilization without forcing zero', () => {
       const plan = generateBzdTaperPlan('clonazepam', 2.0, 'maudsley_hyperbolic', 'standard');
-      expect(plan.schedule.length).toBe(6);
+      expect(plan.schedule.length).toBeGreaterThanOrEqual(5);
       expect(plan.strategy).toBe('maudsley_hyperbolic');
-      expect(plan.baselineGabaReceptorOccupancy).toBeGreaterThan(80);
 
       // Verify that step reductions are proportional and not fixed jumps
       const step1Dose = plan.schedule[0].sourceDrugDoseMg;
@@ -60,12 +46,11 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
       expect(step2Dose).toBeLessThan(step1Dose);
       expect(step3Dose).toBeLessThan(step2Dose);
 
-      // Last step terminates safely at 0mg
+      // Last step terminates safely in consolidation at minimum dose, without forcing premature zero (ASAM 2025)
       const lastStep = plan.schedule[plan.schedule.length - 1];
-      expect(lastStep.sourceDrugDoseMg).toBe(0);
-      expect(lastStep.percentRemaining).toBe(0);
-      expect(lastStep.estimatedGabaReceptorOccupancy).toBe(0);
-      expect(lastStep.sourceDrugInstructions).toContain('SUSPENSÃO COMPLETA');
+      expect(lastStep.isConsolidationPhase).toBe(true);
+      expect(lastStep.sourceDrugDoseMg).toBeGreaterThan(0);
+      expect(lastStep.clinicalNotes).toContain('FASE DE CONSOLIDAÇÃO');
     });
 
     it('calculates liquid formulation drop instructions for Clonazepam', () => {
@@ -74,19 +59,21 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
       expect(stepWithDose?.sourceDrugInstructions).toContain('gota');
     });
 
-    it('supports conservative pace with 8 steps and accelerated with 4 steps', () => {
-      const planConserv = generateBzdTaperPlan('diazepam', 10.0, 'maudsley_hyperbolic', 'conservative');
-      expect(planConserv.schedule.length).toBe(8);
-
-      const planAccel = generateBzdTaperPlan('diazepam', 10.0, 'maudsley_hyperbolic', 'accelerated');
-      expect(planAccel.schedule.length).toBe(4);
+    it('supports individualized custom settings for reduction percentage and step duration', () => {
+      const planCustom = generateBzdTaperPlan('diazepam', 10.0, 'maudsley_hyperbolic', 'standard', {
+        reductionPercentage: 10,
+        stepDurationWeeks: 3,
+      });
+      expect(planCustom.reductionPercentage).toBe(10);
+      expect(planCustom.stepDurationWeeks).toBe(3);
+      expect(planCustom.schedule[0].durationWeeks).toBe(3);
     });
   });
 
-  describe('Maudsley / Ashton Switch Strategy with Hyperbolic Reduction', () => {
-    it('transitions Alprazolam to Diazepam and then performs hyperbolic reduction', () => {
+  describe('Maudsley / Ashton Switch Strategy with Gradual Reduction', () => {
+    it('transitions Alprazolam to Diazepam and then performs gradual reduction', () => {
       const plan = generateBzdTaperPlan('alprazolam', 1.0, 'maudsley_ashton_switch', 'standard');
-      expect(plan.schedule.length).toBe(6);
+      expect(plan.schedule.length).toBeGreaterThanOrEqual(4);
 
       // Step 1: Introduces partial Diazepam at night
       expect(plan.schedule[0].diazepamDoseMg).toBeGreaterThan(0);
@@ -96,16 +83,16 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
       expect(plan.schedule[1].sourceDrugDoseMg).toBe(0);
       expect(plan.schedule[1].diazepamDoseMg).toBe(20);
 
-      // Final step: Diazepam reaches 0 mg
+      // Final step: Diazepam reaches minimum consolidation dose (1 mg) without forcing zero
       const lastStep = plan.schedule[plan.schedule.length - 1];
-      expect(lastStep.diazepamDoseMg).toBe(0);
-      expect(lastStep.percentRemaining).toBe(0);
-      expect(lastStep.diazepamInstructions).toContain('SUSPENSÃO COMPLETA');
+      expect(lastStep.isConsolidationPhase).toBe(true);
+      expect(lastStep.diazepamDoseMg).toBe(1.0);
+      expect(lastStep.clinicalNotes).toContain('FASE DE CONSOLIDAÇÃO');
     });
   });
 
   describe('Clinical Safety, Patient-Led Tapering & Differential Diagnosis', () => {
-    it('provides the Maudsley 2025 differential table for Withdrawal vs Relapse', () => {
+    it('provides the differential table for Withdrawal vs Relapse', () => {
       expect(MAUDSLEY_WITHDRAWAL_VS_RELAPSE_DIFF.length).toBeGreaterThanOrEqual(4);
       const features = MAUDSLEY_WITHDRAWAL_VS_RELAPSE_DIFF.map((i) => i.feature);
       expect(features).toContain('Tempo de Início');
@@ -117,18 +104,17 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
     it('includes patient-led tapering (hold rule) in warnings and SOAP', () => {
       const plan = generateBzdTaperPlan('alprazolam', 2.0, 'maudsley_ashton_switch', 'standard');
       const allWarnings = plan.safetyWarnings.join(' ');
-      expect(allWarnings).toContain('PATIENT-LED TAPERING');
+      expect(allWarnings).toContain('REGRA DO DESMAME GUIADO PELO PACIENTE');
       expect(allWarnings).toContain('PAUSAR');
-      expect(allWarnings).toContain('CURVA HIPERBÓLICA DE RECEPTORES');
-      expect(plan.soapPlanText).toContain('DIRETRIZES MAUDSLEY DE DESPRESCRIÇÃO (15ª ED., 2025)');
-      expect(plan.soapPlanText).toContain('Ocupação basal estimada de receptores GABA-A');
+      expect(allWarnings).toContain('ASAM 2025');
+      expect(plan.soapPlanText).toContain('DIRETRIZES ASAM (2025)');
     });
 
     it('includes patient guidance text with accessible rules of thumb', () => {
       const plan = generateBzdTaperPlan('clonazepam', 0.5, 'maudsley_hyperbolic', 'standard');
-      expect(plan.patientGuidanceText).toContain('DIRETRIZES MAUDSLEY 2025');
-      expect(plan.patientGuidanceText).toContain('POR QUE REDUZIMOS EM PASSOS CADA VEZ MENORES?');
-      expect(plan.patientGuidanceText).toContain('SE VOCÊ TIVER UMA SEMANA DIFÍCIL');
+      expect(plan.patientGuidanceText).toContain('DIRETRIZES ASAM 2025');
+      expect(plan.patientGuidanceText).toContain('COMO FUNCIONA A REDUÇÃO GRADUAL?');
+      expect(plan.patientGuidanceText).toContain('REGRAS DE OURO');
     });
   });
 });

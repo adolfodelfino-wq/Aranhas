@@ -83,10 +83,10 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase">
-              Diretrizes Maudsley (14th Ed) & Hayasaka (2015)
+              Maudsley Prescribing (15ª Ed., 2025) & Hayasaka (2015)
             </span>
             <span className="text-xs text-slate-500 font-normal">
-              Meta-Análise RCTs
+              CANMAT 2023 · NHS SPS 2024
             </span>
           </div>
           <h2 className="text-lg sm:text-xl font-semibold text-slate-900 flex items-center gap-2">
@@ -94,7 +94,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
             <span>Guia de Troca de Antidepressivos</span>
           </h2>
           <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
-            Calcula a dose clinicamente equivalente, determina a estratégia recomendada (Troca Direta, Cruzada ou Washout), avalia riscos de síndrome serotoninérgica/descontinuação e gera cronograma semanal.
+            Estratégias determinísticas de transição baseadas em diretrizes clínicas (NHS SPS e Maudsley 15ª ed.), separando dose de introdução, faixa de referência e equivalências de ensaios clínicos (Hayasaka et al., 2015).
           </p>
         </div>
 
@@ -153,13 +153,13 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
                     <td className="py-2 px-3 font-medium text-slate-600 font-mono">{row.dose20Eq}</td>
                     <td className="py-2 px-3 text-slate-500">{row.halfLife}</td>
                     <td className="py-2 px-3">
-                      {row.isRct ? (
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-semibold">
-                          RCT (Hayasaka 2015)
+                      {row.isPrimaryHayasaka ? (
+                        <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-semibold">
+                          Análise Primária (Hayasaka 2015)
                         </span>
                       ) : (
-                        <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded">
-                          Consenso Clínico
+                        <span className="text-[10px] bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">
+                          Não avaliado em Hayasaka 2015
                         </span>
                       )}
                     </td>
@@ -301,50 +301,90 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
           </div>
         </div>
 
-        {/* Pairing Result Summary Box */}
+        {/* Pairing Result Summary Box - Três Pilares Farmacológicos Claramente Separados */}
         <div className="bg-slate-50 border border-slate-200 p-5 rounded-lg space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="space-y-0.5">
               <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase tracking-wider">
-                Pareamento Farmacológico Calculado
+                Pareamento Farmacológico
               </span>
               <div className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <span>{plan.sourceDrug.name} {plan.sourceDoseMg} mg/dia</span>
                 <ArrowRight className="w-4 h-4 text-teal-700 shrink-0" />
-                <span className="text-teal-900 font-semibold">{plan.targetDrug.name} ~{plan.recommendedTargetDoseMg} mg/dia</span>
+                <span className="text-teal-900 font-semibold">{plan.targetDrug.name}</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-md text-xs font-medium">
-                Equivalência estimada: <strong className="text-teal-800 font-mono">{plan.calculatedEquivalentDoseMg.toFixed(1)} mg</strong>
+            {onOpenEvidenceModal && (
+              <button
+                type="button"
+                onClick={onOpenEvidenceModal}
+                className="self-start md:self-auto px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-teal-700" />
+                <span>Evidências Maudsley & Hayasaka</span>
+              </button>
+            )}
+          </div>
+
+          {/* Grid dos Três Pilares */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Pilar 1: Dose de Introdução */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-1">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase block">
+                1. Dose de Introdução
               </span>
-              <span className="px-3 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                {plan.evidenceSource}
+              <div className="text-sm sm:text-base font-bold text-teal-900 font-mono">
+                {plan.recommendedStartingDoseMg} mg/dia
+              </div>
+              <p className="text-[11px] text-slate-500 leading-tight">
+                Dose inicial recomendada para introdução clínica segura na APS.
+              </p>
+            </div>
+
+            {/* Pilar 2: Faixa Terapêutica de Referência */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-1">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase block">
+                2. Faixa Terapêutica (Maudsley 2025)
               </span>
-              {onOpenEvidenceModal && (
-                <button
-                  type="button"
-                  onClick={onOpenEvidenceModal}
-                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-teal-700" />
-                  <span>Ver evidências</span>
-                </button>
-              )}
+              <div className="text-sm sm:text-base font-bold text-slate-900 font-mono">
+                {plan.referenceTherapeuticRange.min} a {plan.referenceTherapeuticRange.max} {plan.referenceTherapeuticRange.unit}
+              </div>
+              <p className="text-[11px] text-slate-500 leading-tight">
+                {plan.referenceTherapeuticRange.clinicalNotes || 'Faixa de eficácia consensual em adultos.'}
+              </p>
+            </div>
+
+            {/* Pilar 3: Equivalência em RCTs (Hayasaka 2015) */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 space-y-1">
+              <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase block">
+                3. Equivalência em RCTs (Hayasaka)
+              </span>
+              <div className="text-sm sm:text-base font-bold text-slate-800 font-mono">
+                {plan.estimatedEquivalence.available ? plan.estimatedEquivalence.valueText : 'Não disponível em RCTs'}
+              </div>
+              <p className="text-[11px] text-slate-500 leading-tight">
+                {plan.estimatedEquivalence.available
+                  ? 'Referência descritiva em ensaios clínicos (não constitui prescrição direta).'
+                  : 'Fármaco não avaliado na meta-análise primária de Hayasaka (2015).'}
+              </p>
             </div>
           </div>
 
           {/* Strategy Box */}
           <div className={`p-4 rounded-lg border flex items-start gap-3 ${
-            plan.strategyType === 'washout'
+            !plan.hasValidatedProtocol
+              ? 'bg-amber-50 border-amber-300 text-amber-950'
+              : plan.strategyType === 'washout'
               ? 'bg-rose-50 border-rose-300 text-rose-950'
               : plan.strategyType === 'direct'
               ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
               : 'bg-teal-50/60 border-teal-200 text-teal-950'
           }`}>
             <div className="mt-0.5 shrink-0">
-              {plan.strategyType === 'washout' ? (
+              {!plan.hasValidatedProtocol ? (
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              ) : plan.strategyType === 'washout' ? (
                 <ShieldAlert className="w-5 h-5 text-rose-600" />
               ) : plan.strategyType === 'direct' ? (
                 <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -355,11 +395,13 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-xs sm:text-sm">
-                  Estratégia Recomendada: {plan.strategyTitle}
+                  {plan.hasValidatedProtocol ? `Estratégia Recomendada: ${plan.strategyTitle}` : 'Transição Individualizada'}
                 </span>
-                <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-mono font-medium">
-                  ~{plan.durationWeeks} semanas
-                </span>
+                {plan.hasValidatedProtocol && (
+                  <span className="text-[10px] bg-white/80 px-2 py-0.5 rounded border border-slate-200 font-mono font-medium">
+                    ~{plan.durationWeeks} semanas
+                  </span>
+                )}
               </div>
               <p className="text-xs leading-relaxed opacity-90">
                 {plan.strategySummary}
@@ -369,7 +411,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
         </div>
       </div>
 
-      {/* TABELA DE TRANSIÇÃO PASSO A PASSO (CRONOGRAMA SEMANAL) */}
+      {/* TABELA DE TRANSIÇÃO PASSO A PASSO (CRONOGRAMA SEMANAL) OU AVISO DE PROTOCOLO INDIVIDUALIZADO */}
       <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="space-y-0.5">
@@ -378,7 +420,9 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
               <span>Cronograma Semanal de Transição</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Protocolo posológico detalhado para orientar o paciente e prescrever no prontuário.
+              {plan.hasValidatedProtocol
+                ? 'Protocolo posológico detalhado para orientar o paciente e prescrever no prontuário.'
+                : 'Conduta clínica para combinação sem protocolo determinístico validado.'}
             </p>
           </div>
 
@@ -388,7 +432,7 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
               className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors border border-slate-200 cursor-pointer"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Copiado!' : 'Copiar Cronograma'}</span>
+              <span>{copied ? 'Copiado!' : 'Copiar Registro'}</span>
             </button>
 
             {onImportToSoap && (
@@ -403,45 +447,61 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
           </div>
         </div>
 
-        {/* Tabela Formatada */}
-        <div className="overflow-x-auto rounded border border-slate-200">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
-                <th className="py-2.5 px-3 font-bold w-36">Período / Fase</th>
-                <th className="py-2.5 px-3 font-bold text-amber-800 w-52">
-                  1. Desmame ({plan.sourceDrug.name})
-                </th>
-                <th className="py-2.5 px-3 font-bold text-blue-800 w-52">
-                  2. Introdução ({plan.targetDrug.name})
-                </th>
-                <th className="py-2.5 px-3 font-bold">Conduta Clínica e Ações</th>
-                <th className="py-2.5 px-3 font-bold">Sintomas para Monitorar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {plan.timelineSteps.map((step) => (
-                <tr key={step.stepNumber} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-2.5 px-3 font-bold text-slate-900 bg-slate-50 whitespace-nowrap">
-                    {step.periodLabel}
-                  </td>
-                  <td className="py-2.5 px-3 font-mono text-amber-900 bg-amber-50/40 font-medium">
-                    {step.sourceDose}
-                  </td>
-                  <td className="py-2.5 px-3 font-mono text-blue-900 bg-blue-50/40 font-semibold">
-                    {step.targetDose}
-                  </td>
-                  <td className="py-2.5 px-3 leading-relaxed text-slate-800">
-                    {step.clinicalAction}
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-500 text-[11px] leading-relaxed">
-                    {step.symptomsToMonitor}
-                  </td>
+        {plan.hasValidatedProtocol ? (
+          /* Tabela Formatada de Cronograma */
+          <div className="overflow-x-auto rounded border border-slate-200">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                  <th className="py-2.5 px-3 font-bold w-36">Período / Fase</th>
+                  <th className="py-2.5 px-3 font-bold text-amber-800 w-52">
+                    1. Desmame ({plan.sourceDrug.name})
+                  </th>
+                  <th className="py-2.5 px-3 font-bold text-blue-800 w-52">
+                    2. Introdução ({plan.targetDrug.name})
+                  </th>
+                  <th className="py-2.5 px-3 font-bold">Conduta Clínica e Ações</th>
+                  <th className="py-2.5 px-3 font-bold">Sintomas para Monitorar</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {plan.timelineSteps.map((step) => (
+                  <tr key={step.stepNumber} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2.5 px-3 font-bold text-slate-900 bg-slate-50 whitespace-nowrap">
+                      {step.periodLabel}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-amber-900 bg-amber-50/40 font-medium">
+                      {step.sourceDose}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-blue-900 bg-blue-50/40 font-semibold">
+                      {step.targetDose}
+                    </td>
+                    <td className="py-2.5 px-3 leading-relaxed text-slate-800">
+                      {step.clinicalAction}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500 text-[11px] leading-relaxed">
+                      {step.symptomsToMonitor}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Card Informativo para Par sem Protocolo Validado */
+          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg space-y-2 text-xs text-amber-900">
+            <p className="font-semibold flex items-center gap-1.5">
+              <Info className="w-4 h-4 text-amber-700" />
+              <span>Cronograma algorítmico suspenso por insuficiência de protocolo determinístico</span>
+            </p>
+            <p className="leading-relaxed">
+              As diretrizes do NHS SPS e do Maudsley Prescribing Guidelines (15ª Ed., 2025) não estabelecem um algoritmo de troca cruzada padronizado para a transição entre <strong>{plan.sourceDrug.name} ({plan.sourceDrug.class})</strong> e <strong>{plan.targetDrug.name} ({plan.targetDrug.class})</strong>.
+            </p>
+            <p className="leading-relaxed">
+              <strong>Conduta recomendada:</strong> Planejamento individualizado com o médico assistente ou psiquiatra de referência da UBS, considerando as meias-vidas de eliminação, interações farmacocinéticas e gravidade dos sintomas prévios.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Racional Farmacológico & Alertas */}

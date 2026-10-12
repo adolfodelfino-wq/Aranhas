@@ -328,18 +328,84 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     ]
   },
   {
-    id: 'maudsley-deprescribing-guidelines-15th-ed',
-    topic: 'Desprescrição e Desmame de Benzodiazepínicos na APS',
-    title: 'The Maudsley Deprescribing Guidelines: Antidepressants, Benzodiazepines, Gabapentinoids and Z-drugs & The Maudsley Prescribing Guidelines in Psychiatry (15ª Edição)',
-    source: 'Horowitz M, Taylor DM. Wiley-Blackwell (2024) / Taylor DM, Barnes TRE, Young AH. The Maudsley Prescribing Guidelines 15th Edition, Wiley (2025)',
-    year: '2024-2025',
-    summary: 'Diretrizes internacionais de referência máxima para a desprescrição segura de psicofármacos. Introduz o conceito fundamental do Desmame Hiperbólico baseado na curva não-linear de Hill da ocupação de receptores GABA-A e SERT em estudos de PET scan. Demonstra matematicamente por que cortes lineares fixos em miligramas fracassam na fase final ("the difficult last mile") e estabelece a prática do Desmame Guiado pelo Paciente (Patient-Led Tapering).',
+    id: 'maudsley-prescribing-15th-ed',
+    topic: 'Psicofarmacologia Clínica e Diretrizes Posológicas',
+    title: 'The Maudsley Prescribing Guidelines in Psychiatry (15ª Edição)',
+    source: 'Taylor DM, Barnes TRE, Young AH. Wiley-Blackwell',
+    year: '2025',
+    summary: 'Referência global padrão-ouro para prescrição psicofarmacológica clínica baseada em evidências. Estabelece faixas posológicas terapêuticas de referência, doses de introdução, monitoramento de intervalo QTc e estratégias de transição posológica.',
     keyPoints: [
-      'Desmame Hiperbólico: Reduções proporcionais à dose remanescente (e não quedas lineares em mg) garantem uma desocupação linear e suave dos receptores GABA-A, evitando crises de ansiedade rebote e convulsões.',
-      'Diferenciação Crítica: Sintomas que surgem em horas/dias com características disestésicas (choques, zumbido, hiperacusia) decorrem da Síndrome de Retirada, e não de recaída do transtorno primário.',
-      'Regra da Pausa (Hold): Quando houver abstinência moderada, a dose deve ser mantida (pausada) por 2 a 4 semanas até estabilização biológica; nunca acelerar ou retornar à dose inicial plena.',
-      'Apresentações Líquidas e Microescalonamento: Clonazepam em gotas e formulações orais permitem microdoses precisas nas etapas finais de descontinuação.',
-      'Critérios de Beers (AGS 2023) e STOPP: A desprescrição na APS reduz em mais de 50% as quedas com fratura de fêmur e a síndrome pseudo-demencial reversível em idosos.'
+      'Faixas Terapêuticas de Referência: Estabelece as janelas de eficácia e doses máximas para todos os antidepressivos maiores na prática ambulatorial e hospitalar.',
+      'Transição entre Psicofármacos: Detalha o manejo das trocas diretas, trocas cruzadas e janelas estritas de intervalo livre (washout).',
+      'Monitoramento de Segurança: Critérios rigorosos para controle de intervalo QTc com citalopram e escitalopram, toxicidade cardiovascular de tricíclicos e monitoramento pressórico com duais.',
+      'Diferenciação Metodológica: Distingue claramente a prescrição e titulação aguda da desprescrição em fases de remissão estável.'
+    ]
+  },
+  {
+    id: 'maudsley-deprescribing-2024',
+    topic: 'Desprescrição e Desmame Gradual de Psicofármacos',
+    title: 'The Maudsley Deprescribing Guidelines: Antidepressants, Benzodiazepines, Gabapentinoids and Z-drugs',
+    source: 'Horowitz MA, Taylor DM. Wiley-Blackwell (DOI: 10.1002/9781394291052)',
+    year: '2024',
+    summary: 'Primeiro compêndio clínico internacional sistemático dedicado exclusivamente à desprescrição segura de psicofármacos. Apresenta o método do Desmame Hiperbólico fundamentado em estudos de neuroimagem PET da ocupação de receptores.',
+    keyPoints: [
+      'Princípio Hiperbólico: Reduções de dose devem ser proporcionais à dose remanescente atual (e não cortes lineares fixos em mg), prevenindo o choque de receptores nas etapas finais ("the difficult last mile").',
+      'Desmame Guiado pelo Paciente (Patient-Led Tapering): O paciente controla o ritmo dos degraus. Se houver abstinência moderada a severa, a dose deve ser mantida (regra do "hold") por 2 a 4 semanas até estabilização biológica.',
+      'Diferencial Clínico: Estabelece a distinção semiológica precisa entre Síndrome de Retirada (início precoce, curso em ondas, sintomas sensoriais/choques) e Recaída (início insidioso e tardio, sintomas puramente psíquicos).',
+      'Microescalonamento: Enfatiza a utilização de formulações líquidas (gotas) e fracionamento fino para viabilizar microdoses sem forçar a interrupção prematura para zero.'
+    ]
+  },
+  {
+    id: 'hayasaka-dose-equivalents-2015',
+    topic: 'Equivalência de Doses de Antidepressivos em Ensaios Clínicos',
+    title: 'Dose equivalents of antidepressants: Evidence-based recommendations from randomized controlled trials',
+    source: 'Hayasaka Y, Purgato M, Magni LR, Ogawa Y, Takeshima N, Cipriani A, Barbui C, Leucht S, Furukawa TA. Journal of Affective Disorders (DOI: 10.1016/j.jad.2015.03.021)',
+    year: '2015',
+    summary: 'Meta-análise de 83 ensaios clínicos randomizados duplo-cegos (14.131 pacientes) que determinou as razões de dose clinicamente equivalentes para 12 antidepressivos tomando como padrão de referência a Fluoxetina 40 mg/dia.',
+    keyPoints: [
+      'Doses Equivalentes Primárias a Fluoxetina 40 mg/dia: Paroxetina 34,0 mg; Sertralina 98,5 mg; Escitalopram 18,0 mg; Fluvoxamina 143,3 mg; Venlafaxina 149,4 mg; Mirtazapina 50,9 mg; Bupropiona 348,5 mg; Amitriptilina 122,3 mg; Nortriptilina 100,9 mg; Clomipramina 116,1 mg; Agomelatina 53,2 mg.',
+      'Escopo e Limitações: Citalopram e antidepressivos mais recentes (Desvenlafaxina, Duloxetina, Vortioxetina) não tiveram coeficientes de equivalência primários estabelecidos no resumo da meta-análise.',
+      'Aplicação Clínica: Fornece um balizador populacional baseado em RCTs, mas NÃO substitui a titulação individualizada e a consideração da dose de introdução clínica na prescrição.'
+    ]
+  },
+  {
+    id: 'asam-benzodiazepine-tapering-2025',
+    topic: 'Desprescrição de Benzodiazepínicos na Atenção Primária',
+    title: 'The ASAM Clinical Practice Guideline on Benzodiazepine Tapering',
+    source: 'American Society of Addiction Medicine (ASAM)',
+    year: '2025',
+    summary: 'Diretriz de prática clínica da ASAM orientando a descontinuação e redução gradual de benzodiazepínicos e agonistas do receptor de benzodiazepínicos na atenção primária e ambulatório.',
+    keyPoints: [
+      'Ritmo Individualizado: Reduções recomendadas de 5% a 25% da dose atual a cada 1 a 4 semanas, com desaceleração progressiva nas doses finais.',
+      'Não Forçar Término para Zero: Desaconselha cronogramas inflexíveis que forçam a última dose para zero sem estabilização e consentimento; preconiza a consolidação na menor dose viável.',
+      'Manejo Compartilhado: Se surgirem sintomas moderados de abstinência, pausar a redução mantendo a dose atual por 2 a 4 semanas, sem acelerar e sem retornar à dose cheia inicial.',
+      'Prevenção de Danos: A redução gradual associada a apoio psicoterápico previne convulsões, delirium e quedas em populações vulneráveis.'
+    ]
+  },
+  {
+    id: 'canmat-depression-2023',
+    topic: 'Diretrizes Clínicas de Manejo do Transtorno Depressivo Maior',
+    title: 'CANMAT 2023 Update on Clinical Guidelines for Management of Major Depressive Disorder in Adults',
+    source: 'Lam RW, McIntosh D, Wang J et al. Canadian Journal of Psychiatry (DOI: 10.1177/07067437241245384)',
+    year: '2024',
+    summary: 'Atualização das diretrizes da Canadian Network for Mood and Anxiety Treatments (CANMAT) para diagnóstico, tratamento farmacológico de primeira linha, troca e descontinuação no TDM.',
+    keyPoints: [
+      'Medicamentos de Primeira Linha: Confirma ISRSs (exceto fluvoxamina), ISRNs (desvenlafaxina, duloxetina, venlafaxina), bupropiona, mirtazapina e vortioxetina com nível 1 de evidência.',
+      'Doses e Titulação: Define a dose de introdução e a faixa terapêutica recomendada para cada fármaco, alertando contra titulações aceleradas desnecessárias.',
+      'Transição Terapêutica: Recomenda troca cruzada gradual como conduta padrão na ausência de resposta terapêutica ou intolerância a efeitos colaterais.'
+    ]
+  },
+  {
+    id: 'nhs-sps-antidepressant-switching-2024',
+    topic: 'Estratégias Práticas de Troca de Antidepressivos',
+    title: 'Switching strategies for antidepressants in adults: Practice Guidelines',
+    source: 'NHS Specialist Pharmacy Service (SPS) - Reino Unido',
+    year: '2024',
+    summary: 'Diretrizes práticas do serviço especializado de farmácia clínica do NHS britânico para seleção de estratégias de transição entre antidepressivos em adultos.',
+    keyPoints: [
+      'Troca Direta (Direct Switch): Indicada principalmente entre ISRSs da mesma classe em doses baixas ou moderadas.',
+      'Troca Cruzada (Cross-Taper): Estratégia de escolha para transições entre classes distintas (ISRS para ISRN, tricíclicos, etc.) e em doses elevadas.',
+      'Janela Livre Obrigatória (Washout): Exigência inegociável em trocas envolvendo IMAOs (14 dias gerais e 5 semanas para fluoxetina) para prevenção de síndrome serotoninérgica fatal.'
     ]
   }
 ];
