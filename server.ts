@@ -1,3 +1,7 @@
+// Ensure HMR is disabled in AI Studio to prevent WebSocket errors and infinite reload loops
+process.env.DISABLE_HMR = "true";
+
+import http from "http";
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -7,6 +11,7 @@ import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 
 const app = express();
+const httpServer = http.createServer(app);
 // Resolve server port: AI Studio Cloud Run uses port 8080 for nginx reverse proxy.
 // The backend / Vite dev server must always bind to port 3000 to avoid EADDRINUSE on 8080.
 function resolvePort(): number {
@@ -128,13 +133,16 @@ async function startServer() {
     });
   } else {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: { server: httpServer },
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`[Nexus Mental APS] Servidor rodando em http://localhost:${PORT}`);
   });
 }
