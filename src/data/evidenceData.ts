@@ -192,20 +192,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Orientações educativas para cuidadores e familiares.'
     ]
   },
-  // 12. Farmacologia de Troca de Antidepressivos (Hayasaka / Maudsley / Horowitz)
-  {
-    id: 'hayasaka-dose-equivalents-2015',
-    topic: 'Psicofarmacologia & Transição de Antidepressivos',
-    title: 'Dose equivalents of antidepressants: evidence-based recommendations from randomized controlled trials',
-    source: 'Hayasaka Y, Purgato M, Magni LR, et al. Journal of Affective Disorders (Elsevier)',
-    year: '2015',
-    summary: 'Meta-análise seminal de 83 ensaios clínicos randomizados duplo-cegos (RCTs) com 23 diferentes antidepressivos e mais de 20.000 pacientes para estabelecer doses equivalentes de eficácia baseadas em evidências sólidas, definindo a Fluoxetina 40 mg/dia como padrão de referência internacional.',
-    keyPoints: [
-      'Doses equivalentes a Fluoxetina 40 mg/d estabelecidas por RCTs: Sertralina 98,5 mg/d (~100mg), Escitalopram 18,0 mg/d (~20mg), Citalopram 36,6 mg/d (~40mg), Paroxetina 34,0 mg/d (~40mg), Fluvoxamina 143,3 mg/d (~150mg), Venlafaxina 146,5 mg/d (~150mg), Mirtazapina 50,9 mg/d (~45mg), Amitriptilina 122,3 mg/d (~125-150mg), Clomipramina 116,1 mg/d (~125mg).',
-      'Fornece a matriz de cálculo e alicerce metodológico para transição farmacológica segura e sem sobredosagem.',
-      'Complementado por estimativas clínicas consensuais para fármacos mais novos (Desvenlafaxina, Duloxetina, Bupropiona, Vortioxetina).'
-    ]
-  },
+
   {
     id: 'maudsley-prescribing-guidelines-2021',
     topic: 'Diretrizes de Troca de Psicofármacos & Segurança',

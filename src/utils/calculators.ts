@@ -1,4 +1,5 @@
 import { CalculatorResult } from '../types';
+import { ANTIDEPRESSANTS_DB } from './antidepressantSwitching';
 
 /**
  * Calculadora de Função Renal (CKD-EPI 2021 race-free eGFR)
@@ -449,37 +450,57 @@ export function calculateCardiovascularRisk(
 
 /**
  * Tabela e conversão de Dose Equivalente de Antidepressivos
+ * Unificada com ANTIDEPRESSANTS_DB (baseada na análise primária de Hayasaka et al. 2015 à Fluoxetina 40mg).
+ * Não converte equivalência em prescrição automática; distingue faixa terapêutica e dose de introdução.
  */
 export function calculateAntidepressantEquivalence(
-  drug: string,
+  drugNameOrId: string,
   doseMg: number
 ): CalculatorResult {
-  // Padrão de equivalência aproximada em relação à Fluoxetina 20mg
-  const baseEquivalents: Record<string, number> = {
-    Fluoxetina: 20,
-    Sertralina: 50,
-    Escitalopram: 10,
-    Citalopram: 20,
-    Paroxetina: 20,
-    Venlafaxina: 75,
-    Duloxetina: 60,
-    Amitriptilina: 50,
-  };
+  const normKey = drugNameOrId.trim().toLowerCase();
+  const drugEntry = Object.values(ANTIDEPRESSANTS_DB).find(
+    (d) => d.id === normKey || d.name.toLowerCase() === normKey
+  );
 
-  const stdDose = baseEquivalents[drug] || 20;
-  const ratio = doseMg / stdDose;
+  if (!drugEntry || !Number.isFinite(doseMg) || doseMg <= 0) {
+    return {
+      id: 'antidepressant-eq',
+      title: 'Equivalência de Antidepressivos',
+      value: 'Entrada inválida',
+      interpretation: 'Medicamento não identificado ou dose inválida. Selecione um antidepressivo disponível com dose positiva.',
+      soapText: 'Tentativa de cálculo de equivalência com entrada inválida.',
+    };
+  }
 
-  const fluoxetinaEq = Math.round(ratio * 20);
-  const sertralinaEq = Math.round(ratio * 50);
-  const escitalopramEq = Math.round(ratio * 10);
+  const range = drugEntry.referenceTherapeuticRange;
+  const startDose = drugEntry.recommendedStartingDoseMg;
 
-  const interpretation = `A dose de ${drug} ${doseMg} mg equivale aproximadamente a Fluoxetina ${fluoxetinaEq} mg/dia, Sertralina ${sertralinaEq} mg/dia ou Escitalopram ${escitalopramEq} mg/dia.`;
-  const soapText = `Estimada dose equivalente do antidepressivo: ${drug} ${doseMg} mg/dia (~ Fluoxetina ${fluoxetinaEq} mg/dia / Sertralina ${sertralinaEq} mg/dia).`;
+  if (drugEntry.hayasakaEquivalenceToFluoxetine40 === null) {
+    const interpretation = `${drugEntry.name}: Fármaco sem coeficiente de equivalência primária na meta-análise de ensaios clínicos de Hayasaka et al. (2015). Dose de introdução clínica recomendada: ${startDose} mg/dia. Faixa terapêutica de referência: ${range.min} a ${range.max} ${range.unit}.`;
+    const soapText = `Avaliação posológica de ${drugEntry.name} ${doseMg} mg/dia: Fármaco sem equivalência em RCTs (Hayasaka 2015). Dose de introdução: ${startDose} mg/dia; faixa terapêutica de referência: ${range.min}-${range.max} ${range.unit}.`;
+
+    return {
+      id: 'antidepressant-eq',
+      title: 'Equivalência de Antidepressivos',
+      value: 'Sem equivalência em RCTs',
+      interpretation,
+      soapText,
+    };
+  }
+
+  // Coeficiente Hayasaka em relação a Fluoxetina 40mg
+  const ratio = doseMg / drugEntry.hayasakaEquivalenceToFluoxetine40;
+  const fluoxetina40Eq = Math.round(ratio * 40 * 10) / 10;
+  const sertralinaEq = Math.round(ratio * 98.5 * 10) / 10;
+  const escitalopramEq = Math.round(ratio * 18.0 * 10) / 10;
+
+  const interpretation = `A dose de ${drugEntry.name} ${doseMg} mg/dia corresponde aproximadamente a Fluoxetina ${fluoxetina40Eq} mg/dia, Sertralina ${sertralinaEq} mg/dia ou Escitalopram ${escitalopramEq} mg/dia (segundo análise primária de Hayasaka et al., 2015, à Fluoxetina 40 mg/dia). Nota: Equivalência populacional descritiva, não vinculativa a prescrição direta. Dose de introdução de ${drugEntry.name}: ${startDose} mg/dia; Faixa terapêutica: ${range.min} a ${range.max} ${range.unit}.`;
+  const soapText = `Estimada equivalência populacional em ensaios clínicos (Hayasaka 2015): ${drugEntry.name} ${doseMg} mg/dia (~ Fluoxetina ${fluoxetina40Eq} mg/dia / Sertralina ${sertralinaEq} mg/dia). Não substitui a titulação clínica individualizada.`;
 
   return {
     id: 'antidepressant-eq',
     title: 'Equivalência de Antidepressivos',
-    value: `${fluoxetinaEq} mg Fluoxetina Eq.`,
+    value: `~${fluoxetina40Eq} mg Fluoxetina Eq.`,
     interpretation,
     soapText,
   };

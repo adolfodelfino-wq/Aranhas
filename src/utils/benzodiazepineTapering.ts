@@ -406,8 +406,8 @@ export function generateBzdTaperPlan(
         percentRemaining: percentRem,
         isConsolidationPhase: false,
         clinicalNotes: stepCount === 1
-          ? `Início da redução gradual (${reductionPercentage}% por etapa). Redução proporcional inicial geralmente bem tolerada.`
-          : `Redução progressiva da dose atual. Se surgirem sintomas moderados de abstinência, aplicar regra de pausa (hold) por 2 a 4 semanas.`,
+          ? `Início da redução gradual (${reductionPercentage}% da dose corrente).`
+          : `Etapa ${stepCount}: redução de ${reductionPercentage}% sobre a dose anterior.`,
       });
 
       if (stepDose <= minViableDose) {
@@ -520,7 +520,7 @@ export function generateBzdTaperPlan(
         totalDailyEquivalentDiazepamMg: stepDzDose,
         percentRemaining: percentRem,
         isConsolidationPhase: false,
-        clinicalNotes: `Redução gradual de Diazepam (${reductionPercentage}% por etapa). Se houver sintomas de abstinência, pausar na dose atual por 2 a 4 semanas.`,
+        clinicalNotes: `Etapa ${taperStepCount}: redução de Diazepam (${reductionPercentage}% sobre a dose anterior).`,
       });
 
       if (stepDzDose <= minDiazepamDose) {
@@ -653,6 +653,8 @@ export function generateBzdTaperPlan(
   // Geração de Orientação em Linguagem Clara para o Paciente
   const patientGuidanceText = [
     `📋 GUIA DE ORIENTAÇÃO PARA DESMAME SEGURO DE ${sourceDrug.name.toUpperCase()} (DIRETRIZES ASAM 2025 / MAUDSLEY)`,
+    `⚠️ AVISO IMPORTANTE: Este plano é INDIVIDUAL e EXCLUSIVO para o seu caso. NUNCA inicie ou altere este desmame sem acompanhamento e orientação médica direta da sua equipe de saúde. Não compartilhe este cronograma com outras pessoas, pois cada organismo e medicação exigem avaliação específica.`,
+    ``,
     `Olá! Preparamos este plano com base nas melhores evidências médicas para apoiar você a reduzir gradualmente sua medicação com segurança, respeito ao seu tempo e conforto.`,
     ``,
     `🧠 COMO FUNCIONA A REDUÇÃO GRADUAL?`,

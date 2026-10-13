@@ -110,9 +110,11 @@ describe('P1-01: Benzodiazepine & Z-Drug Maudsley 15th Edition (2025) / Horowitz
       expect(plan.soapPlanText).toContain('DIRETRIZES ASAM (2025)');
     });
 
-    it('includes patient guidance text with accessible rules of thumb', () => {
+    it('includes patient guidance text with accessible rules of thumb and mandatory medical supervision warning', () => {
       const plan = generateBzdTaperPlan('clonazepam', 0.5, 'maudsley_hyperbolic', 'standard');
       expect(plan.patientGuidanceText).toContain('DIRETRIZES ASAM 2025');
+      expect(plan.patientGuidanceText).toContain('AVISO IMPORTANTE');
+      expect(plan.patientGuidanceText).toContain('orientação médica');
       expect(plan.patientGuidanceText).toContain('COMO FUNCIONA A REDUÇÃO GRADUAL?');
       expect(plan.patientGuidanceText).toContain('REGRAS DE OURO');
     });

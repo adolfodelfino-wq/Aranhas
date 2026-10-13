@@ -606,11 +606,20 @@ export interface EstimatedEquivalenceInfo {
   isRct: boolean;
 }
 
+export type ClinicalRuleClassification =
+  | 'documented_source' // regra documentada em fonte verificável (NHS SPS)
+  | 'individual_assessment' // estratégia que depende de avaliação médica individual
+  | 'specialist_required' // combinação que exige especialista
+  | 'unavailable'; // combinação sem regra disponível
+
 export interface AntidepressantSwitchPlan {
   sourceDrug: AntidepressantInfo;
   sourceDoseMg: number;
   targetDrug: AntidepressantInfo;
-  hasValidatedProtocol: boolean;
+  isValidInput: boolean;
+  validationError?: string;
+  hasValidatedProtocol: boolean; // Mantido para compatibilidade retroativa
+  ruleClassification: ClinicalRuleClassification;
   unsupportedReason?: string;
   // Três pilares farmacológicos claramente separados:
   estimatedEquivalence: EstimatedEquivalenceInfo;
@@ -645,15 +654,111 @@ export interface AntidepressantSwitchPlan {
  * - CANMAT (2023) e NHS Specialist Pharmacy Service (SPS 2024)
  *
  * Princípio P0: Não transforma equivalências teóricas em doses de prescrição obrigatórias.
- * Não gera cronograma para pares sem protocolo validado.
+ * Não gera cronograma para combinações sem regra documentada ou que exijam avaliação de especialista.
  */
 export function calculateAntidepressantTransition(
   sourceDrugId: string,
   sourceDoseMg: number,
   targetDrugId: string
 ): AntidepressantSwitchPlan {
-  const source = ANTIDEPRESSANTS_DB[sourceDrugId] || ANTIDEPRESSANTS_DB.fluoxetina;
-  const target = ANTIDEPRESSANTS_DB[targetDrugId] || ANTIDEPRESSANTS_DB.sertralina;
+  // 0. Validação de entradas (sem fallback silencioso)
+  const source = ANTIDEPRESSANTS_DB[sourceDrugId];
+  const target = ANTIDEPRESSANTS_DB[targetDrugId];
+
+  if (!source || !target) {
+    const fallbackDrug: AntidepressantInfo = source || target || {
+      id: 'desconhecido',
+      name: 'Medicamento não identificado',
+      class: 'Outro',
+      standardDoses: [],
+      recommendedStartingDoseMg: 0,
+      referenceTherapeuticRange: { min: 0, max: 0, unit: 'mg/dia' },
+      hayasakaEquivalenceToFluoxetine40: null,
+      minTherapeuticDose: 0,
+      maxRecommendedDose: 0,
+      hayasakaEqToFluoxetine40: null,
+      isRctEvidence: false,
+      halfLifeHours: 'N/A',
+      cypInteractions: {},
+      discontinuationRisk: 'Baixo',
+      serotoninRisk: 'Moderado',
+      specialAlerts: [],
+    };
+
+    return {
+      sourceDrug: source || fallbackDrug,
+      sourceDoseMg: Number.isFinite(sourceDoseMg) ? sourceDoseMg : 0,
+      targetDrug: target || fallbackDrug,
+      isValidInput: false,
+      validationError: `Identificador de medicamento inválido ou desconhecido: "${!source ? sourceDrugId : targetDrugId}". Selecione medicamentos disponíveis na base farmacológica.`,
+      hasValidatedProtocol: false,
+      ruleClassification: 'unavailable',
+      unsupportedReason: 'Medicamento não cadastrado no catálogo farmacológico.',
+      estimatedEquivalence: {
+        available: false,
+        valueText: 'Não calculável',
+        explanation: 'Medicamento desconhecido.',
+        isRct: false,
+      },
+      referenceTherapeuticRange: { min: 0, max: 0, unit: 'mg/dia' },
+      recommendedStartingDoseMg: 0,
+      strategyType: 'individualized',
+      strategyTitle: 'Entrada Inválida',
+      strategySummary: 'Erro de validação farmacológica: medicamento não identificado.',
+      durationWeeks: 0,
+      timelineSteps: [],
+      pharmacologicalRationale: ['Impossível calcular transição com medicamento desconhecido.'],
+      clinicalRisks: {
+        serotoninSyndrome: { risk: 'Baixo', note: 'Dados insuficientes.' },
+        discontinuationSyndrome: { risk: 'Baixo', note: 'Dados insuficientes.' },
+        cypInteractions: [],
+        cardiacAndOtherAlerts: [],
+      },
+      patientInstructions: [],
+      soapPrescriptionText: 'ERRO: Transição farmacológica não processada devido a identificador de medicamento inválido.',
+      calculatedEquivalentDoseMg: 0,
+      recommendedTargetDoseMg: 0,
+      evidenceSource: 'Nenhuma (entrada inválida)',
+    };
+  }
+
+  if (!Number.isFinite(sourceDoseMg) || sourceDoseMg <= 0) {
+    return {
+      sourceDrug: source,
+      sourceDoseMg: 0,
+      targetDrug: target,
+      isValidInput: false,
+      validationError: `Dose informada inválida (${sourceDoseMg} mg). A dose do medicamento de origem deve ser um valor positivo e finito.`,
+      hasValidatedProtocol: false,
+      ruleClassification: 'unavailable',
+      unsupportedReason: 'Dose informada inválida ou menor/igual a zero.',
+      estimatedEquivalence: {
+        available: false,
+        valueText: 'Não calculável',
+        explanation: 'Dose do medicamento de origem deve ser positiva e finita.',
+        isRct: false,
+      },
+      referenceTherapeuticRange: target.referenceTherapeuticRange,
+      recommendedStartingDoseMg: target.recommendedStartingDoseMg,
+      strategyType: 'individualized',
+      strategyTitle: 'Dose Inválida',
+      strategySummary: 'Informe uma dose numérica positiva para avaliação da transição.',
+      durationWeeks: 0,
+      timelineSteps: [],
+      pharmacologicalRationale: ['Dose inválida para análise farmacocinética.'],
+      clinicalRisks: {
+        serotoninSyndrome: { risk: 'Baixo', note: 'Dose não informada.' },
+        discontinuationSyndrome: { risk: 'Baixo', note: 'Dose não informada.' },
+        cypInteractions: [],
+        cardiacAndOtherAlerts: [],
+      },
+      patientInstructions: [],
+      soapPrescriptionText: `AVALIAÇÃO DE TRANSIÇÃO: Dose inválida informada para ${source.name}. Cálculo não executado.`,
+      calculatedEquivalentDoseMg: 0,
+      recommendedTargetDoseMg: target.recommendedStartingDoseMg,
+      evidenceSource: 'Nenhuma (dose inválida)',
+    };
+  }
 
   // 1. Pilar 1: Equivalência Estimada (Hayasaka 2015)
   let estimatedEquivalence: EstimatedEquivalenceInfo;
@@ -694,7 +799,8 @@ export function calculateAntidepressantTransition(
   // 3. Pilar 3: Dose de Introdução Recomendada
   const recommendedStartingDoseMg = target.recommendedStartingDoseMg;
 
-  // 4. Determinação da Estratégia de Transição (NHS SPS 2024 / Maudsley 15ª ed. 2025)
+  // 4. Determinação da Estratégia de Transição (NHS SPS / Maudsley 15ª ed. 2025)
+  let ruleClassification: ClinicalRuleClassification = 'documented_source';
   let hasValidatedProtocol = true;
   let unsupportedReason: string | undefined;
   let strategyType: 'direct' | 'cross_taper' | 'washout' | 'individualized' = 'cross_taper';
@@ -704,17 +810,37 @@ export function calculateAntidepressantTransition(
   const timelineSteps: TransitionStep[] = [];
   const pharmacologicalRationale: string[] = [];
 
-  // -------------------------------------------------------------
-  // REGRA A: ENVOLVENDO IMAO (Tranilcipromina / Moclobemida)
+  // =========================================================================
+  // REGRA 1: MESMO MEDICAMENTO
+  // =========================================================================
+  if (source.id === target.id) {
+    strategyType = 'direct';
+    strategyTitle = 'Manutenção do Medicamento Atual';
+    durationWeeks = 0;
+    strategySummary = `O mesmo fármaco (${source.name}) foi selecionado como origem e destino. Manter a posologia atual de ${sourceDoseMg} mg/dia.`;
+    ruleClassification = 'documented_source';
+    timelineSteps.push({
+      stepNumber: 1,
+      periodLabel: 'Manutenção Contínua',
+      sourceDose: `${source.name} ${sourceDoseMg} mg/dia`,
+      targetDose: `${target.name} ${sourceDoseMg} mg/dia`,
+      clinicalAction: `Manter a posologia prescrita de ${source.name} ${sourceDoseMg} mg/dia.`,
+      symptomsToMonitor: 'Eficácia clínica, tolerabilidade e adesão ao tratamento.',
+    });
+  }
+
+  // =========================================================================
+  // REGRA 2: ENVOLVENDO IMAO (Tranilcipromina / Moclobemida)
   // Washout estrito obrigatório para prevenir Síndrome Serotoninérgica letal
-  // -------------------------------------------------------------
-  if (source.class === 'IMAO' || target.class === 'IMAO') {
+  // =========================================================================
+  else if (source.class === 'IMAO' || target.class === 'IMAO') {
     strategyType = 'washout';
-    strategyTitle = 'Washout Obrigatório (Janela Livre de Fármacos)';
+    strategyTitle = 'Intervalo Livre Obrigatório (Washout)';
+    ruleClassification = 'documented_source';
 
     if (source.id === 'fluoxetina' && target.id === 'tranilcipromina') {
       durationWeeks = 6;
-      strategySummary = 'Devido à meia-vida ultralonga da norfluoxetina (até 15 dias), é OBRIGATÓRIO aguardar 5 semanas (35 dias) de intervalo livre completo entre a suspensão da fluoxetina e o início da tranilcipromina.';
+      strategySummary = 'Devido à meia-vida prolongada da norfluoxetina (até 15 dias), as diretrizes do NHS SPS e Maudsley estabelecem intervalo livre obrigatório de 5 semanas (35 dias) entre a interrupção da fluoxetina e o início da tranilcipromina.';
       timelineSteps.push(
         {
           stepNumber: 1,
@@ -772,7 +898,7 @@ export function calculateAntidepressantTransition(
       );
     } else if (source.id === 'tranilcipromina') {
       durationWeeks = 3;
-      strategySummary = `A inibição da MAO é irreversível e exige 14 dias para que o organismo ressíntese novas enzimas MAO. Aguardar 14 dias de intervalo livre após a última dose de ${source.name} antes de iniciar ${target.name}.`;
+      strategySummary = `A inibição da MAO pela tranilcipromina é irreversível. É obrigatório aguardar 14 dias de intervalo livre após a última dose de ${source.name} antes de iniciar ${target.name}.`;
       timelineSteps.push(
         {
           stepNumber: 1,
@@ -835,131 +961,338 @@ export function calculateAntidepressantTransition(
       );
     }
   }
-  // -------------------------------------------------------------
-  // REGRA B: DE FLUOXETINA PARA OUTRO ISRS / ISRN / ATÍPICO
-  // Meia-vida longa da Norfluoxetina fornece autodesmame biológico
-  // -------------------------------------------------------------
+
+  // =========================================================================
+  // REGRA 3: TRANSIÇÕES ENVOLVENDO CLOMIPRAMINA (ALTO RISCO SEROTONINÉRGICO)
+  // O NHS SPS não recomenda sobreposição (cross-taper) de clomipramina com ISRS ou IRSN sem orientação de especialista.
+  // =========================================================================
+  else if (
+    (source.id === 'clomipramina' && (target.class === 'ISRS' || target.class === 'ISRN')) ||
+    (target.id === 'clomipramina' && (source.class === 'ISRS' || source.class === 'ISRN'))
+  ) {
+    strategyType = 'individualized';
+    ruleClassification = 'specialist_required';
+    hasValidatedProtocol = false;
+    durationWeeks = 0;
+    unsupportedReason = `O NHS Specialist Pharmacy Service (SPS) contraindica a sobreposição posológica (cross-tapering) entre Clomipramina e ${source.id === 'clomipramina' ? target.name : source.name} (${source.id === 'clomipramina' ? target.class : source.class}) sem suporte especializado, devido à potente inibição de recaptação de serotonina e risco crítico de síndrome serotoninérgica. Exige desmame completo prévio, monitoramento eletrocardiográfico (QTc) e orientação de especialista em saúde mental.`;
+    strategyTitle = 'Transição com Avaliação Especializada (Risco Serotoninérgico)';
+    strategySummary = unsupportedReason;
+  }
+
+  // =========================================================================
+  // REGRA 4: TRANSIÇÕES A PARTIR DE FLUOXETINA (NHS SPS)
+  // Intervalos específicos de clareamento dependendo do medicamento de destino e da dose prévia
+  // =========================================================================
   else if (source.id === 'fluoxetina') {
-    strategyType = 'direct';
-    strategyTitle = 'Troca Direta com Janela Curta (Autodesmame pela Norfluoxetina)';
-    durationWeeks = 2;
-    strategySummary = `A fluoxetina e seu metabólito norfluoxetina possuem meia-vida biológica de até 15 dias. Suspender a fluoxetina e aguardar de 4 a 7 dias (ou iniciar no dia seguinte se a dose for baixa, 20 mg/dia) antes de introduzir ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia).`;
-
-    timelineSteps.push(
-      {
-        stepNumber: 1,
-        periodLabel: 'Semana 1 (Dias 1 - 7)',
-        sourceDose: 'SUSPENSA TOTALMENTE (0 mg/dia)',
-        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
-        clinicalAction: `Interromper a Fluoxetina. Se dose era de 20 mg/dia, iniciar ${target.name} no dia seguinte. Se dose era ≥40 mg/dia, aguardar 4 a 7 dias sem medicação antes de iniciar ${target.name} na dose de introdução.`,
-        symptomsToMonitor: 'Sinais leves de sobreposição serotoninérgica transitória (inquietação, náusea).',
-      },
-      {
-        stepNumber: 2,
-        periodLabel: 'Semana 2 em diante (Dia 8+)',
-        sourceDose: 'SUSPENSA DEFINITIVAMENTE',
-        targetDose: `${target.name} (titular conforme resposta clínica)`,
-        clinicalAction: `Avaliar tolerabilidade. Titular dentro da faixa terapêutica recomendada (${target.referenceTherapeuticRange.min} a ${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}).`,
-        symptomsToMonitor: 'Resposta terapêutica e remissão de sintomas.',
+    // 4A: Fluoxetina -> Outro ISRS
+    if (target.class === 'ISRS') {
+      ruleClassification = 'documented_source';
+      if (sourceDoseMg <= 20) {
+        strategyType = 'direct';
+        strategyTitle = 'Troca com Início no Dia Seguinte (Dose Baixa de Fluoxetina)';
+        durationWeeks = 2;
+        strategySummary = `NHS SPS: Em dose baixa de fluoxetina (20 mg/dia), suspender a fluoxetina e iniciar ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia) no dia seguinte. Monitorar tolerabilidade inicial.`;
+        timelineSteps.push(
+          {
+            stepNumber: 1,
+            periodLabel: 'Semana 1 (Dias 1 - 7)',
+            sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+            targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+            clinicalAction: `Tomar última dose de Fluoxetina no dia anterior. Iniciar ${target.name} ${recommendedStartingDoseMg} mg/dia no dia seguinte.`,
+            symptomsToMonitor: 'Tolerabilidade gastrointestinal e sintomas transitórios de adaptação.',
+          },
+          {
+            stepNumber: 2,
+            periodLabel: 'Semana 2 em diante (Dia 8+)',
+            sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+            targetDose: `${target.name} (titulação clínica)`,
+            clinicalAction: `Titular dentro da faixa terapêutica recomendada (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme resposta clínica e tolerabilidade.`,
+            symptomsToMonitor: 'Resposta clínica e sintomas de descontinuação.',
+          }
+        );
+      } else {
+        // Doses maiores de Fluoxetina (>20 mg): intervalo livre de 4 a 7 dias
+        strategyType = 'washout';
+        strategyTitle = 'Intervalo de Clareamento de 4 a 7 Dias (Dose Alta de Fluoxetina)';
+        durationWeeks = 2;
+        strategySummary = `NHS SPS: Para doses de fluoxetina >20 mg/dia (${sourceDoseMg} mg/dia), suspender a fluoxetina e aguardar de 4 a 7 dias sem medicação antes de introduzir ${target.name} em sua dose inicial recomendada (${recommendedStartingDoseMg} mg/dia), reduzindo o risco de sobreposição serotoninérgica decorrente da norfluoxetina.`;
+        timelineSteps.push(
+          {
+            stepNumber: 1,
+            periodLabel: 'Dias 1 a 5 (Intervalo de Clareamento)',
+            sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+            targetDose: 'NÃO INICIAR (Aguardar 4 a 7 dias)',
+            clinicalAction: 'Suspender a Fluoxetina e aguardar intervalo de 4 a 7 dias sem medicação.',
+            symptomsToMonitor: 'Sintomas de retirada e estabilidade clínica.',
+          },
+          {
+            stepNumber: 2,
+            periodLabel: 'Dia 6 em diante',
+            sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+            targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+            clinicalAction: `Iniciar ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia). Titular gradualmente se necessário.`,
+            symptomsToMonitor: 'Tolerabilidade e melhora dos sintomas.',
+          }
+        );
       }
-    );
+    }
+    // 4B: Fluoxetina -> IRSN (Venlafaxina, Desvenlafaxina, Duloxetina)
+    else if (target.class === 'ISRN') {
+      ruleClassification = 'documented_source';
+      strategyType = 'washout';
+      strategyTitle = 'Intervalo de Clareamento de 4 a 7 Dias (Fluoxetina para IRSN)';
+      durationWeeks = 3;
+      strategySummary = `NHS SPS: Suspender a fluoxetina e aguardar um intervalo de 4 a 7 dias sem medicação antes de iniciar ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia). Não realizar sobreposição simultânea devido à meia-vida ultralonga da norfluoxetina e risco serotoninérgico.`;
+      timelineSteps.push(
+        {
+          stepNumber: 1,
+          periodLabel: 'Dias 1 a 6 (Intervalo de Clareamento)',
+          sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+          targetDose: 'NÃO INICIAR',
+          clinicalAction: 'Suspender Fluoxetina e aguardar intervalo de clareamento de 4 a 7 dias.',
+          symptomsToMonitor: 'Inquietação e sintomas de retirada.',
+        },
+        {
+          stepNumber: 2,
+          periodLabel: 'Semana 2 (Dias 7 - 14)',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+          clinicalAction: `Iniciar ${target.name} em sua dose de introdução (${recommendedStartingDoseMg} mg/dia).`,
+          symptomsToMonitor: 'Pressão arterial e tolerabilidade inicial.',
+        },
+        {
+          stepNumber: 3,
+          periodLabel: 'Semana 3 em diante (Dia 15+)',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} (titular dentro da faixa terapêutica)`,
+          clinicalAction: `Titular dentro da faixa recomendada (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme avaliação médica.`,
+          symptomsToMonitor: 'Resposta terapêutica e tolerabilidade pressórica.',
+        }
+      );
+    }
+    // 4C: Fluoxetina -> Tricíclicos (Amitriptilina, Nortriptilina)
+    else if (target.class === 'Tricíclico') {
+      ruleClassification = 'documented_source';
+      strategyType = 'washout';
+      strategyTitle = 'Intervalo de Clareamento com Titulação Cautelosa (Inibição de CYP2D6)';
+      durationWeeks = 3;
+      strategySummary = `NHS SPS: Suspender a fluoxetina e aguardar intervalo de 4 a 7 dias antes de iniciar ${target.name}. ATENÇÃO: A fluoxetina inibe potentemente o citocromo CYP2D6 por semanas após a suspensão, o que pode dobrar ou triplicar os níveis séricos de ${target.name}. Iniciar com dose baixa de ${recommendedStartingDoseMg} mg/dia e titular cautelosamente.`;
+      timelineSteps.push(
+        {
+          stepNumber: 1,
+          periodLabel: 'Dias 1 a 6 (Intervalo de Clareamento)',
+          sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+          targetDose: 'NÃO INICIAR',
+          clinicalAction: 'Suspender Fluoxetina e aguardar clareamento de 4 a 7 dias.',
+          symptomsToMonitor: 'Sintomas de descontinuação.',
+        },
+        {
+          stepNumber: 2,
+          periodLabel: 'Semanas 2 e 3 (Dias 7 a 21)',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia ao deitar`,
+          clinicalAction: `Iniciar ${target.name} na dose mínima (${recommendedStartingDoseMg} mg/dia). A inibição residual de CYP2D6 pela fluoxetina eleva os níveis séricos do tricíclico.`,
+          symptomsToMonitor: 'Sedação, hipotensão postural e sintomas anticolinérgicos.',
+        }
+      );
+    }
+    // 4D: Fluoxetina -> Outros (Mirtazapina, Bupropiona, etc.)
+    else {
+      ruleClassification = 'documented_source';
+      strategyType = 'washout';
+      strategyTitle = 'Intervalo de Clareamento de 4 a 7 Dias';
+      durationWeeks = 2;
+      strategySummary = `NHS SPS: Suspender a fluoxetina e aguardar de 4 a 7 dias sem medicação antes de introduzir ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia).`;
+      timelineSteps.push(
+        {
+          stepNumber: 1,
+          periodLabel: 'Dias 1 a 5 (Intervalo de Clareamento)',
+          sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+          targetDose: 'NÃO INICIAR',
+          clinicalAction: 'Suspender a Fluoxetina e aguardar 4 a 7 dias.',
+          symptomsToMonitor: 'Estabilidade clínica.',
+        },
+        {
+          stepNumber: 2,
+          periodLabel: 'Dia 6 em diante',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+          clinicalAction: `Iniciar ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia).`,
+          symptomsToMonitor: 'Tolerabilidade e resposta clínica.',
+        }
+      );
+    }
   }
-  // -------------------------------------------------------------
-  // REGRA C: ISRS PARA ISRS EM DOSES BAIXAS OU MODERADAS
-  // Mesma classe farmacológica: Troca direta recomendada pelo NHS SPS
-  // -------------------------------------------------------------
-  else if (
-    source.class === 'ISRS' &&
-    target.class === 'ISRS' &&
-    source.id !== 'paroxetina' &&
-    sourceDoseMg <= (source.referenceTherapeuticRange.min * 2)
-  ) {
-    strategyType = 'direct';
-    strategyTitle = 'Troca Direta (Direct Switch)';
-    durationWeeks = 2;
-    strategySummary = `Ambos são ISRS. Em doses baixas a moderadas (sem paroxetina), as diretrizes do NHS SPS e Maudsley recomendam a troca direta de um dia para o outro, cessando ${source.name} e iniciando ${target.name} no dia seguinte na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia).`;
 
-    timelineSteps.push(
-      {
-        stepNumber: 1,
-        periodLabel: 'Semana 1 (Dias 1 - 7)',
-        sourceDose: 'SUSPENSA (Troca Direta)',
-        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
-        clinicalAction: `Tomar a última dose de ${source.name} no dia anterior e iniciar ${target.name} ${recommendedStartingDoseMg} mg/dia na manhã seguinte.`,
-        symptomsToMonitor: 'Náuseas leves de adaptação ou cefaleia transitória.',
-      },
-      {
-        stepNumber: 2,
-        periodLabel: 'Semana 2 em diante (Dia 8+)',
-        sourceDose: 'SUSPENSA DEFINITIVAMENTE',
-        targetDose: `${target.name} (titulação clínica)`,
-        clinicalAction: `Se houver boa tolerabilidade, titular dentro da faixa terapêutica recomendada (${target.referenceTherapeuticRange.min} a ${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme avaliação médica.`,
-        symptomsToMonitor: 'Eficácia clínica e adesão posológica.',
-      }
-    );
+  // =========================================================================
+  // REGRA 5: ISRS PARA ISRS (EXCETO FLUOXETINA E EXCETO CLOMIPRAMINA)
+  // Doses baixas/moderadas: troca direta. Doses altas ou Paroxetina: cross-taper.
+  // =========================================================================
+  else if (source.class === 'ISRS' && target.class === 'ISRS') {
+    ruleClassification = 'documented_source';
+    const isHighDoseOrParoxetine = source.id === 'paroxetina' || sourceDoseMg > (source.referenceTherapeuticRange.min * 2);
+
+    if (!isHighDoseOrParoxetine) {
+      strategyType = 'direct';
+      strategyTitle = 'Troca Direta de um Dia para o Outro (NHS SPS)';
+      durationWeeks = 2;
+      strategySummary = `NHS SPS: Entre a maioria dos ISRS em doses baixas ou habituais (excluindo paroxetina e fluoxetina), a estratégia documentada é a troca direta. Suspender ${source.name} e iniciar ${target.name} no dia seguinte na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia).`;
+      timelineSteps.push(
+        {
+          stepNumber: 1,
+          periodLabel: 'Semana 1 (Dias 1 - 7)',
+          sourceDose: 'SUSPENSA (Troca Direta)',
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+          clinicalAction: `Tomar última dose de ${source.name} no dia anterior e iniciar ${target.name} ${recommendedStartingDoseMg} mg/dia na manhã seguinte.`,
+          symptomsToMonitor: 'Náuseas leves de adaptação ou cefaleia transitória.',
+        },
+        {
+          stepNumber: 2,
+          periodLabel: 'Semana 2 em diante (Dia 8+)',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} (titulação clínica)`,
+          clinicalAction: `Se houver boa tolerabilidade, titular dentro da faixa recomendada (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme avaliação médica.`,
+          symptomsToMonitor: 'Eficácia clínica e adesão posológica.',
+        }
+      );
+    } else {
+      // Doses altas ou Paroxetina (risco de descontinuação elevado)
+      strategyType = 'cross_taper';
+      strategyTitle = 'Troca Cruzada Gradual (Cross-Tapering em 2 a 3 Semanas)';
+      durationWeeks = 3;
+      strategySummary = `NHS SPS: Em doses elevadas de ISRS ou ao transicionar a partir de paroxetina (meia-vida curta com alto risco de descontinuação), recomenda-se redução gradual de ${source.name} enquanto se introduz e titula ${target.name} a partir de sua dose inicial (${recommendedStartingDoseMg} mg/dia).`;
+      const halfSourceDose = Math.round(sourceDoseMg / 2);
+      timelineSteps.push(
+        {
+          stepNumber: 1,
+          periodLabel: 'Semana 1 (Dias 1 - 7)',
+          sourceDose: `${source.name} ${halfSourceDose} mg/dia (redução de 50%)`,
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia (dose de introdução)`,
+          clinicalAction: `Reduzir a dose de ${source.name} pela metade e introduzir ${target.name} ${recommendedStartingDoseMg} mg/dia.`,
+          symptomsToMonitor: 'Sintomas de descontinuação (tontura, sensação de choque) e queixas de adaptação.',
+        },
+        {
+          stepNumber: 2,
+          periodLabel: 'Semana 2 (Dias 8 - 14)',
+          sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+          targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+          clinicalAction: `Suspender totalmente ${source.name}. Manter ${target.name} na dose de introdução.`,
+          symptomsToMonitor: 'Tolerabilidade gastrointestinal, sono e humor.',
+        },
+        {
+          stepNumber: 3,
+          periodLabel: 'Semana 3 em diante (Dia 15+)',
+          sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+          targetDose: `${target.name} (titulação clínica)`,
+          clinicalAction: `Ajustar dentro da faixa terapêutica (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme resposta clínica.`,
+          symptomsToMonitor: 'Resposta clínica e remissão de sintomas.',
+        }
+      );
+    }
   }
-  // -------------------------------------------------------------
-  // REGRA D: ISRS (doses altas ou Paroxetina) OU ISRS PARA ISRN / ATÍPICO / TRICÍCLICO
-  // Troca Cruzada Gradual (Cross-Taper) em 2 a 3 Semanas
-  // -------------------------------------------------------------
+
+  // =========================================================================
+  // REGRA 6: ISRS PARA IRSN OU IRSN PARA ISRS (EXCETO CLOMIPRAMINA E EXCETO FLUOXETINA)
+  // Troca Cruzada Gradual documentada no NHS SPS
+  // =========================================================================
   else if (
-    (source.class === 'ISRS' && (target.class === 'ISRN' || target.class === 'Atípico / Modulador' || target.class === 'Tricíclico' || target.class === 'ISRS')) ||
-    (source.class === 'ISRN' && (target.class === 'ISRS' || target.class === 'ISRN' || target.class === 'Atípico / Modulador' || target.class === 'Tricíclico')) ||
-    (source.class === 'Atípico / Modulador' && (target.class === 'ISRS' || target.class === 'ISRN' || target.class === 'Atípico / Modulador')) ||
-    (source.class === 'Tricíclico' && (target.class === 'ISRS' || target.class === 'ISRN' || target.class === 'Tricíclico'))
+    (source.class === 'ISRS' && target.class === 'ISRN') ||
+    (source.class === 'ISRN' && target.class === 'ISRS')
   ) {
+    ruleClassification = 'documented_source';
     strategyType = 'cross_taper';
-    strategyTitle = 'Troca Cruzada Gradual (Cross-Tapering)';
+    strategyTitle = 'Troca Cruzada Gradual (Cross-Tapering Documentado no NHS SPS)';
     durationWeeks = 3;
-    strategySummary = `Redução progressiva da dose de ${source.name} enquanto se introduz e titula ${target.name} a partir de sua dose inicial (${recommendedStartingDoseMg} mg/dia). Essa conduta atenua os sintomas de descontinuação e mantém a cobertura terapêutica.`;
-
+    strategySummary = `NHS SPS: Reduzir gradualmente a dose de ${source.name} enquanto se introduz ${target.name} na dose de introdução recomendada (${recommendedStartingDoseMg} mg/dia). Essa estratégia reduz o risco de sintomas de descontinuação e mantém a cobertura terapêutica.`;
     const halfSourceDose = Math.round(sourceDoseMg / 2);
-
     timelineSteps.push(
       {
         stepNumber: 1,
         periodLabel: 'Semana 1 (Dias 1 - 7)',
         sourceDose: `${source.name} ${halfSourceDose} mg/dia (redução de 50%)`,
         targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia (dose de introdução)`,
-        clinicalAction: `Reduzir a dose de ${source.name} pela metade e introduzir ${target.name} em sua dose de introdução clínica recomendada.`,
-        symptomsToMonitor: 'Sintomas de descontinuação (tontura, sensação de choque, náuseas) e queixas de adaptação.',
+        clinicalAction: `Reduzir ${source.name} pela metade e introduzir ${target.name} em sua dose inicial.`,
+        symptomsToMonitor: 'Sintomas de descontinuação e tolerabilidade inicial.',
       },
       {
         stepNumber: 2,
         periodLabel: 'Semana 2 (Dias 8 - 14)',
-        sourceDose: sourceDoseMg > (source.referenceTherapeuticRange.min * 2)
-          ? `${source.name} ${Math.round(halfSourceDose / 2)} mg/dia (quarto da dose)`
-          : 'SUSPENSA TOTALMENTE (0 mg)',
-        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia (manter ou titular)`,
-        clinicalAction: `Suspender totalmente (ou reduzir ainda mais) ${source.name}. Manter ${target.name} na dose de introdução ou avançar para a faixa terapêutica conforme tolerabilidade.`,
-        symptomsToMonitor: 'Tolerabilidade gastrointestinal, sono e humor.',
+        sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia`,
+        clinicalAction: `Suspender totalmente ${source.name}. Manter ${target.name} na dose inicial.`,
+        symptomsToMonitor: 'Tolerabilidade e sintomas ansiosos.',
       },
       {
         stepNumber: 3,
         periodLabel: 'Semana 3 em diante (Dia 15+)',
         sourceDose: 'SUSPENSA DEFINITIVAMENTE',
-        targetDose: `${target.name} (ajuste dentro da faixa terapêutica)`,
-        clinicalAction: `Estabilizar ${target.name} dentro da faixa terapêutica de referência (${target.referenceTherapeuticRange.min} a ${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}), orientando o paciente sobre o tempo de resposta terapêutica (4 a 6 semanas).`,
-        symptomsToMonitor: 'Resposta clínica e remissão de sintomas depressivos/ansiosos.',
+        targetDose: `${target.name} (titulação clínica)`,
+        clinicalAction: `Titular ${target.name} dentro da faixa terapêutica recomendada (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}).`,
+        symptomsToMonitor: 'Resposta clínica e pressão arterial (se IRSN).',
       }
     );
   }
-  // -------------------------------------------------------------
-  // REGRA E: COMBINAÇÃO SEM PROTOCOLO DETERMINÍSTICO VALIDADO
-  // -------------------------------------------------------------
+
+  // =========================================================================
+  // REGRA 7: OUTRAS COMBINAÇÕES ESPECÍFICAS DOCUMENTADAS NO NHS SPS
+  // (ISRS/IRSN para Mirtazapina; Tricíclicos comuns para ISRS)
+  // =========================================================================
+  else if (
+    (source.class === 'ISRS' && target.id === 'mirtazapina') ||
+    (source.class === 'ISRN' && target.id === 'mirtazapina')
+  ) {
+    ruleClassification = 'documented_source';
+    strategyType = 'cross_taper';
+    strategyTitle = 'Troca Cruzada Gradual (NHS SPS)';
+    durationWeeks = 3;
+    strategySummary = `NHS SPS: Reduzir progressivamente ${source.name} enquanto se introduz ${target.name} em dose inicial de ${recommendedStartingDoseMg} mg/dia ao deitar.`;
+    const halfSourceDose = Math.round(sourceDoseMg / 2);
+    timelineSteps.push(
+      {
+        stepNumber: 1,
+        periodLabel: 'Semana 1 (Dias 1 - 7)',
+        sourceDose: `${source.name} ${halfSourceDose} mg/dia (redução de 50%)`,
+        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia ao deitar`,
+        clinicalAction: `Reduzir ${source.name} pela metade e introduzir ${target.name} ao deitar.`,
+        symptomsToMonitor: 'Sedação noturna, aumento do apetite e sintomas de descontinuação.',
+      },
+      {
+        stepNumber: 2,
+        periodLabel: 'Semana 2 (Dias 8 - 14)',
+        sourceDose: 'SUSPENSA TOTALMENTE (0 mg)',
+        targetDose: `${target.name} ${recommendedStartingDoseMg} mg/dia ao deitar`,
+        clinicalAction: `Suspender totalmente ${source.name}. Manter ${target.name}.`,
+        symptomsToMonitor: 'Tolerabilidade e humor.',
+      },
+      {
+        stepNumber: 3,
+        periodLabel: 'Semana 3 em diante (Dia 15+)',
+        sourceDose: 'SUSPENSA DEFINITIVAMENTE',
+        targetDose: `${target.name} (titular dentro da faixa terapêutica)`,
+        clinicalAction: `Titular dentro da faixa (${target.referenceTherapeuticRange.min}-${target.referenceTherapeuticRange.max} ${target.referenceTherapeuticRange.unit}) conforme avaliação médica.`,
+        symptomsToMonitor: 'Resposta clínica.',
+      }
+    );
+  }
+
+  // =========================================================================
+  // REGRA 8: COMBINAÇÕES SEM REGRA DOCUMENTADA ESPECÍFICA NO NHS SPS
+  // Não gerar cronograma; exigir avaliação médica individualizada.
+  // =========================================================================
   else {
     hasValidatedProtocol = false;
+    ruleClassification = 'unavailable';
     strategyType = 'individualized';
     strategyTitle = 'Avaliação Médica Individualizada Necessária';
     durationWeeks = 0;
-    unsupportedReason = `A transição específica entre ${source.name} (${source.class}) e ${target.name} (${target.class}) não possui diretriz padronizada consensual no NHS SPS ou Maudsley Prescribing Guidelines (15ª Ed., 2025). Exige avaliação individualizada pelo médico assistente/psiquiatra considerando farmacocinética e perfil clínico.`;
+    unsupportedReason = `A transição específica entre ${source.name} (${source.class}) e ${target.name} (${target.class}) não possui diretriz padronizada suficientemente documentada no NHS SPS. Não há cronograma algorítmico automatizado disponível para esta combinação. Exige planejamento individualizado pelo médico assistente considerando perfil farmacocinético, comorbidades e tolerabilidade.`;
     strategySummary = unsupportedReason;
   }
 
   // 5. Racional Farmacológico Específico
   pharmacologicalRationale.push(
     `Meia-vida de eliminação: ${source.name} (${source.halfLifeHours}${source.activeMetaboliteHalfLife ? ' | ' + source.activeMetaboliteHalfLife : ''}) vs. ${target.name} (${target.halfLifeHours}${target.activeMetaboliteHalfLife ? ' | ' + target.activeMetaboliteHalfLife : ''}).`,
-    `Potencial de Descontinuação de ${source.name}: classificado como ${source.discontinuationRisk}. ${source.discontinuationRisk === 'Muito Alto' || source.discontinuationRisk === 'Alto' ? 'Requer desmame gradual e atenção redobrada a sintomas como tontura e parestesias.' : 'Baixo risco de sintomas intensos de retirada.'}`,
+    `Potencial de Descontinuação de ${source.name}: classificado como ${source.discontinuationRisk}. ${source.discontinuationRisk === 'Muito Alto' || source.discontinuationRisk === 'Alto' ? 'Requer atenção a sintomas como tontura, náuseas e parestesias.' : 'Baixo risco relativo de sintomas intensos de retirada.'}`,
     `Dose de introdução clínica recomendada de ${target.name}: ${recommendedStartingDoseMg} mg/dia. Faixa terapêutica de referência: ${referenceTherapeuticRange.min} a ${referenceTherapeuticRange.max} ${referenceTherapeuticRange.unit}.`
   );
 
@@ -984,7 +1317,10 @@ export function calculateAntidepressantTransition(
 
   if (source.class === 'IMAO' || target.class === 'IMAO') {
     serotoninRiskLevel = 'Crítico';
-    serotoninNote = 'PERIGO FATAL: A combinação concomitante de IMAO com fármacos serotoninérgicos pode precipitar Síndrome Serotoninérgica letal e colapso cardiovascular. O respeito à janela de intervalo livre (washout) é inegociável.';
+    serotoninNote = 'PERIGO FATAL: A combinação de IMAO com fármacos serotoninérgicos pode precipitar Síndrome Serotoninérgica letal e colapso cardiovascular. O respeito à janela de intervalo livre (washout) é inegociável.';
+  } else if (source.id === 'clomipramina' || target.id === 'clomipramina') {
+    serotoninRiskLevel = 'Crítico';
+    serotoninNote = 'ALTO RISCO SEROTONINÉRGICO: A Clomipramina possui potente inibição de recaptação de serotonina combinada com atividade anticolinérgica e bloqueio alfa-adrenérgico. Sobreposição posológica com outros agentes serotoninérgicos não é recomendada sem especialista.';
   } else if (source.class === 'ISRS' && target.class === 'ISRN' && strategyType === 'cross_taper') {
     serotoninRiskLevel = 'Moderado';
     serotoninNote = 'Monitorar nas semanas de transição combinada quanto a hiperreflexia, náuseas e tremores finos.';
@@ -995,7 +1331,7 @@ export function calculateAntidepressantTransition(
 
   if (source.id === 'paroxetina' || source.id === 'venlafaxina') {
     discontinuationRiskLevel = 'Muito Alto';
-    discontinuationNote = `Atenção máxima: ${source.name} possui meia-vida curta e alto índice de sintomas de descontinuação. Reduzir em passos lentos; se o paciente queixar-se de choques na cabeça ou vertigem intensa, desacelerar o desmame em 1 semana extra.`;
+    discontinuationNote = `Atenção: ${source.name} possui meia-vida curta e alto índice de sintomas de descontinuação. Reduzir em passos lentos; se o paciente queixar-se de choques na cabeça ou vertigem intensa, manter a dose atual por período adicional.`;
   }
 
   const cardiacAlerts: string[] = [];
@@ -1034,14 +1370,16 @@ ${soapStepsText}
 Orientações: Paciente orientado sobre sintomas transitórios de descontinuação e sinais de alerta. Retorno pactuado em 3 a 4 semanas.`
     : `AVALIAÇÃO DE TRANSIÇÃO DE ANTIDEPRESSIVO:
 ${source.name} (${sourceDoseMg} mg/dia) -> ${target.name}
-Aviso Clínico: Par farmacológico sem diretriz padronizada determinística validada no NHS SPS / Maudsley 15ª ed.
-Conduta: Requer planejamento individualizado e acompanhamento especializado.`;
+Aviso Clínico: ${unsupportedReason || 'Par farmacológico sem regra padronizada documentada no NHS SPS.'}
+Conduta: Requer planejamento individualizado e acompanhamento médico/especializado.`;
 
   return {
     sourceDrug: source,
     sourceDoseMg,
     targetDrug: target,
+    isValidInput: true,
     hasValidatedProtocol,
+    ruleClassification,
     unsupportedReason,
     estimatedEquivalence,
     referenceTherapeuticRange,

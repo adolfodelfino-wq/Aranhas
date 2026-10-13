@@ -50,6 +50,9 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
   const [showFullEquivalenceTable, setShowFullEquivalenceTable] = useState(false);
   const [showDifferentialTable, setShowDifferentialTable] = useState(false);
   const [showPatientGuidance, setShowPatientGuidance] = useState(false);
+  const [showSafetyAlerts, setShowSafetyAlerts] = useState(false);
+  const [showWithdrawalSymptoms, setShowWithdrawalSymptoms] = useState(false);
+  const [showNonPharmAdvice, setShowNonPharmAdvice] = useState(false);
 
   const selectedDrug = BZD_DATABASE[sourceDrugId] || BZD_DATABASE.clonazepam;
 
@@ -127,9 +130,6 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
               <Pill className="w-5 h-5 text-teal-600" />
               Calculadora de Desmame de Benzodiazepínicos e Drogas Z
             </h2>
-            <p className="text-xs text-slate-600 leading-relaxed max-w-4xl">
-              Protocolo farmacocinético e clínico estruturado pelas <strong>Diretrizes ASAM (2025)</strong> e <strong>Maudsley Deprescribing Guidelines (2024)</strong>. Baseado em reduções proporcionais à dose atual guiadas pelo paciente, prevenindo a falha nos últimos degraus e estabilizando na menor dose tolerável sem forçar término artificial em zero.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -705,7 +705,7 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
                 <span>Passo a Passo das Consultas e Posologias</span>
                 <span className="text-[11px] font-normal text-slate-500">
                   {strategy === 'maudsley_hyperbolic'
-                    ? 'Redução hiperbólica (degraus decrescentes em mg)'
+                    ? 'Redução hiperbólica proporcional'
                     : 'Ajuste posológico progressivo'}
                 </span>
               </h4>
@@ -820,52 +820,147 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
             </div>
           </div>
 
-          {/* Safety Warnings & Red Flags (Mandatory Clinical Protocols) */}
-          <div className="bg-red-50/70 border border-red-300 rounded-xl p-4 shadow-xs space-y-2">
-            <h4 className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldAlert className="w-4 h-4 text-red-600" />
-              Sinais de Alarme & Alertas Clínicos Críticos (Segurança do Paciente)
-            </h4>
-            <ul className="text-xs text-red-800 space-y-1.5 pl-1">
-              {plan.safetyWarnings.map((warning, idx) => (
-                <li key={`safety-${idx}`} className="flex items-start gap-1.5">
-                  <span className="text-red-500 font-bold">•</span>
-                  <span>{warning}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Acordeões Clínicos: Alertas Críticos, Sintomas de Retirada e TCC-I */}
+          <div className="space-y-3 pt-1">
+            {/* 1. Alertas de Segurança & Protocolos Críticos */}
+            <div className="border border-red-200 rounded-xl overflow-hidden bg-white shadow-xs transition-all">
+              <button
+                type="button"
+                onClick={() => setShowSafetyAlerts(!showSafetyAlerts)}
+                className="w-full p-3.5 bg-red-50/50 hover:bg-red-50/80 text-left flex items-center justify-between transition-colors cursor-pointer"
+                aria-expanded={showSafetyAlerts}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                    <ShieldAlert className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-red-950 uppercase tracking-wider">
+                        Sinais de Alarme & Alertas Clínicos Críticos
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">
+                        {plan.safetyWarnings.length} alertas
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-red-800/80 truncate mt-0.5">
+                      Regra de pausa guiada pelo paciente, risco de abstinência abrupta e critérios de Beers.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-red-700 font-medium shrink-0 ml-3">
+                  <span>{showSafetyAlerts ? 'Ocultar' : 'Expandir'}</span>
+                  {showSafetyAlerts ? (
+                    <ChevronUp className="w-4 h-4 text-red-600" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-red-600" />
+                  )}
+                </div>
+              </button>
 
-          {/* Expected Withdrawal Symptoms & Non-Pharmacological Strategies */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 shadow-xs space-y-2">
-              <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                Sintomas Esperados de Retirada
-              </h4>
-              <ul className="text-xs text-amber-900/90 space-y-1 pl-1">
-                {plan.withdrawalSymptoms.map((sym, idx) => (
-                  <li key={`sym-${idx}`} className="flex items-start gap-1.5">
-                    <span className="text-amber-500 font-bold">•</span>
-                    <span>{sym}</span>
-                  </li>
-                ))}
-              </ul>
+              {showSafetyAlerts && (
+                <div className="p-4 bg-white border-t border-red-100 animate-in fade-in duration-150">
+                  <ul className="text-xs text-slate-800 space-y-2">
+                    {plan.safetyWarnings.map((warning, idx) => (
+                      <li key={`safety-${idx}`} className="flex items-start gap-2 leading-relaxed">
+                        <span className="text-red-500 font-bold shrink-0 mt-0.5">•</span>
+                        <span>{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 shadow-xs space-y-2">
-              <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-                <HeartPulse className="w-4 h-4 text-emerald-600" />
-                Não-Farmacológicos na APS (TCC-I)
-              </h4>
-              <ul className="text-xs text-emerald-900 space-y-1 pl-1">
-                {plan.nonPharmacologicalAdvice.map((adv, idx) => (
-                  <li key={`adv-${idx}`} className="flex items-start gap-1.5">
-                    <span className="text-emerald-600 font-bold">•</span>
-                    <span>{adv}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* 2 e 3 em Grid: Sintomas de Retirada e Não-Farmacológicos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Acordeão: Sintomas Esperados de Retirada */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs transition-all">
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawalSymptoms(!showWithdrawalSymptoms)}
+                  className="w-full p-3.5 bg-slate-50 hover:bg-slate-100/80 text-left flex items-center justify-between transition-colors cursor-pointer"
+                  aria-expanded={showWithdrawalSymptoms}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-4 h-4 text-amber-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-900 block truncate">
+                        Sintomas Esperados de Retirada
+                      </span>
+                      <span className="text-[10px] text-slate-500 block truncate">
+                        {plan.withdrawalSymptoms.length} tópicos (ansiedade, insônia de rebote, etc.)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 ml-2">
+                    {showWithdrawalSymptoms ? (
+                      <ChevronUp className="w-4 h-4 text-slate-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    )}
+                  </div>
+                </button>
+
+                {showWithdrawalSymptoms && (
+                  <div className="p-3.5 bg-white border-t border-slate-100 animate-in fade-in duration-150">
+                    <ul className="text-xs text-slate-700 space-y-1.5">
+                      {plan.withdrawalSymptoms.map((sym, idx) => (
+                        <li key={`sym-${idx}`} className="flex items-start gap-2 leading-relaxed">
+                          <span className="text-amber-500 font-bold shrink-0 mt-0.5">•</span>
+                          <span>{sym}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Acordeão: Não-Farmacológicos na APS (TCC-I) */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs transition-all">
+                <button
+                  type="button"
+                  onClick={() => setShowNonPharmAdvice(!showNonPharmAdvice)}
+                  className="w-full p-3.5 bg-slate-50 hover:bg-slate-100/80 text-left flex items-center justify-between transition-colors cursor-pointer"
+                  aria-expanded={showNonPharmAdvice}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                      <HeartPulse className="w-4 h-4 text-emerald-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-900 block truncate">
+                        Não-Farmacológicos (TCC-I & Sono)
+                      </span>
+                      <span className="text-[10px] text-slate-500 block truncate">
+                        {plan.nonPharmacologicalAdvice.length} condutas práticas para APS
+                      </span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 ml-2">
+                    {showNonPharmAdvice ? (
+                      <ChevronUp className="w-4 h-4 text-slate-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    )}
+                  </div>
+                </button>
+
+                {showNonPharmAdvice && (
+                  <div className="p-3.5 bg-white border-t border-slate-100 animate-in fade-in duration-150">
+                    <ul className="text-xs text-slate-700 space-y-1.5">
+                      {plan.nonPharmacologicalAdvice.map((adv, idx) => (
+                        <li key={`adv-${idx}`} className="flex items-start gap-2 leading-relaxed">
+                          <span className="text-emerald-600 font-bold shrink-0 mt-0.5">•</span>
+                          <span>{adv}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

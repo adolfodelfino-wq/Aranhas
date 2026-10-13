@@ -1,6 +1,6 @@
 {
-  "summary":  "Detailed plan for generating the TCR academic report on antidepressant switching and tapering guidelines with equivalence tables, rationales, and references for GPT-6 review.",
-  "updatedAt":  "2026-10-10T03:18:22.601694867Z",
-  "requestFeedback":  true,
-  "userFacing":  true
+  "summary": "Plano de implementação para despoluição visual e ergonomia cognitiva na calculadora de desmame de benzodiazepínicos:\n1. Eliminar o texto redundante do protocolo farmacocinético que repete informações dos badges.\n2. Converter as três seções extensas de texto (Alertas Críticos, Sintomas Esperados de Retirada e Intervenções Não-Farmacológicas TCC-I) em acordeões recolhidos em linha (cards clicáveis com prévia e expansão sob demanda).\n3. Preservar o gerador de mensagem do WhatsApp que teve ótima avaliação.\n4. Validar compilação e testes da aplicação.",
+  "updatedAt": "2026-10-12T15:51:38.644454775Z",
+  "requestFeedback": true,
+  "userFacing": true
 }
