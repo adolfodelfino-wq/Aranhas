@@ -19,22 +19,49 @@
 
 | ID | Requisito | Entrada sintética / procedimento | Resultado esperado | Código relacionado | Modalidade | Estado |
 |---|---|---|---|---|---|---|
-| EEM-01 | Ausência de inferência quando vazio | EemState com todos os domínios e observações vazios | Indicar ausência de parâmetros selecionados, sem afirmar normalidade | src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-02 | Seleção restrita ao observado | Selecionar apenas “Humor: ansioso” | Conter ansiedade e não incluir aparência, afeto, orientação ou outros domínios não selecionados | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-03 | Diferenciação do pensamento | Informar curso, forma e conteúdo em seleções distintas | Conservar todos os descritores sob Pensamento, sem misturar ou omitir categorias | src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-04 | Achado negativo somente se selecionado | Selecionar somente “Sem alterações perceptivas” | Incluir exatamente a seleção de sensopercepção, sem presumir normalidade de outros domínios | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-05 | Preservação das observações livres | Preencher Observações complementares com texto sintético acentuado, quebras de linha | Texto preservado na síntese gerada, sem reescrita nem informações adicionais | src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-06 | Descritores desconhecidos ou inválidos | IDs inexistentes ou campo de seleção em formato inesperado | Não converter IDs em achados clínicos nem presumir normalidade | src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-07 | Preservação de achado sensível | Selecionar explicitamente ideação suicida no conteúdo do pensamento | Registrar o descritor selecionado, sem automaticamente estratificar risco ou definir conduta | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-08 | Integração no Objetivo | Objetivo com PA e FC; inserir síntese do EEM | Manter PA e FC, inserir único bloco de EEM | src/utils/eemFormatter.ts; src/components/EemSoapWorkstationView.tsx | Automatizada | Pendente |
-| EEM-09 | Substituição e preservação de outros dados | Reimportar EEM atualizado com escala já presente em Objetivo | Substituir descritores antigos sem apagar achados ou resultado de escala | src/utils/eemFormatter.ts | Automatizada | Pendente |
-| EEM-10 | Consistência dos controles visuais | Acionar Padrão Eutímico e selecionar achados incompatíveis em interface | Opções do padrão existem no catálogo; exclusão mútua evita descritores contraditórios; não se aplica preenchimento normal automático | src/components/EemSoapWorkstationView.tsx; src/components/EemView.tsx; src/data/eemData.ts | Inspeção técnica + interface | Pendente |
+| EEM-01 | Ausência de inferência quando vazio | EemState com todos os domínios e observações vazios | Indicar ausência de parâmetros selecionados, sem afirmar normalidade | src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-02 | Seleção restrita ao observado | Selecionar apenas “Humor: ansioso” | Conter ansiedade e não incluir aparência, afeto, orientação ou outros domínios não selecionados | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-03 | Diferenciação do pensamento | Informar curso, forma e conteúdo em seleções distintas | Conservar todos os descritores sob Pensamento, sem misturar ou omitir categorias | src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-04 | Achado negativo somente se selecionado | Selecionar somente “Sem alterações perceptivas” | Incluir exatamente a seleção de sensopercepção, sem presumir normalidade de outros domínios | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-05 | Preservação das observações livres | Preencher Observações complementares com texto sintético acentuado, quebras de linha | Texto preservado na síntese gerada, sem reescrita nem informações adicionais | src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-06 | Descritores desconhecidos ou inválidos | IDs inexistentes ou campo de seleção em formato inesperado | Não converter IDs em achados clínicos nem presumir normalidade | src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-07 | Preservação de achado sensível | Selecionar explicitamente ideação suicida no conteúdo do pensamento | Registrar o descritor selecionado, sem automaticamente estratificar risco ou definir conduta | src/data/eemData.ts; src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-08 | Integração no Objetivo | Objetivo com PA e FC; inserir síntese do EEM | Manter PA e FC, inserir único bloco de EEM | src/utils/eemFormatter.ts; src/components/EemSoapWorkstationView.tsx | Automatizada | Automatizado aprovado |
+| EEM-09 | Substituição e preservação de outros dados | Reimportar EEM atualizado com escala já presente em Objetivo | Substituir descritores antigos sem apagar achados ou resultado de escala | src/utils/eemFormatter.ts | Automatizada | Automatizado aprovado |
+| EEM-10 | Consistência dos controles visuais | Acionar Padrão Eutímico e selecionar achados incompatíveis em interface | Opções do padrão existem no catálogo; exclusão mútua evita descritores contraditórios; não se aplica preenchimento normal automático | src/components/EemSoapWorkstationView.tsx; src/components/EemView.tsx; src/data/eemData.ts | Inspeção técnica + interface | Regras automatizadas aprovadas; interface pendente |
 
 ## Registro inicial da inspeção do código — não é execução de cenário
 
 Ao confrontar as opções cadastradas em src/data/eemData.ts com src/components/EemSoapWorkstationView.tsx, observaram-se identificadores potencialmente incompatíveis no preenchimento de “Padrão Eutímico” (por exemplo, humor_eutimico em vez de eutimico; afeto_modulado em vez de normoemotivo; curso_normal em vez de curso_normopsiquico; forma_logico em vez de forma_coerente). As regras de exclusão mútua também utilizam algumas dessas variantes. **Esta é uma divergência de inspeção estática**, pendente de reprodução no teste EEM-10; não classificar como falha executada antes da verificação.
 
 O componente isolado EemView.tsx possui um estado inicial de normalidade quando não recebe eemState, devendo ser examinada sua exposição no aplicativo e a condição de uso; o estado EEM no App.tsx inicia com seleções vazias.
+
+## Rodadas formativas executadas — evidência técnica
+
+**R01 — geração e formatação textual do EEM (código anterior à correção do preset)**
+
+- Commit: `adf9e1c1cfec62a666790db4002f641112840191`.
+- Evidência: https://github.com/adolfodelfino-wq/Aranhas/actions/runs/40375432785
+- EEM-01 a EEM-09: **9/9 verificações automatizadas aprovadas**. Suíte geral: **133/133 testes aprovados**; build realizado.
+- Inspeção do EEM-10 identificou IDs divergentes entre o preset da estação integrada e o catálogo. O problema foi classificado como **divergência documental do código (inspeção estática)**; não havia teste manual do botão, portanto não afirmar falha observada da interface.
+- A checagem global de tipos retornou erro em calculadora farmacológica, **fora do recorte deste TCR**, não computado como falha de EEM.
+
+**Correção controlada do EEM-10**
+
+- Criado `src/utils/eemSelection.ts` com IDs do preset derivados do catálogo, transições puras e exclusão de descritores incompatíveis.
+- `EemSoapWorkstationView.tsx` e `EemView.tsx` passaram a compartilhar a função de seleção; o padrão preenchido na estação integrada passou a usar os IDs existentes. A ação é explícita por clique, não representa normalidade inferida automaticamente.
+- Novo teste EEM-10 verifica a consistência dos IDs e a exclusão mútua em função determinística.
+- Testes manuais dos controles React permanecem necessários para concluir o cenário.
+
+**R02 — reexecução após a correção**
+
+- Commit: `06b475244244f7236da7e4d8f10486210c04dbcb`.
+- Evidência: https://github.com/adolfodelfino-wq/Aranhas/actions/runs/40376049655
+- EEM-01 a EEM-10: **10/10 verificações automatizadas aprovadas**. Suíte geral: **134/134 testes aprovados**, build aprovado.
+- Erro global de TypeScript permanece restrito à calculadora farmacológica e não foi incluído entre os resultados do EEM.
+- **Pendente:** teste de interface (clique no padrão, marcação/desmarcação, atualização visível e importação pelo usuário), conferência do estado inicial do componente isolado e execução da rodada final em versão congelada.
+
+**Interpretação:** R01 e R02 constituem evidências técnicas formativas com commits distintos. Não caracterizam validação clínica, aprovação dos cenários manuais ou efetividade assistencial.
 
 ## Registro de rodada
 
@@ -48,4 +75,4 @@ O componente isolado EemView.tsx possui um estado inicial de normalidade quando 
 - Evidência (log/captura sem dados reais): pendente
 - Correções, commits e reexecuções: pendente
 
-**Interpretação:** mesmo que os nove cenários automatizados estejam conformes, a MRC-EEM não estará integralmente concluída enquanto EEM-10 e a revisão do fluxo real estiverem pendentes.
+**Interpretação:** as dez verificações automatizadas foram aprovadas após a correção, porém a MRC-EEM somente estará concluída após verificar os controles na interface, documentar evidências e executar a rodada final sobre uma versão definida.
