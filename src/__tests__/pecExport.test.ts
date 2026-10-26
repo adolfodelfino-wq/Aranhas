@@ -65,9 +65,9 @@ describe('Assistente de cópia para PEC (e-SUS APS)', () => {
     const soap: SoapState = {
       ...dummySoap,
       subjective: '   ',
-      objective: '\\n   ',
+      objective: '\n   ',
       assessment: 'Hipóteses a investigar.',
-      plan: '\\t',
+      plan: '\t',
     };
     const pec = formatForPec(soap, dummyPatient);
     expect(pec.subjective).toBe('Não registrado.');
