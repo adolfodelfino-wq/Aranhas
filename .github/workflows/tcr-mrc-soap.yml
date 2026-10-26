@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - tcr-2026-fundamentacao-seguranca-soap
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
