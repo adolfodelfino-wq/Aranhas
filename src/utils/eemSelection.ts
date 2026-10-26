@@ -2,6 +2,25 @@ import { EEM_DOMAINS } from '../data/eemData';
 import type { EemState } from '../types';
 
 /**
+ * Empty starting state. No normal clinical findings may be inferred from
+ * an unexamined domain or from opening the EEM interface.
+ */
+export const getEmptyEemState = (): EemState => ({
+  aparencia: [], aparenciaOutros: '',
+  atitude: [], atitudeOutros: '',
+  fala: [], falaOutros: '',
+  humor: [], humorOutros: '',
+  afeto: [], afetoOutros: '',
+  pensamentoCurso: [], pensamentoForma: [], pensamentoConteudo: [], pensamentoOutros: '',
+  sensopercepcao: [], sensopercepcaoOutros: '',
+  orientacao: [], orientacaoOutros: '',
+  atencaoMemoria: [], atencaoMemoriaOutros: '',
+  insight: [], insightOutros: '',
+  julgamento: [], julgamentoOutros: '',
+  observacoesLivres: '',
+});
+
+/**
  * User-triggered preset only. Never apply it to an unevaluated patient
  * automatically: normal descriptors require explicit confirmation.
  */
