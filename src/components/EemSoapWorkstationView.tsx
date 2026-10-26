@@ -204,7 +204,7 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
     const domain = EEM_DOMAINS.find((d) => d.id === domainId);
     const key = domainId as keyof EemState;
     const values = Array.isArray(eemState[key]) ? (eemState[key] as string[]) : [];
-    if (!domain || values.length === 0) return 'Não observado';
+    if (!domain || values.length === 0) return 'Não registrado';
     const labels = values
       .map((valId) => domain.options.find((o) => o.id === valId)?.label)
       .filter(Boolean);
@@ -226,6 +226,8 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   };
 
   const handleInsertScaleToSoap = (scaleRes: ScaleResult) => {
+    // A partial result must not be rendered as a final numerical assessment.
+    if (scaleRes.isComplete === false) return;
     const currentObjective = soapState.objective ? soapState.objective.trim() : '';
     const scaleLine = `• ${scaleRes.scaleTitle} (${scaleRes.date || 'Hoje'}): ${scaleRes.totalScore}/${scaleRes.maxScore} pts — ${scaleRes.classification}.`;
 
@@ -650,10 +652,12 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                         <button
                           type="button"
                           onClick={() => handleInsertScaleToSoap(res)}
-                          className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer"
+                          disabled={res.isComplete === false}
+                          title={res.isComplete === false ? 'Finalize o instrumento para importar o escore' : 'Inserir resultado no Objetivo'}
+                          className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer disabled:text-slate-400 disabled:cursor-not-allowed"
                         >
                           <FileCheck className="w-3.5 h-3.5" />
-                          <span>{isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
+                          <span>{res.isComplete === false ? 'Preenchimento pendente' : isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
                         </button>
                       </div>
                     </div>
