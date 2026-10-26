@@ -64,6 +64,14 @@
 
 Os resultados técnicos acima permanecem associados exclusivamente ao commit testado. Modificações futuras exigem nova execução e vinculação a novo SHA.
 
+## Rodada formativa R02 — reexecução automatizada delimitada
+
+- Commit: `8724d0d1e24d5cb6cf055ac9db6304e24d71d21e`.
+- Evidência: https://github.com/adolfodelfino-wq/Aranhas/actions/runs/40376917221
+- Testes do recorte acadêmico executados separadamente da suíte geral: **SOAP-01 a SOAP-08: 8/8 verificações automatizadas aprovadas**, juntamente com dez verificações MRC-EEM; **18/18 no total dos dois módulos**.
+- A verificação global de TypeScript conserva uma pendência externa ao objeto do estudo, que não foi considerada falha da MRC-SOAP. A compilação do aplicativo foi realizada.
+- Ainda faltam etapas manuais de SOAP-01, SOAP-02, SOAP-06 e SOAP-09 a SOAP-12, de modo que os 12 cenários completos ainda não foram concluídos.
+
 ## Registro de execução (modelo para novas rodadas)
 
 - **ID da rodada:** MRC-SOAP-R___
