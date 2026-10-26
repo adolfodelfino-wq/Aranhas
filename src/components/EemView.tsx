@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState } from '../types';
 import { generateEemSummary } from '../utils/eemFormatter';
-import { toggleEemSelection } from '../utils/eemSelection';
+import { getEmptyEemState, getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
 import {
   Stethoscope,
   CheckCircle,
@@ -22,34 +22,6 @@ interface EemViewProps {
   onOpenEducationSuggestions?: () => void;
 }
 
-const getInitialEemState = (): EemState => ({
-  aparencia: ['higienizado', 'vestuario_adequado', 'aparente_idade'],
-  aparenciaOutros: '',
-  atitude: ['cooperativo'],
-  atitudeOutros: '',
-  fala: ['fala_normal'],
-  falaOutros: '',
-  humor: ['eutimico'],
-  humorOutros: '',
-  afeto: ['normoemotivo'],
-  afetoOutros: '',
-  pensamentoCurso: ['curso_normopsiquico'],
-  pensamentoForma: ['forma_coerente'],
-  pensamentoConteudo: ['conteudo_sem_alteracoes'],
-  pensamentoOutros: '',
-  sensopercepcao: ['senso_sem_alteracoes'],
-  sensopercepcaoOutros: '',
-  orientacao: ['orientado_global'],
-  orientacaoOutros: '',
-  atencaoMemoria: ['atencao_normoprosexica', 'memoria_preservada'],
-  atencaoMemoriaOutros: '',
-  insight: ['insight_preservado'],
-  insightOutros: '',
-  julgamento: ['julgamento_preservado'],
-  julgamentoOutros: '',
-  observacoesLivres: '',
-});
-
 export const EemView: React.FC<EemViewProps> = ({
   onImportToSoap,
   eemState,
@@ -57,7 +29,7 @@ export const EemView: React.FC<EemViewProps> = ({
   onOpenEducationSuggestions,
 }) => {
   const sanitizeEemState = (state?: EemState): EemState => {
-    const base = getInitialEemState();
+    const base = getEmptyEemState();
     if (!state) return base;
     return {
       ...base,
@@ -127,7 +99,7 @@ export const EemView: React.FC<EemViewProps> = ({
   };
 
   const handleResetToStandard = () => {
-    setEem(getInitialEemState());
+    updateState(getEuthymicEemPreset());
     setImported(false);
     setCollapsedDomains({});
     setResetFeedback(true);
