@@ -44,7 +44,7 @@ describe('Assistente de cópia para PEC (e-SUS APS)', () => {
     expect(pec.subjective).toBe(dummySoap.subjective);
   });
 
-  it('provides safe fallback text when SOAP fields are empty', () => {
+  it('marks empty SOAP sections as unrecorded without adding clinical facts', () => {
     const emptySoap: SoapState = {
       subjective: '',
       objective: '',
@@ -54,9 +54,39 @@ describe('Assistente de cópia para PEC (e-SUS APS)', () => {
     };
 
     const pec = formatForPec(emptySoap, dummyPatient);
-    expect(pec.subjective).toContain('Sem queixas registradas');
-    expect(pec.objective).toContain('Exame físico e mental');
-    expect(pec.assessment).toContain('Avaliação clínica');
-    expect(pec.plan).toContain('Orientações gerais');
+    expect(pec.subjective).toBe('Não registrado.');
+    expect(pec.objective).toBe('Não registrado.');
+    expect(pec.assessment).toBe('Não registrado.');
+    expect(pec.plan).toBe('Não registrado.');
+    expect(pec.fullNarrative).not.toMatch(/sem alterações|sem queixas|orientações gerais|avaliação clínica em andamento/i);
+  });
+
+  it('treats whitespace-only fields as unrecorded and preserves written sections', () => {
+    const soap: SoapState = {
+      ...dummySoap,
+      subjective: '   ',
+      objective: '\\n   ',
+      assessment: 'Hipóteses a investigar.',
+      plan: '\\t',
+    };
+    const pec = formatForPec(soap, dummyPatient);
+    expect(pec.subjective).toBe('Não registrado.');
+    expect(pec.objective).toBe('Não registrado.');
+    expect(pec.assessment).toBe('Hipóteses a investigar.');
+    expect(pec.plan).toBe('Não registrado.');
+  });
+
+  it('retains explicitly selected codes without claiming an unrecorded assessment', () => {
+    const soap: SoapState = {
+      subjective: '',
+      objective: '',
+      assessment: '',
+      plan: '',
+      importedItems: [],
+    };
+    const pec = formatForPec(soap, dummyPatient, [COMMON_APS_CODES[0]]);
+    expect(pec.assessment).toContain('Não registrado.');
+    expect(pec.assessment).toContain('CIAP-2: P76 | CID-10: F32.9');
+    expect(pec.objective).toBe('Não registrado.');
   });
 });
