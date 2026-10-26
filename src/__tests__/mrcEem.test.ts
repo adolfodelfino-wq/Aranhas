@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EEM_DOMAINS } from '../data/eemData';
 import { formatEemIntoObjective, generateEemSummary } from '../utils/eemFormatter';
-import { getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
+import { getEmptyEemState, getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
 import type { EemState } from '../types';
 
 /**
@@ -26,7 +26,8 @@ const emptyEem = (): EemState => ({
 
 describe('MRC-EEM v1.0 | semiologia, documentação e integração', () => {
   it('[EEM-01] um exame não preenchido não gera descrição de normalidade', () => {
-    const text = generateEemSummary(emptyEem());
+    expect(getEmptyEemState()).toEqual(emptyEem());
+    const text = generateEemSummary(getEmptyEemState());
     expect(text).toContain('Nenhum parâmetro selecionado.');
     expect(text).not.toMatch(/eutímic|orientado global|sem alterações perceptivas|julgamento preservado/i);
   });
