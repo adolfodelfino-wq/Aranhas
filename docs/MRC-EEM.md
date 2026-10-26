@@ -63,6 +63,16 @@ O componente isolado EemView.tsx possui um estado inicial de normalidade quando 
 
 **Interpretação:** R01 e R02 constituem evidências técnicas formativas com commits distintos. Não caracterizam validação clínica, aprovação dos cenários manuais ou efetividade assistencial.
 
+## Rodada formativa R03 — escopo delimitado e estado inicial protegido
+
+- Versão/commit: `8724d0d1e24d5cb6cf055ac9db6304e24d71d21e`.
+- Evidência: https://github.com/adolfodelfino-wq/Aranhas/actions/runs/40376917221
+- Foi corrigida a inicialização do componente EemView isolado: um estado sem informação começa vazio, sem descritores de normalidade. O preenchimento eutímico permanece disponível **somente por comando explícito do usuário**, sendo aplicado ao estado pelo mesmo mecanismo de atualização utilizado nas demais seleções.
+- A rotina do GitHub Actions passou a executar apenas testes do TCR: **8 verificações MRC-SOAP + 10 MRC-EEM = 18/18 verificações automatizadas aprovadas**; build geral concluído.
+- Diagnóstico global TypeScript apresenta pendência em calculadora farmacológica fora do recorte. Permanece documentado como observação de engenharia e **não é critério nem resultado do TCR**.
+- Ainda pendentes: controles e importação em interface, avaliação de dados sintéticos com ambiente isolado, rodada final congelada.
+- Não relatar como aprovação de 10 cenários EEM completos enquanto a parte manual do EEM-10 não estiver testada.
+
 ## Registro de rodada
 
 - Rodada / finalidade: pendente
