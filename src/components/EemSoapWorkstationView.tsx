@@ -227,7 +227,7 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
 
   const handleInsertScaleToSoap = (scaleRes: ScaleResult) => {
     // A partial result must not be rendered as a final numerical assessment.
-    if (scaleRes.isComplete === false) return;
+    if (scaleRes.isComplete === false || scaleRes.completionStatus === 'incomplete' || scaleRes.completionStatus === 'invalid') return;
     const currentObjective = soapState.objective ? soapState.objective.trim() : '';
     const scaleLine = `• ${scaleRes.scaleTitle} (${scaleRes.date || 'Hoje'}): ${scaleRes.totalScore}/${scaleRes.maxScore} pts — ${scaleRes.classification}.`;
 
@@ -619,6 +619,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
               <div className="space-y-2">
                 {scaleHistory.map((res, idx) => {
                   const isJustInserted = insertedScaleId === (res.id || res.scaleId);
+                  const isIncomplete = res.isComplete === false || res.completionStatus === 'incomplete' || res.completionStatus === 'invalid';
                   const hasItem9Alert =
                     res.scaleId === 'phq-9' &&
                     ((res.answersArray && res.answersArray[8] > 0) ||
@@ -652,12 +653,12 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                         <button
                           type="button"
                           onClick={() => handleInsertScaleToSoap(res)}
-                          disabled={res.isComplete === false}
-                          title={res.isComplete === false ? 'Finalize o instrumento para importar o escore' : 'Inserir resultado no Objetivo'}
+                          disabled={isIncomplete}
+                          title={isIncomplete ? 'Finalize o instrumento para importar o escore' : 'Inserir resultado no Objetivo'}
                           className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer disabled:text-slate-400 disabled:cursor-not-allowed"
                         >
                           <FileCheck className="w-3.5 h-3.5" />
-                          <span>{res.isComplete === false ? 'Preenchimento pendente' : isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
+                          <span>{isIncomplete ? 'Preenchimento pendente' : isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
                         </button>
                       </div>
                     </div>
