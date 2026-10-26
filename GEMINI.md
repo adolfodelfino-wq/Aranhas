@@ -36,5 +36,25 @@
 10. Quando identificar uma melhoria fora do escopo solicitado, apenas mencioná-la brevemente ao final. Não implementá-la.
 11. Antes de qualquer alteração de grande impacto, solicitar autorização.
 12. Priorizar mudanças incrementais e de menor custo computacional.
+## RECORTE ACADÊMICO VIGENTE — TCR NEXUS CLÍNICO (ENTREGA 20/11/2026)
 
+Este recorte orienta a **pesquisa**, não autoriza a exclusão de funcionalidades existentes do **produto**. A avaliação técnico-funcional terá apenas três módulos integrados: **SOAP**, **EEM psiquiátrico semiestruturado** e **sete instrumentos** (PHQ-9, GAD-7, AUDIT de 10 itens, EPDS, MEEM, ASRS-18 e SNAP-IV). O **MEEM é rastreio cognitivo**, diferente do **EEM psicopatológico**. Calculadoras, IA generativa, sincronização longitudinal, gráficos e demais módulos permanecem no aplicativo, mas **fora das conclusões do TCR**. Não apagar ou ocultar esses módulos sem autorização.
 
+### Referencial teórico atual do TCR (não equivale à validação do software)
+- **Problema clínico e documentação**: Lobo et al. (2015), DOI 10.1016/j.ijmedinf.2015.05.001 — estudo sobre documentação semiestruturada do EEM em serviço especializado, **não na APS brasileira**.
+- **Narrativa e prontuários em saúde mental**: Zurynski et al. (2021), DOI 10.2196/30564; Seinen et al. (2025), DOI 10.2196/66910 — documentação eletrônica e complementaridade entre campos estruturados e texto livre.
+- **Contexto brasileiro e carga documental**: Bruzeguini et al. (2025), DOI 10.1111/eip.13582; Gaspary et al. (2026), DOI 10.3389/fdgth.2025.1676631; Olakotan et al. (2025), DOI 10.1111/jep.70189 — uso de instrumentos, usabilidade e fluxo de trabalho. Nenhum comprova que o Nexus reduz o tempo de consulta ou melhora desfechos.
+- **Desenvolvimento de artefato de software (DSR)**: Hevner et al. (2004), DOI 10.2307/25148625; Peffers et al. (2007), DOI 10.2753/MIS0742-1222240302.
+- **Planejamento da avaliação**: Venable et al. (2016), DOI 10.1057/ejis.2014.36; Basit et al. (2018), DOI 10.2196/medinform.9679 — avaliação artificial, critérios de aceitação e rastreabilidade.
+
+O artigo mestre aprovado academicamente está no Google Docs; não substituir as referências clínicas específicas das escalas por referências de documentação ou DSR.
+
+### Regras de segurança e verificação do TCR
+1. **Não inventar achados clínicos nem condutas**: campo SOAP vazio exportado não significa exame normal, ausência de queixa ou plano pactuado. Usar indicação neutra de ausência de registro.
+2. EEM **não investigado** não deve assumir normalidade; preservar texto livre e domínios selecionados pelo médico.
+3. Instrumentos incompletos ou com entrada inválida não recebem classificação clínica conclusiva; alertas individuais pertinentes devem permanecer visíveis e ser interpretados pelo médico.
+4. Fonte bibliográfica e teste de código existente **não demonstram aprovação funcional**. Antes de afirmar qualquer resultado, executar testes e registrar comando, entradas, saídas, commit, divergências e reexecuções.
+5. Usar **somente dados sintéticos** nos testes e documentar isolamento de Firebase/Firestore e de dados assistenciais reais.
+6. O GAS deve **revisar o diff, executar \`npm run lint\`, \`npm test\` e \`npm run build\`**, registrar falhas e evitar publicação automática antes da revisão médica.
+7. Quando houver discrepância entre código e a fonte do instrumento, **abrir pendência para conferência clínica**; não alterar pontos de corte, licenças ou interpretações sem validação da referência primária.
+8. Em qualquer alteração no repositório, preservar o histórico Git e a natureza **privada** do projeto. Atualizar a documentação canônica, sem novos arquivos paralelos.
