@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EEM_DOMAINS } from '../data/eemData';
 import { formatEemIntoObjective, generateEemSummary } from '../utils/eemFormatter';
+import { getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
 import type { EemState } from '../types';
 
 /**
@@ -128,4 +129,45 @@ describe('MRC-EEM v1.0 | semiologia, documentação e integração', () => {
     expect(twice).not.toContain('Humor: ansioso.');
     expect(twice.match(/Exame do Estado Mental \(EEM\):/gi)).toHaveLength(1);
   });
+
+  it('[EEM-10] padrão e exclusão mútua usam apenas descritores cadastrados', () => {
+    const preset = getEuthymicEemPreset();
+    for (const domain of EEM_DOMAINS) {
+      const selected = preset[domain.id as keyof EemState];
+      expect(Array.isArray(selected)).toBe(true);
+      for (const id of selected as string[]) {
+        expect(domain.options.some((option) => option.id === id)).toBe(true);
+      }
+    }
+    expect(generateEemSummary(preset)).toContain('Humor: eutímico');
+    expect(generateEemSummary(preset)).toContain('Afeto: normoemotivo');
+    expect(generateEemSummary(preset)).toContain('Pensamento: normopsíquico');
+
+    const depressed = toggleEemSelection(preset, 'humor', 'distimico');
+    expect(depressed.humor).toContain('distimico');
+    expect(depressed.humor).not.toContain('eutimico');
+    expect(depressed.afeto).toEqual(preset.afeto);
+
+    const restored = toggleEemSelection(depressed, 'humor', 'eutimico');
+    expect(restored.humor).toEqual(['eutimico']);
+
+    const alteredContent = toggleEemSelection({
+      ...emptyEem(),
+      pensamentoConteudo: ['conteudo_sem_alteracoes'],
+      observacoesLivres: 'Observação sintética preservada.',
+    }, 'pensamentoConteudo', 'conteudo_ideacao_suicida');
+    expect(alteredContent.pensamentoConteudo).toEqual(['conteudo_ideacao_suicida']);
+    expect(alteredContent.observacoesLivres).toBe('Observação sintética preservada.');
+
+    const disoriented = toggleEemSelection(preset, 'orientacao', 'desorientado_tempo');
+    expect(disoriented.orientacao).toContain('desorientado_tempo');
+    expect(disoriented.orientacao).not.toContain('orientado_global');
+
+    const reoriented = toggleEemSelection(disoriented, 'orientacao', 'orientado_global');
+    expect(reoriented.orientacao).toEqual(['orientado_global']);
+
+    const arbitrary = toggleEemSelection(preset, 'humor', 'codigo_inexistente');
+    expect(arbitrary).toBe(preset);
+  });
+
 });
