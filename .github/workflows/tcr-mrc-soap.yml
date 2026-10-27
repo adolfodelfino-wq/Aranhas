@@ -1,4 +1,4 @@
-name: TCR MRC-SOAP e MRC-EEM - verificacao delimitada
+name: TCR - SOAP EEM escalas - verificacao delimitada
 
 on:
   push:
@@ -27,9 +27,9 @@ jobs:
       - name: Diagnostico global TypeScript (informativo; inclui recursos fora do TCR)
         continue-on-error: true
         run: npm run lint
-      - name: Verificar apenas criterios MRC-SOAP e MRC-EEM
+      - name: Verificar invariantes tecnicas MRC-SOAP EEM e ESC
         if: ${{ always() }}
-        run: npm test -- src/__tests__/mrcSoap.test.ts src/__tests__/mrcEem.test.ts --reporter=verbose
+        run: npm test -- src/__tests__/mrcSoap.test.ts src/__tests__/mrcEem.test.ts src/__tests__/mrcEsc.test.ts --reporter=verbose
       - name: Verificar build geral da aplicacao (informativo sobre integridade)
         if: ${{ always() }}
         run: npm run build
