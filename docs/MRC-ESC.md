@@ -53,6 +53,10 @@ IDs de cada instrumento identificam, respectivamente:
 5. Corrigir em commit separado e repetir os testes pertinentes. Não agregar resultados de versões diferentes como se fossem uma rodada única.
 6. Relatar denominadores de critérios documentais examinados e de cenários técnicos executados; indeterminados não são aprovações.
 
+## Auditorias específicas por instrumento
+
+- **MEEM:** [parecer de fidelidade clínico-científica e protocolo de decisão](MRC-ESC-MEEM-AUDITORIA.md). Documento de inspeção; diferenças na aplicação, interpretação normativa e condições de reprodução ainda pendentes de decisão e teste.
+
 ## Registro de execução formativa da MRC-ESC
 
 - **Commit:** a8e4d195c7993a2465617b2cb371b42d97ecbc25.
