@@ -394,5 +394,80 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Troca Cruzada (Cross-Taper): Estratégia de escolha para transições entre classes distintas (ISRS para ISRN, tricíclicos, etc.) e em doses elevadas.',
       'Janela Livre Obrigatória (Washout): Exigência inegociável em trocas envolvendo IMAOs (14 dias gerais e 5 semanas para fluoxetina) para prevenção de síndrome serotoninérgica fatal.'
     ]
+  },
+// Fundamentação acadêmica do TCR — documentação, EEM, integração e método DSR.
+  // Estes estudos não validam diretamente o Nexus Clínico nem suas regras de escore.
+  {
+    id: 'tcr-lobo-2015',
+    topic: 'Pesquisa TCR: EEM e registro semiestruturado',
+    title: 'A comparison of mental state examination documentation before and after a semi-structured assessment template',
+    source: 'Lobo SEM et al. International Journal of Medical Informatics. DOI: 10.1016/j.ijmedinf.2015.05.001',
+    year: '2015',
+    summary: 'Comparação de registros de EEM em serviço especializado antes e depois de um modelo eletrônico semiestruturado; não é prova de efetividade na APS brasileira.',
+    keyPoints: [
+      'Evidência direta para estudar organização e abrangência documental do EEM.',
+      'Não demonstra redução de tempo ou melhora de desfechos clínicos no Nexus.'
+    ]
+  },
+  {
+    id: 'tcr-zurynski-2021',
+    topic: 'Pesquisa TCR: narrativa e prontuário em saúde mental',
+    title: 'Implementation of Electronic Medical Records in Mental Health Settings: Scoping Review',
+    source: 'Zurynski Y et al. JMIR Mental Health. DOI: 10.2196/30564',
+    year: '2021',
+    summary: 'Revisão de escopo sobre implementação de registros eletrônicos em serviços de saúde mental e desafios da documentação narrativa.',
+    keyPoints: [
+      'Examina compatibilidade entre prontuário e necessidades próprias do atendimento em saúde mental.',
+      'A implementação de registro eletrônico não garante maior qualidade assistencial.'
+    ]
+  },
+  {
+    id: 'tcr-seinen-2025',
+    topic: 'Pesquisa TCR: registro estruturado e texto livre',
+    title: 'Using Structured Codes and Free-Text Notes to Measure Information Complementarity in Electronic Health Records',
+    source: 'Seinen TM et al. Journal of Medical Internet Research. DOI: 10.2196/66910',
+    year: '2025',
+    summary: 'Estudo sobre a complementaridade das informações presentes em códigos estruturados e notas livres no prontuário.',
+    keyPoints: [
+      'Sustenta preservar texto livre mesmo com documentação estruturada.',
+      'Não testa o Nexus nem demonstra que uma interface específica melhora desfechos.'
+    ]
+  },
+  {
+    id: 'tcr-gaspary-2026',
+    topic: 'Pesquisa TCR: prontuários em saúde mental brasileira',
+    title: 'A structured framework to improve usability in EHR implementation: a user-centered case study in Brazilian mental healthcare',
+    source: 'Gaspary FP et al. Frontiers in Digital Health. DOI: 10.3389/fdgth.2025.1676631',
+    year: '2026',
+    summary: 'Estudo brasileiro de usabilidade e implementação de prontuário em saúde mental, útil para contextualização sociotécnica.',
+    keyPoints: [
+      'Discute dificuldades de navegação, integração e flexibilidade documental.',
+      'Usabilidade observada em outro serviço não equivale a avaliação técnico-funcional do Nexus.'
+    ]
+  },
+  {
+    id: 'tcr-peffers-2007',
+    topic: 'Pesquisa TCR: Design Science Research',
+    title: 'A Design Science Research Methodology for Information Systems Research',
+    source: 'Peffers K et al. Journal of Management Information Systems. DOI: 10.2753/MIS0742-1222240302',
+    year: '2007',
+    summary: 'Propõe seis atividades de pesquisa orientada ao desenvolvimento e à avaliação de artefatos de sistemas de informação.',
+    keyPoints: [
+      'Distingue a construção e demonstração da avaliação efetiva do artefato.',
+      'A unidade de análise é a instanciação de software em versão identificada.'
+    ]
+  },
+  {
+    id: 'tcr-venable-2016',
+    topic: 'Pesquisa TCR: avaliação de artefatos DSR',
+    title: 'FEDS: A Framework for Evaluation in Design Science Research',
+    source: 'Venable J, Pries-Heje J, Baskerville R. European Journal of Information Systems. DOI: 10.1057/ejis.2014.36',
+    year: '2016',
+    summary: 'Framework de planejamento da avaliação de artefatos, distinguindo avaliação artificial/naturalística e formativa/somativa.',
+    keyPoints: [
+      'A avaliação preliminar com dados sintéticos é artificial e delimitada à consistência técnico-funcional.',
+      'Testes de bancada não demonstram eficácia clínica nem usabilidade por profissionais.'
+    ]
   }
+
 ];

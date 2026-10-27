@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState } from '../types';
 import { generateEemSummary } from '../utils/eemFormatter';
+import { getEmptyEemState, getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
 import {
   Stethoscope,
   CheckCircle,
@@ -21,34 +22,6 @@ interface EemViewProps {
   onOpenEducationSuggestions?: () => void;
 }
 
-const getInitialEemState = (): EemState => ({
-  aparencia: ['higienizado', 'vestuario_adequado', 'aparente_idade'],
-  aparenciaOutros: '',
-  atitude: ['cooperativo'],
-  atitudeOutros: '',
-  fala: ['fala_normal'],
-  falaOutros: '',
-  humor: ['eutimico'],
-  humorOutros: '',
-  afeto: ['normoemotivo'],
-  afetoOutros: '',
-  pensamentoCurso: ['curso_normopsiquico'],
-  pensamentoForma: ['forma_coerente'],
-  pensamentoConteudo: ['conteudo_sem_alteracoes'],
-  pensamentoOutros: '',
-  sensopercepcao: ['senso_sem_alteracoes'],
-  sensopercepcaoOutros: '',
-  orientacao: ['orientado_global'],
-  orientacaoOutros: '',
-  atencaoMemoria: ['atencao_normoprosexica', 'memoria_preservada'],
-  atencaoMemoriaOutros: '',
-  insight: ['insight_preservado'],
-  insightOutros: '',
-  julgamento: ['julgamento_preservado'],
-  julgamentoOutros: '',
-  observacoesLivres: '',
-});
-
 export const EemView: React.FC<EemViewProps> = ({
   onImportToSoap,
   eemState,
@@ -56,7 +29,7 @@ export const EemView: React.FC<EemViewProps> = ({
   onOpenEducationSuggestions,
 }) => {
   const sanitizeEemState = (state?: EemState): EemState => {
-    const base = getInitialEemState();
+    const base = getEmptyEemState();
     if (!state) return base;
     return {
       ...base,
@@ -97,153 +70,7 @@ export const EemView: React.FC<EemViewProps> = ({
   };
 
   const toggleOption = (key: keyof EemState, optionId: string) => {
-    const currentList = Array.isArray(eem[key]) ? (eem[key] as string[]) : [];
-    const exists = currentList.includes(optionId);
-    let newList: string[];
-
-    if (exists) {
-      newList = currentList.filter((id) => id !== optionId);
-    } else {
-      newList = [...currentList, optionId];
-
-      // Automatic mutual exclusion rules when selecting an option
-      if (key === 'aparencia') {
-        if (optionId === 'higienizado') newList = newList.filter((id) => id !== 'desleixado');
-        if (optionId === 'desleixado') newList = newList.filter((id) => id !== 'higienizado');
-        if (optionId === 'vestuario_adequado') newList = newList.filter((id) => id !== 'vestuario_extravagante');
-        if (optionId === 'vestuario_extravagante') newList = newList.filter((id) => id !== 'vestuario_adequado');
-        if (optionId === 'aparente_idade') newList = newList.filter((id) => id !== 'aparente_envelhecido');
-        if (optionId === 'aparente_envelhecido') newList = newList.filter((id) => id !== 'aparente_idade');
-      }
-
-      if (key === 'atitude') {
-        const altered = ['desconfiado', 'hostil', 'inhibido', 'agita_psicomotora', 'seductor_teatral'];
-        if (optionId === 'cooperativo') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'cooperativo');
-        }
-      }
-
-      if (key === 'fala') {
-        const altered = ['fala_lentificada', 'fala_acelerada', 'fala_baixo_volume', 'fala_disartrica', 'mutismo'];
-        if (optionId === 'fala_normal') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'fala_normal');
-          if (optionId === 'fala_lentificada') newList = newList.filter((id) => id !== 'fala_acelerada');
-          if (optionId === 'fala_acelerada') newList = newList.filter((id) => id !== 'fala_lentificada');
-        }
-      }
-
-      if (key === 'humor') {
-        const altered = ['distimico', 'ansioso', 'euforico', 'disforico', 'apatico'];
-        if (optionId === 'eutimico') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'eutimico');
-        }
-      }
-
-      if (key === 'afeto') {
-        const altered = ['embotado', 'labil', 'incongruente', 'hipomodulado'];
-        if (optionId === 'normoemotivo') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'normoemotivo');
-        }
-      }
-
-      if (key === 'pensamentoCurso') {
-        const altered = ['curso_bradipsiquico', 'curso_taquipsiquico', 'curso_bloqueio'];
-        if (optionId === 'curso_normopsiquico') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'curso_normopsiquico');
-          if (optionId === 'curso_bradipsiquico') newList = newList.filter((id) => id !== 'curso_taquipsiquico');
-          if (optionId === 'curso_taquipsiquico') newList = newList.filter((id) => id !== 'curso_bradipsiquico');
-        }
-      }
-
-      if (key === 'pensamentoForma') {
-        const altered = ['forma_circunstancial', 'forma_tangencial', 'forma_fuga_ideias', 'forma_frouxidao'];
-        if (optionId === 'forma_coerente') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'forma_coerente');
-        }
-      }
-
-      if (key === 'pensamentoConteudo') {
-        const altered = [
-          'conteudo_ruminacoes',
-          'conteudo_ideias_obsessivas',
-          'conteudo_ideacao_suicida',
-          'conteudo_delirio_perseguitorio',
-          'conteudo_delirio_grandeza',
-          'conteudo_delirio_ruina',
-        ];
-        if (optionId === 'conteudo_sem_alteracoes') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'conteudo_sem_alteracoes');
-        }
-      }
-
-      if (key === 'sensopercepcao') {
-        const altered = [
-          'senso_alucinacao_auditiva',
-          'senso_alucinacao_visual',
-          'senso_ilusoes',
-          'senso_despersonalizacao',
-        ];
-        if (optionId === 'senso_sem_alteracoes') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'senso_sem_alteracoes');
-        }
-      }
-
-      if (key === 'orientacao') {
-        if (optionId === 'orientado_global') {
-          newList = ['orientado_global'];
-        } else {
-          newList = newList.filter((id) => id !== 'orientado_global');
-          if (optionId === 'orientado_autopsiquica') {
-            newList = newList.filter((id) => id !== 'desorientado_autopsiquica');
-          }
-          if (optionId === 'desorientado_autopsiquica') {
-            newList = newList.filter((id) => id !== 'orientado_autopsiquica');
-          }
-        }
-      }
-
-      if (key === 'atencaoMemoria') {
-        if (optionId === 'atencao_normoprosexica') {
-          newList = newList.filter((id) => id !== 'atencao_hipoprosexia' && id !== 'atencao_hiperprosexia');
-        }
-        if (optionId === 'atencao_hipoprosexia' || optionId === 'atencao_hiperprosexia') {
-          newList = newList.filter((id) => id !== 'atencao_normoprosexica');
-        }
-        if (optionId === 'memoria_preservada') {
-          newList = newList.filter((id) => id !== 'memoria_hipomnesia_fixacao' && id !== 'memoria_hipomnesia_evocacao');
-        }
-        if (optionId === 'memoria_hipomnesia_fixacao' || optionId === 'memoria_hipomnesia_evocacao') {
-          newList = newList.filter((id) => id !== 'memoria_preservada');
-        }
-      }
-
-      if (key === 'insight') {
-        newList = [optionId];
-      }
-
-      if (key === 'julgamento') {
-        newList = [optionId];
-      }
-    }
-
-    const updatedState = { ...eem, [key]: newList };
-    updateState(updatedState);
+    updateState(toggleEemSelection(eem, key, optionId));
     setImported(false);
   };
 
@@ -272,7 +99,7 @@ export const EemView: React.FC<EemViewProps> = ({
   };
 
   const handleResetToStandard = () => {
-    setEem(getInitialEemState());
+    updateState(getEuthymicEemPreset());
     setImported(false);
     setCollapsedDomains({});
     setResetFeedback(true);

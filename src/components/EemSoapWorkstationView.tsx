@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState, SoapState, PatientSession, ScaleResult } from '../types';
 import { generateEemSummary, formatEemIntoObjective } from '../utils/eemFormatter';
+import { getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
 import {
   Stethoscope,
   FileText,
@@ -93,118 +94,14 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   };
 
   const toggleEemOption = (key: keyof EemState, optionId: string) => {
-    const currentList = Array.isArray(eemState[key]) ? (eemState[key] as string[]) : [];
-    const exists = currentList.includes(optionId);
-    let newList: string[];
-
-    if (exists) {
-      newList = currentList.filter((id) => id !== optionId);
-    } else {
-      newList = [...currentList, optionId];
-
-      if (key === 'aparencia') {
-        if (optionId === 'higienizado') newList = newList.filter((id) => id !== 'desleixado');
-        if (optionId === 'desleixado') newList = newList.filter((id) => id !== 'higienizado');
-        if (optionId === 'vestuario_adequado') newList = newList.filter((id) => id !== 'vestuario_extravagante');
-        if (optionId === 'vestuario_extravagante') newList = newList.filter((id) => id !== 'vestuario_adequado');
-        if (optionId === 'aparente_idade') newList = newList.filter((id) => id !== 'aparente_envelhecido');
-        if (optionId === 'aparente_envelhecido') newList = newList.filter((id) => id !== 'aparente_idade');
-      }
-
-      if (key === 'atitude') {
-        const altered = ['desconfiado', 'hostil', 'inhibido', 'agita_psicomotora', 'seductor_teatral'];
-        if (optionId === 'cooperativo') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'cooperativo');
-        }
-      }
-
-      if (key === 'fala') {
-        const altered = ['fala_lentificada', 'fala_acelerada', 'fala_baixo_volume', 'fala_disartrica', 'mutismo'];
-        if (optionId === 'fala_normal') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'fala_normal');
-        }
-      }
-
-      if (key === 'humor') {
-        const altered = ['humor_deprimido', 'humor_ansioso', 'humor_irritavel', 'humor_expansivo', 'humor_embotado'];
-        if (optionId === 'humor_eutimico') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'humor_eutimico');
-        }
-      }
-
-      if (key === 'afeto') {
-        const altered = ['afeto_embotado', 'afeto_incongruente', 'afeto_labil', 'afeto_hipomodulado'];
-        if (optionId === 'afeto_modulado') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'afeto_modulado');
-        }
-      }
-
-      if (key === 'sensopercepcao') {
-        const altered = [
-          'senso_alucinacao_auditiva',
-          'senso_alucinacao_visual',
-          'senso_ilusoes',
-          'senso_despersonalizacao',
-        ];
-        if (optionId === 'senso_sem_alteracoes') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'senso_sem_alteracoes');
-        }
-      }
-
-      if (key === 'orientacao') {
-        const altered = ['desorientado_tempo', 'desorientado_espaco', 'desorientado_auto'];
-        if (optionId === 'orientado_global') {
-          newList = newList.filter((id) => !altered.includes(id));
-        } else if (altered.includes(optionId)) {
-          newList = newList.filter((id) => id !== 'orientado_global');
-        }
-      }
-
-      if (key === 'atencaoMemoria') {
-        if (optionId === 'atencao_normoprosexica') {
-          newList = newList.filter((id) => id !== 'atencao_hipoprosexia' && id !== 'atencao_hiperprosexia');
-        }
-        if (optionId === 'atencao_hipoprosexia' || optionId === 'atencao_hiperprosexia') {
-          newList = newList.filter((id) => id !== 'atencao_normoprosexica');
-        }
-        if (optionId === 'memoria_preservada') {
-          newList = newList.filter((id) => id !== 'memoria_hipomnesia_fixacao' && id !== 'memoria_hipomnesia_evocacao');
-        }
-        if (optionId === 'memoria_hipomnesia_fixacao' || optionId === 'memoria_hipomnesia_evocacao') {
-          newList = newList.filter((id) => id !== 'memoria_preservada');
-        }
-      }
-
-      if (key === 'insight') {
-        newList = [optionId];
-      }
-
-      if (key === 'julgamento') {
-        newList = [optionId];
-      }
-    }
-
-    onUpdateEem({
-      ...eemState,
-      [key]: newList,
-    });
+    onUpdateEem(toggleEemSelection(eemState, key, optionId));
   };
 
   const getDomainSummary = (domainId: string): string => {
     const domain = EEM_DOMAINS.find((d) => d.id === domainId);
     const key = domainId as keyof EemState;
     const values = Array.isArray(eemState[key]) ? (eemState[key] as string[]) : [];
-    if (!domain || values.length === 0) return 'Não observado';
+    if (!domain || values.length === 0) return 'Não registrado';
     const labels = values
       .map((valId) => domain.options.find((o) => o.id === valId)?.label)
       .filter(Boolean);
@@ -226,6 +123,8 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   };
 
   const handleInsertScaleToSoap = (scaleRes: ScaleResult) => {
+    // A partial result must not be rendered as a final numerical assessment.
+    if (scaleRes.isComplete === false || scaleRes.completionStatus === 'incomplete' || scaleRes.completionStatus === 'invalid') return;
     const currentObjective = soapState.objective ? soapState.objective.trim() : '';
     const scaleLine = `• ${scaleRes.scaleTitle} (${scaleRes.date || 'Hoje'}): ${scaleRes.totalScore}/${scaleRes.maxScore} pts — ${scaleRes.classification}.`;
 
@@ -450,35 +349,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
 
               <button
                 type="button"
-                onClick={() => {
-                  onUpdateEem({
-                    aparencia: ['higienizado', 'vestuario_adequado', 'aparente_idade'],
-                    aparenciaOutros: '',
-                    atitude: ['cooperativo'],
-                    atitudeOutros: '',
-                    fala: ['fala_normal'],
-                    falaOutros: '',
-                    humor: ['humor_eutimico'],
-                    humorOutros: '',
-                    afeto: ['afeto_modulado'],
-                    afetoOutros: '',
-                    pensamentoCurso: ['curso_normal'],
-                    pensamentoForma: ['forma_logico'],
-                    pensamentoConteudo: [],
-                    pensamentoOutros: '',
-                    sensopercepcao: ['senso_sem_alteracoes'],
-                    sensopercepcaoOutros: '',
-                    orientacao: ['orientado_global'],
-                    orientacaoOutros: '',
-                    atencaoMemoria: ['atencao_normoprosexica', 'memoria_preservada'],
-                    atencaoMemoriaOutros: '',
-                    insight: ['insight_preservado'],
-                    insightOutros: '',
-                    julgamento: ['julgamento_preservado'],
-                    julgamentoOutros: '',
-                    observacoesLivres: '',
-                  });
-                }}
+                onClick={() => onUpdateEem(getEuthymicEemPreset())}
                 className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer transition-colors px-3 py-1.5 rounded-md bg-white border border-slate-200/90 shadow-2xs font-medium"
                 title="Preencher padrão eutímico"
               >
@@ -617,6 +488,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
               <div className="space-y-2">
                 {scaleHistory.map((res, idx) => {
                   const isJustInserted = insertedScaleId === (res.id || res.scaleId);
+                  const isIncomplete = res.isComplete === false || res.completionStatus === 'incomplete' || res.completionStatus === 'invalid';
                   const hasItem9Alert =
                     res.scaleId === 'phq-9' &&
                     ((res.answersArray && res.answersArray[8] > 0) ||
@@ -650,10 +522,12 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                         <button
                           type="button"
                           onClick={() => handleInsertScaleToSoap(res)}
-                          className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer"
+                          disabled={isIncomplete}
+                          title={isIncomplete ? 'Finalize o instrumento para importar o escore' : 'Inserir resultado no Objetivo'}
+                          className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer disabled:text-slate-400 disabled:cursor-not-allowed"
                         >
                           <FileCheck className="w-3.5 h-3.5" />
-                          <span>{isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
+                          <span>{isIncomplete ? 'Preenchimento pendente' : isJustInserted ? 'Inserido no Objetivo!' : 'Inserir no Objetivo'}</span>
                         </button>
                       </div>
                     </div>

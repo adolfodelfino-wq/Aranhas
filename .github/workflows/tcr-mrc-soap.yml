@@ -1,0 +1,35 @@
+name: TCR - SOAP EEM escalas - verificacao delimitada
+
+on:
+  push:
+    branches:
+      - tcr-2026-fundamentacao-seguranca-soap
+    paths-ignore:
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout da versao sob teste
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+      - name: Diagnostico global TypeScript (informativo; inclui recursos fora do TCR)
+        continue-on-error: true
+        run: npm run lint
+      - name: Verificar invariantes tecnicas MRC-SOAP EEM e ESC
+        if: ${{ always() }}
+        run: npm test -- src/__tests__/mrcSoap.test.ts src/__tests__/mrcEem.test.ts src/__tests__/mrcEsc.test.ts --reporter=verbose
+      - name: Verificar build geral da aplicacao (informativo sobre integridade)
+        if: ${{ always() }}
+        run: npm run build
