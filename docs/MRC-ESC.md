@@ -53,4 +53,16 @@ IDs de cada instrumento identificam, respectivamente:
 5. Corrigir em commit separado e repetir os testes pertinentes. Não agregar resultados de versões diferentes como se fossem uma rodada única.
 6. Relatar denominadores de critérios documentais examinados e de cenários técnicos executados; indeterminados não são aprovações.
 
-**Status inicial:** 42 critérios planejados; inspeção bibliográfica preliminar realizada; rodada técnica MRC-ESC ainda não executada.
+## Registro de execução formativa da MRC-ESC
+
+- **Commit:** a8e4d195c7993a2465617b2cb371b42d97ecbc25.
+- **Evidência:** https://github.com/adolfodelfino-wq/Aranhas/actions/runs/40439681470
+- **Execução:** suíte Vitest delimitada a MRC-SOAP, MRC-EEM e MRC-ESC; **44/44 testes automatizados passaram**, dos quais **26/26 foram verificações técnico-funcionais dos sete instrumentos de escala**.
+- **Critérios técnicos cobertos nessa rodada:** para cada um dos sete instrumentos, quantidade de itens e extremos de escore; bloqueio de resultados vazios/incompletos; rejeição de alternativa inválida. Adicionalmente, opções 0/2/4 do AUDIT (itens 9–10), alertas PHQ-9 item 9 e EPDS item 10 em formulários incompletos e com soma baixa.
+- **Build:** realizado. Diagnóstico global TypeScript conserva pendência em componente de calculadora farmacológica fora do escopo do TCR; não contabilizar como falha das matrizes.
+- **Avaliação clínico-científica:** **não concluída**. As discrepâncias identificadas no confronto documental permanecem sob análise, e o fato de o código calcular corretamente uma regra programada **não valida a pertinência clínica dessa regra**.
+- **Pendências:** pontos de corte e versões brasileiras, equivalência textual de todos os itens, interpretação e recomendações, limites próximos aos cortes, testes de interface e verificação independente da bibliografia.
+- **Limite de interpretação:** 26 verificações automáticas aprovadas não equivalem a aprovação dos 42 critérios documentais/funcionais planejados.
+
+**Estado:** protocolo das sete escalas definido, execução técnica formativa registrada, auditoria clínica ainda pendente de adjudicação.
+
