@@ -135,7 +135,6 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
                   <th className="py-2.5 px-3 font-semibold">Antidepressivo</th>
                   <th className="py-2.5 px-3 font-semibold">Classe</th>
                   <th className="py-2.5 px-3 font-semibold text-teal-800">Eq. Fluoxetina 40mg</th>
-                  <th className="py-2.5 px-3 font-semibold">Eq. Fluoxetina 20mg</th>
                   <th className="py-2.5 px-3 font-semibold">Meia-vida Plasmática</th>
                   <th className="py-2.5 px-3 font-semibold">Base Científica</th>
                 </tr>
@@ -150,7 +149,6 @@ export const AntidepressantSwitchCalculator: React.FC<AntidepressantSwitchCalcul
                       </span>
                     </td>
                     <td className="py-2 px-3 font-semibold text-teal-900 font-mono">{row.dose40Eq}</td>
-                    <td className="py-2 px-3 font-medium text-slate-600 font-mono">{row.dose20Eq}</td>
                     <td className="py-2 px-3 text-slate-500">{row.halfLife}</td>
                     <td className="py-2 px-3">
                       {row.isPrimaryHayasaka ? (

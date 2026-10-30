@@ -419,6 +419,30 @@ export const RADAR_PROFILES: Record<string, ScaleRadarProfile> = {
     demoInitialAnswers: [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
     demoCurrentAnswers: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   },
+
+  'snap-iv': {
+    scaleId: 'snap-iv',
+    scaleTitle: 'SNAP-IV (TDAH e Desatenção/Hiperatividade)',
+    acronym: 'SNAP-IV',
+    maxScore: 54,
+    remissionThreshold: 10,
+    moderateThreshold: 22,
+    scoreLabel: 'Pontos (0-54)',
+    radialAxisLabel: 'Intensidade dos Sintomas (0 a 3)',
+    domains: [
+      { domain: 'Desatenção: Detalhes/Erros', keyIdx: 0, fullMark: 3, description: 'Deixa de prestar atenção a detalhes ou comete erros por descuido' },
+      { domain: 'Desatenção: Sustentação', keyIdx: 1, fullMark: 3, description: 'Dificuldade para manter a atenção em tarefas' },
+      { domain: 'Desatenção: Escuta', keyIdx: 2, fullMark: 3, description: 'Parece não escutar quando lhe dirigem a palavra' },
+      { domain: 'Desatenção: Instruções', keyIdx: 3, fullMark: 3, description: 'Não segue instruções até o fim e não termina tarefas' },
+      { domain: 'Desatenção: Organização', keyIdx: 4, fullMark: 3, description: 'Dificuldade para organizar tarefas e atividades' },
+      { domain: 'Desatenção: Esforço Mental', keyIdx: 5, fullMark: 3, description: 'Evita tarefas que exijam esforço mental constante' },
+      { domain: 'Hiperatividade: Inquietação', keyIdx: 9, fullMark: 3, description: 'Remexe as mãos ou os pés ou se remexe na cadeira' },
+      { domain: 'Hiperatividade: Levantar', keyIdx: 10, fullMark: 3, description: 'Levanta da cadeira em situações em que se espera que fique sentado' },
+      { domain: 'Impulsividade: Respostas', keyIdx: 15, fullMark: 3, description: 'Dá respostas precipitadas antes de as perguntas serem concluídas' },
+    ],
+    demoInitialAnswers: [3, 3, 2, 3, 2, 2, 0, 0, 0, 3, 2, 1, 0, 0, 1, 2, 1, 1],
+    demoCurrentAnswers: [1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  },
 };
 
 export const getRadarProfile = (scaleId: string): ScaleRadarProfile => {

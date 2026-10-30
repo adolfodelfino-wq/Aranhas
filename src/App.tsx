@@ -416,6 +416,35 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleDeleteScaleResult = (id?: string, index?: number) => {
+    setScaleHistory((prev) => {
+      const updated = prev.filter((item, idx) => {
+        if (id && item.id) return item.id !== id;
+        if (index !== undefined) return idx !== index;
+        return item.scaleId !== id;
+      });
+      if (patient.prontuario && !patient.isDemo) {
+        setIsSyncingCloud(true);
+        syncPatientToCloud(patient, updated)
+          .then((success) => {
+            if (success) setCloudSynced(true);
+          })
+          .finally(() => {
+            setIsSyncingCloud(false);
+          });
+      }
+      return updated;
+    });
+
+    setScaleResults((prev) =>
+      prev.filter((item, idx) => {
+        if (id && item.id) return item.id !== id;
+        if (index !== undefined) return idx !== index;
+        return item.scaleId !== id;
+      })
+    );
+  };
+
   const handleUpdateEem = (updated: EemState) => {
     setEemState(updated);
   };
@@ -575,6 +604,7 @@ export const App: React.FC = () => {
                 onNavigate={handleNavigate}
                 onResetConsultation={handleResetNewPatient}
                 onOpenEvidence={() => handleOpenAboutWithTab('evidencias')}
+                onDeleteScaleResult={handleDeleteScaleResult}
                 focusSubjectiveTrigger={focusSubjectiveTrigger}
               />
             )}

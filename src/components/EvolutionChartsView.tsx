@@ -281,7 +281,9 @@ ${variation.formattedSummary}
               }}
               className="text-xs font-sans font-medium bg-white border border-slate-200 rounded-md px-3 py-1.5 text-slate-800 focus:outline-none focus:border-teal-700 shadow-2xs"
             >
-              {Object.values(RADAR_PROFILES).map((p) => (
+              {Object.values(RADAR_PROFILES)
+                .filter((p) => ['phq-9', 'gad-7', 'audit', 'epds', 'meem', 'asrs-18', 'snap-iv'].includes(p.scaleId))
+                .map((p) => (
                 <option key={p.scaleId} value={p.scaleId}>
                   {p.acronym} — {p.scaleTitle.replace(/\(.*?\)/, '').trim()}
                 </option>

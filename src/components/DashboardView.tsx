@@ -73,7 +73,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           Ferramentas rápidas
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           {/* 1. Instrumentos */}
           <button
             type="button"
@@ -89,36 +89,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Instrumentos
                 </h3>
                 <p className="text-xs text-slate-500 font-normal">
-                  PHQ-9, GAD-7, AUDIT, C-SSRS e escalas validadas
+                  PHQ-9, GAD-7, AUDIT, EPDS, MEEM e escalas
                 </p>
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
           </button>
 
-          {/* 2. Calculadoras */}
-          <button
-            type="button"
-            onClick={() => onNavigate('calculators')}
-            className="p-4 bg-white border border-slate-200/80 hover:border-slate-300 rounded-lg text-left transition-all hover:bg-slate-50/50 cursor-pointer flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-md bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-600 group-hover:text-teal-700">
-                <Calculator className="w-4 h-4" strokeWidth={1.75} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800 group-hover:text-slate-900">
-                  Calculadoras
-                </h3>
-                <p className="text-xs text-slate-500 font-normal">
-                  Desmame Maudsley, CPZE, eGFR e risco cardiovascular
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
-          </button>
-
-          {/* 3. EEM + SOAP */}
+          {/* 2. EEM + SOAP */}
           <button
             type="button"
             onClick={() => onNavigate('soap')}
@@ -140,7 +118,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
           </button>
 
-          {/* 4. Evolução */}
+          {/* 3. Evolução */}
           <button
             type="button"
             onClick={() => onNavigate('scales', { scaleId: 'phq-9' })}

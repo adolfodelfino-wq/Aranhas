@@ -2424,3 +2424,29 @@ export const ALL_SCALES: ScaleDefinition[] = [
   ...ADDITIONAL_SCALES,
 ];
 
+/**
+ * Escopo do TCR (20/11/2026): 7 instrumentos prioritários e validados na APS:
+ * 1. PHQ-9 (Depressão)
+ * 2. GAD-7 (Ansiedade)
+ * 3. AUDIT (Padrão de uso de álcool - 10 itens)
+ * 4. EPDS (Depressão perinatal / pós-parto)
+ * 5. MEEM (Rastreio cognitivo)
+ * 6. ASRS-18 (TDAH em adultos)
+ * 7. SNAP-IV (TDAH / Desatenção e Hiperatividade)
+ */
+export const TCR_SCALE_IDS = [
+  'phq-9',
+  'gad-7',
+  'audit',
+  'epds',
+  'meem',
+  'asrs-18',
+  'snap-iv',
+] as const;
+
+export type TcrScaleId = typeof TCR_SCALE_IDS[number];
+
+export const TCR_SCALES: ScaleDefinition[] = TCR_SCALE_IDS.map(
+  (id) => ALL_SCALES.find((s) => s.id === id)!
+).filter(Boolean);
+

@@ -40,15 +40,18 @@ export function formatForPec(
     ? selectedCodes.map((c) => `• CIAP-2: ${c.ciap2} | CID-10: ${c.cid10} - ${c.label}`).join('\n')
     : '';
 
-  const cleanSubjective = soap.subjective?.trim() || 'Sem queixas registradas no momento.';
-  const cleanObjective = soap.objective?.trim() || 'Exame físico e mental sem alterações evidentes documentadas.';
-  
-  let cleanAssessment = soap.assessment?.trim() || 'Avaliação clínica em andamento.';
+  // Empty SOAP sections must not be converted into negative findings, diagnoses,
+  // clinical assessments or therapeutic decisions not provided by the physician.
+  const missingFieldText = 'Não registrado.';
+  const cleanSubjective = soap.subjective?.trim() || missingFieldText;
+  const cleanObjective = soap.objective?.trim() || missingFieldText;
+
+  let cleanAssessment = soap.assessment?.trim() || missingFieldText;
   if (codesString) {
     cleanAssessment = `${cleanAssessment}\n\n[CODIFICAÇÃO CIAP-2 / CID-10]:\n${codesString}`;
   }
 
-  const cleanPlan = soap.plan?.trim() || 'Orientações gerais de saúde e acompanhamento na UBS.';
+  const cleanPlan = soap.plan?.trim() || missingFieldText;
 
   const fullNarrative = `[ATENDIMENTO MÉDICO - APS / e-SUS PEC]
 PACIENTE: ${patient.name} (${patient.age} anos, Pront: ${patient.prontuario || 'S/N'})

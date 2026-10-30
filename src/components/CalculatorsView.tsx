@@ -5,6 +5,11 @@ import {
   calculateAntipsychoticEquivalence,
   DetailedCardiovascularResult,
 } from '../utils/calculators';
+import {
+  ANTIPSYCHOTIC_DATABASE,
+  calculateAntipsychoticEquivalenceV2,
+  AntipsychoticEquivalenceResult,
+} from '../utils/antipsychoticEquivalence';
 import { CalculatorResult } from '../types';
 import { CalculatorTabId } from '../utils/navigation';
 import {
@@ -111,10 +116,6 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
   const [showAggravatorsSection, setShowAggravatorsSection] = useState(false);
   const [showPsychSection, setShowPsychSection] = useState(true);
 
-  // Antipsychotic Inputs
-  const [apDrug, setApDrug] = useState('Risperidona');
-  const [apDose, setApDose] = useState('3');
-
   const egfrResult: CalculatorResult = calculateEgfr(
     parseFloat(creatinine) || 1.0,
     parseInt(egfrAge, 10) || 45,
@@ -148,9 +149,33 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
     hasSevereMentalIllness,
   });
 
+  // Antipsychotic Inputs
+  const [apDrug, setApDrug] = useState('risperidona');
+  const [apDose, setApDose] = useState('3');
+  const [apIsFirstEpisode, setApIsFirstEpisode] = useState(false);
+
+  const parsedApDose = parseFloat(apDose);
+  let apDetailedResult: AntipsychoticEquivalenceResult | null = null;
+  let apValidationError: string | null = null;
+
+  if (isNaN(parsedApDose) || parsedApDose <= 0) {
+    apValidationError = 'Informe uma dose numérica diária estritamente positiva.';
+  } else {
+    try {
+      apDetailedResult = calculateAntipsychoticEquivalenceV2({
+        drugId: apDrug,
+        doseMg: parsedApDose,
+        isFirstEpisode: apIsFirstEpisode,
+      });
+    } catch (err: unknown) {
+      apValidationError = err instanceof Error ? err.message : 'Parâmetros de entrada inválidos.';
+    }
+  }
+
   const apResult: CalculatorResult = calculateAntipsychoticEquivalence(
     apDrug,
-    parseFloat(apDose) || 2
+    isNaN(parsedApDose) ? 0 : parsedApDose,
+    apIsFirstEpisode
   );
 
   const handleExport = (res: CalculatorResult) => {
@@ -280,85 +305,224 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
       {/* Tab 2: Antipsychotic Equivalence (CPZE) */}
       {activeTab === 'antipsychotic' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Form (lg:col-span-7) */}
+          {/* Left Column: Form & Clinical Parameters (lg:col-span-7) */}
           <div className="lg:col-span-7 bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs space-y-4">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2">
-              Parâmetros de Entrada
-            </h2>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h2 className="text-base font-bold text-slate-900">
+                Parâmetros de Entrada (CPZE)
+              </h2>
+              {onOpenEvidenceModal && (
+                <button
+                  type="button"
+                  onClick={onOpenEvidenceModal}
+                  className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Ver Evidências (Leucht / Gardner)</span>
+                </button>
+              )}
+            </div>
 
             <div className="space-y-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-mono font-bold uppercase text-slate-700">
-                  Antipsicótico Atual:
+                <label className="font-sans font-semibold text-slate-700">
+                  Antipsicótico Prescrito:
                 </label>
                 <select
                   value={apDrug}
                   onChange={(e) => setApDrug(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-teal-700 outline-none"
                 >
-                  <option value="Risperidona">Risperidona (VO)</option>
-                  <option value="Haloperidol">Haloperidol (VO)</option>
-                  <option value="Olanzapina">Olanzapina (VO)</option>
-                  <option value="Quetiapina">Quetiapina (VO)</option>
-                  <option value="Aripiprazol">Aripiprazol (VO)</option>
-                  <option value="Clozapina">Clozapina (VO)</option>
-                  <option value="Clorpromazina">Clorpromazina (VO)</option>
+                  {Object.values(ANTIPSYCHOTIC_DATABASE).map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} {d.isClozapine ? '— Uso Restrito (ERT)' : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-mono font-bold uppercase text-slate-700">
+                <label className="font-sans font-semibold text-slate-700">
                   Dose Diária Atual (mg/dia):
                 </label>
                 <input
                   type="number"
                   step="0.5"
+                  min="0.1"
                   value={apDose}
                   onChange={(e) => setApDose(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-blue-600 outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-teal-700 outline-none"
                 />
               </div>
 
+              {/* Contexto Clínico: Primeiro Episódio Psicótico */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={apIsFirstEpisode}
+                    onChange={(e) => setApIsFirstEpisode(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
+                  />
+                  <div className="space-y-0.5">
+                    <span className="font-semibold text-slate-800 block">
+                      Paciente em Primeiro Episódio Psicótico (PEP / FEP)
+                    </span>
+                    <span className="text-[11px] text-slate-500 block leading-relaxed">
+                      Sensibilidade biológica aumentada a doses reduzidas e maior risco de efeitos extrapiramidais/metabólicos.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Alerta de Validação / Erro de Entrada */}
+              {apValidationError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-xs flex items-start gap-2">
+                  <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>{apValidationError}</span>
+                </div>
+              )}
+
+              {/* Alerta de Clozapina se selecionada */}
+              {apDetailedResult?.drug.isClozapine && (
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded text-amber-900 text-xs space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>Aviso de Farmacovigilância: Clozapina</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    A estimativa de CPZE tem finalidade descritiva de carga de exposição. É expressamente contraindicada qualquer substituição ou transição automática orientada por equivalências matemáticas. O fármaco exige controle hematológico regular (risco de agranulocitose).
+                  </p>
+                </div>
+              )}
+
+              {/* Alerta de Primeiro Episódio Psicótico se marcado */}
+              {apDetailedResult?.firstEpisodeNotice && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-blue-900 text-xs space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-950">
+                    <Info className="w-4 h-4 text-blue-700 shrink-0" />
+                    <span>Particularidade Clínica: Primeiro Episódio Psicótico</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    {apDetailedResult.firstEpisodeNotice}
+                  </p>
+                </div>
+              )}
+
+              {/* Nota Metodológica Sucinta */}
               <div className="bg-slate-50 p-3 rounded border border-slate-200 text-slate-600 leading-relaxed text-[11px]">
-                <strong>Metodologia CPZE:</strong> Padronização baseada nas diretrizes de Leucht et al. (2016) e Davis (1974) para estimar potência dopaminérgica D2 e risco de efeitos extrapiramidais e síndrome metabólica.
+                <strong>Metodologia Científica:</strong> O Nexus adota o método de Dose Média Clássica de <em>Leucht et al. (2015)</em> como estimativa principal, complementado pelo método de Dose Mínima Eficaz (<em>Leucht et al., 2014</em>) e Consenso Internacional (<em>Gardner et al., 2010</em>). O método DDD (<em>Leucht et al., 2016</em>) é apresentado exclusivamente como informação de utilização populacional.
               </div>
             </div>
           </div>
 
-          {/* Right Column: Sticky Result (lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-md space-y-5 lg:sticky lg:top-20">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+          {/* Right Column: Result, Independent Methods & SOAP (lg:col-span-5) */}
+          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-md space-y-4 lg:sticky lg:top-20">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Resultado do Escore
               </span>
-              <span className="font-mono text-xs text-slate-400">
+              <span className="text-xs font-mono text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                 CPZE
               </span>
             </div>
 
+            {/* Resultado Principal: Leucht et al. (2015) */}
             <div className="text-center space-y-1 py-3 bg-slate-50 rounded-lg border border-slate-200/80">
-              <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
-                {apResult.value}
-                <span className="text-base text-slate-400 font-normal"> mg/dia</span>
-              </div>
-              <div className="text-xs font-sans font-medium text-slate-500">
-                Equivalente em Clorpromazina (CPZE)
-              </div>
+              {apDetailedResult?.primaryResult ? (
+                <>
+                  <div className="font-mono text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight">
+                    {apDetailedResult.primaryResult.equivalentCpzeMg}
+                    <span className="text-base text-slate-500 font-normal"> mg/dia</span>
+                  </div>
+                  <div className="text-xs font-medium text-slate-600">
+                    Equivalente em Clorpromazina (CPZE)
+                  </div>
+                  <div className="text-[10px] text-teal-800 font-semibold pt-0.5">
+                    Método Principal: Dose Média Clássica (Leucht et al., 2015)
+                  </div>
+                </>
+              ) : (
+                <div className="py-2">
+                  <div className="text-sm font-bold text-slate-700">
+                    Dado Primário Não Disponível
+                  </div>
+                  <div className="text-[11px] text-slate-500 max-w-xs mx-auto mt-1">
+                    Este fármaco não possui coeficiente de dose média em RCTs na Tabela 1 de Leucht (2015).
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 p-3 rounded text-center text-xs font-medium">
-              {apResult.interpretation}
-            </div>
-
-            <div className="space-y-1.5 text-xs text-slate-700 bg-slate-50 p-3 rounded border border-slate-200">
-              <span className="font-sans font-semibold uppercase text-[11px] block text-slate-600">
-                Texto para Prontuário:
+            {/* Métodos Comparativos Independentes (Seção Secundária) */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                Métodos Comparativos Independentes:
               </span>
-              <p className="leading-relaxed">{apResult.soapText}</p>
+
+              {apDetailedResult?.comparativeResults && apDetailedResult.comparativeResults.length > 0 ? (
+                <div className="space-y-1.5 text-xs">
+                  {apDetailedResult.comparativeResults.map((comp) => (
+                    <div
+                      key={comp.method}
+                      className="p-2.5 bg-slate-50 rounded border border-slate-200 flex items-start justify-between gap-2"
+                    >
+                      <div>
+                        <div className="font-semibold text-slate-800">{comp.methodName}</div>
+                        <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                          {comp.sourceTableOrSection} • {comp.referenceCitation}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono font-bold text-slate-900">
+                          {comp.equivalentCpzeMg}
+                        </span>
+                        <span className="text-[10px] text-slate-500 block">mg CPZE</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500 italic p-2 bg-slate-50 rounded">
+                  Sem dados comparativos independentes disponíveis para este fármaco.
+                </div>
+              )}
+
+              {/* Informação Complementar de Utilização: DDD (Leucht 2016) */}
+              {apDetailedResult?.dddComplementaryInfo && (
+                <div className="p-2.5 bg-slate-50/60 rounded border border-slate-200 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-700">
+                      Utilização Populacional (DDD - Leucht 2016):
+                    </span>
+                    <span className="font-mono font-semibold text-slate-800">
+                      ~{apDetailedResult.dddComplementaryInfo.equivalentCpzeMg} mg CPZE
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                    Unidade técnica de consumo populacional (OMS); não reflete equivalência de dose clínica individual.
+                  </p>
+                </div>
+              )}
             </div>
 
+            {/* Limitação de Dose-Resposta (Furukawa 2026 / Leucht) */}
+            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 leading-relaxed">
+              <strong>Nota Clínica (Furukawa 2026):</strong> As curvas de resposta clínica e saturação D2 não são lineares entre os fármacos. A equivalência CPZE informa a exposição teórica aproximada e não deve ser usada para substituição direta de prescrição.
+            </div>
+
+            {/* Texto Estruturado para SOAP */}
+            <div className="space-y-1 text-xs text-slate-700 bg-slate-50 p-3 rounded border border-slate-200">
+              <span className="font-sans font-semibold uppercase text-[11px] block text-slate-600">
+                Registro para Prontuário (SOAP):
+              </span>
+              <p className="leading-relaxed text-[11px]">{apResult.soapText}</p>
+            </div>
+
+            {/* Botões de Ação */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => handleExport(apResult)}
                 className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
               >
@@ -367,11 +531,16 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
               </button>
 
               <button
+                type="button"
                 onClick={() => handleCopy(apResult)}
                 className="w-full py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-sans font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                {copied[apResult.id] ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                <span>{copied[apResult.id] ? 'Copiado!' : 'Copiar Texto Simples'}</span>
+                {copied[apResult.id] ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                )}
+                <span>{copied[apResult.id] ? 'Copiado!' : 'Copiar Registro Simples'}</span>
               </button>
             </div>
           </div>

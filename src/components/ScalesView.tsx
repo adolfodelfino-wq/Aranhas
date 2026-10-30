@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ALL_SCALES } from '../data/scalesData';
+import { ALL_SCALES, TCR_SCALES } from '../data/scalesData';
 import { ScaleDefinition, ScaleResult } from '../types';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WhatsappShareModal } from './WhatsappShareModal';
@@ -129,7 +129,9 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
   };
 
   const scale: ScaleDefinition =
-    ALL_SCALES.find((s) => s.id === selectedScaleId) || ALL_SCALES[0];
+    TCR_SCALES.find((s) => s.id === selectedScaleId) ||
+    ALL_SCALES.find((s) => s.id === selectedScaleId) ||
+    TCR_SCALES[0];
 
   // Reset answers when switching scales or when patient is reset
   useEffect(() => {
@@ -249,7 +251,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               }}
               className="bg-slate-50/80 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-hidden focus:border-teal-700 cursor-pointer"
             >
-              {ALL_SCALES.map((s) => (
+              {TCR_SCALES.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.acronym} — {s.title} ({s.questions.length} itens)
                 </option>
@@ -301,20 +303,10 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                   'phq-9': 'Sintomas depressivos · 9 questões · Últimas 2 semanas',
                   'gad-7': 'Sintomas ansiosos · 7 questões · Últimas 2 semanas',
                   'audit': 'Padrão de uso de álcool · 10 questões · Últimos 12 meses',
-                  'audit-c': 'Rastreio rápido de álcool · 3 questões · Últimos 12 meses',
-                  'c-ssrs': 'Risco de suicídio · 6 questões · Triagem clínica',
-                  'meem': 'Rastreio cognitivo · 11 tarefas · Avaliação no momento',
-                  'mdq': 'Espectro bipolar · 15 itens · Histórico de vida',
                   'epds': 'Depressão pós-parto e gestacional · 10 questões · Últimos 7 dias',
-                  'pc-ptsd-5': 'Estresse pós-traumático · 5 itens · Último mês',
-                  'isi': 'Gravidade da insônia · 7 questões · Últimas 2 semanas',
-                  'asrs': 'Rastreio de TDAH em adultos · 6 questões · Últimos 6 meses',
-                  'gds-15': 'Depressão geriátrica · 15 questões · Última semana',
-                  'cage': 'Rastreio de uso nocivo de álcool · 4 questões · Histórico',
-                  'hama': 'Gravidade da ansiedade · 14 itens · Avaliação atual',
-                  'hamd': 'Gravidade da depressão · 17 itens · Última semana',
-                  'panss-6': 'Sintomas psicóticos breves · 6 itens · Última semana',
-                  'ymrs': 'Sintomas de mania · 11 itens · Últimas 48 horas',
+                  'meem': 'Rastreio cognitivo · 11 tarefas · Avaliação no momento',
+                  'asrs-18': 'Rastreio de TDAH em adultos · 18 questões · Últimos 6 meses',
+                  'snap-iv': 'TDAH / Desatenção e Hiperatividade · 18 itens · Avaliação por pais/professores',
                 };
                 return map[scale.id] || `${scale.title} · ${scale.questions.length} itens · ~${scale.estimatedMinutes || 2} min`;
               })()}

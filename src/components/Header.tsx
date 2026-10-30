@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PatientSession, NavView } from '../types';
-import { ALL_SCALES } from '../data/scalesData';
+import { ALL_SCALES, TCR_SCALES } from '../data/scalesData';
 import {
   Search,
   Brain,
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   // Filter tools for instant search
   const filteredScales = searchQuery.trim()
-    ? ALL_SCALES.filter(
+    ? TCR_SCALES.filter(
         (s) =>
           (s.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
           (s.acronym || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -227,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
-              placeholder="Pesquisar instrumentos, calculadoras, fármacos..."
+              placeholder="Pesquisar instrumentos clínicos (PHQ-9, GAD-7, AUDIT, MEEM...)"
               className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 placeholder-slate-400 pl-10 pr-16 py-2 rounded-lg border border-slate-200 focus:border-teal-700 text-xs font-sans transition-all outline-hidden"
             />
             {searchQuery ? (
@@ -249,7 +249,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isSearchFocused && (searchQuery.trim() || isSearchFocused) && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden z-50 text-slate-800 animate-in fade-in slide-in-from-top-1 duration-150 max-h-96 overflow-y-auto">
               <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
-                <span>{searchQuery ? `Resultados para "${searchQuery}"` : 'Ferramentas Mais Utilizadas'}</span>
+                <span>{searchQuery ? `Resultados para "${searchQuery}"` : 'Instrumentos Clínicos Padronizados'}</span>
                 <span className="text-[10px] text-slate-400">ESC fecha</span>
               </div>
 
@@ -258,7 +258,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="px-2 py-1 text-[10px] font-semibold font-mono uppercase tracking-wider text-slate-400">
                   Instrumentos Clínicos
                 </div>
-                {(searchQuery ? filteredScales : ALL_SCALES.slice(0, 5)).map((s) => (
+                {(searchQuery ? filteredScales : TCR_SCALES).map((s) => (
                   <button
                     key={s.id}
                     type="button"
@@ -280,38 +280,6 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                     <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                       ~{s.estimatedMinutes || 2} min
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Calculadoras Médicas */}
-              <div className="p-1.5 border-t border-slate-100">
-                <div className="px-2 py-1 text-[10px] font-semibold font-mono uppercase tracking-wider text-slate-400">
-                  Calculadoras Médicas
-                </div>
-                {clinicalCalculators.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => handleSelectTool('calc', c.id)}
-                    className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 transition-colors flex items-center justify-between group cursor-pointer"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-slate-900 group-hover:text-teal-700">
-                          {c.acronym}
-                        </span>
-                        <span className="text-xs text-slate-700 font-normal">
-                          {c.title}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-400">
-                        {c.category}
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono bg-teal-50 text-teal-800 border border-teal-200/60 px-2 py-0.5 rounded">
-                      Decisão Clínica
                     </span>
                   </button>
                 ))}

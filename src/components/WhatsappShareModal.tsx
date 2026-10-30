@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ALL_SCALES } from '../data/scalesData';
+import { ALL_SCALES, TCR_SCALES } from '../data/scalesData';
 import { ScaleResult } from '../types';
 import {
   Send,
@@ -57,7 +57,7 @@ export const WhatsappShareModal: React.FC<WhatsappShareModalProps> = ({
   const [scriptPreset, setScriptPreset] = useState<'pre_consultation' | 'treatment_monitoring' | 'direct'>('pre_consultation');
   const [showMedicalTips, setShowMedicalTips] = useState<boolean>(true);
 
-  const scale = ALL_SCALES.find((s) => s.id === selectedScaleId) || ALL_SCALES[0];
+  const scale = TCR_SCALES.find((s) => s.id === selectedScaleId) || ALL_SCALES.find((s) => s.id === selectedScaleId) || TCR_SCALES[0];
 
   // Base URL of current app or configured domain
   const getBaseUrl = () => {
@@ -315,7 +315,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
                 Selecione a Escala a ser Enviada:
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {ALL_SCALES.map((s) => (
+                {TCR_SCALES.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => setSelectedScaleId(s.id)}
@@ -456,7 +456,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
                 onChange={(e) => setSelectedScaleId(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
               >
-                {ALL_SCALES.map((s) => (
+                {TCR_SCALES.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.acronym} - {s.title} ({s.questions.length} itens)
                   </option>

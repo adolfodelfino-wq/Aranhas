@@ -506,39 +506,71 @@ export function calculateAntidepressantEquivalence(
   };
 }
 
+import { calculateAntipsychoticEquivalenceV2 } from './antipsychoticEquivalence';
+
 /**
  * Tabela e conversão de Dose Equivalente de Antipsicóticos (em mg de Clorpromazina)
+ *
+ * Utiliza o método de dose média clássica de Leucht et al. (2015) como método principal.
  */
 export function calculateAntipsychoticEquivalence(
   drug: string,
-  doseMg: number
+  doseMg: number,
+  isFirstEpisode: boolean = false
 ): CalculatorResult {
-  // Equivalência aproximada para 100mg de Clorpromazina
-  const baseEquivalents: Record<string, number> = {
-    Clorpromazina: 100,
-    Haloperidol: 2,
-    Risperidona: 2,
-    Quetiapina: 100,
-    Olanzapina: 5,
-    Aripiprazol: 5,
-    Levomepromazina: 100,
+  // Mapeamento normalizado de chaves
+  const drugKeyMap: Record<string, string> = {
+    clorpromazina: 'clorpromazina',
+    haloperidol: 'haloperidol',
+    risperidona: 'risperidona',
+    olanzapina: 'olanzapina',
+    quetiapina: 'quetiapina',
+    aripiprazol: 'aripiprazol',
+    clozapina: 'clozapina',
+    levomepromazina: 'levomepromazina',
   };
 
-  const stdDose = baseEquivalents[drug] || 100;
-  const ratio = doseMg / stdDose;
+  const normalizedKey = drugKeyMap[drug.toLowerCase().trim()];
 
-  const clorpromazinaEq = Math.round(ratio * 100);
-  const haloperidolEq = (ratio * 2).toFixed(1);
-  const risperidonaEq = (ratio * 2).toFixed(1);
+  if (!normalizedKey || isNaN(doseMg) || doseMg <= 0) {
+    return {
+      id: 'antipsychotic-eq',
+      title: 'Equivalência de Antipsicóticos',
+      value: 'Dado indisponível',
+      interpretation: 'Medicamento desconhecido ou dose inválida. Não há estimativa de equivalência verificável.',
+      soapText: `Equivalência de antipsicóticos: dados indisponíveis para ${drug} ${doseMg} mg/dia.`,
+    };
+  }
 
-  const interpretation = `A dose de ${drug} ${doseMg} mg/dia corresponde a aproximadamente ${clorpromazinaEq} mg/dia de Clorpromazina equivalente (ou ~${haloperidolEq} mg de Haloperidol / ~${risperidonaEq} mg de Risperidona).`;
-  const soapText = `Calculada equivalência de antipsicótico: ${drug} ${doseMg} mg/dia (~ Clorpromazina ${clorpromazinaEq} mg/dia equivalente).`;
+  try {
+    const res = calculateAntipsychoticEquivalenceV2({
+      drugId: normalizedKey,
+      doseMg,
+      isFirstEpisode,
+    });
 
-  return {
-    id: 'antipsychotic-eq',
-    title: 'Equivalência de Antipsicóticos',
-    value: `${clorpromazinaEq} mg Clorpromazina Eq.`,
-    interpretation,
-    soapText,
-  };
+    const primaryVal = res.primaryResult
+      ? `${res.primaryResult.equivalentCpzeMg} mg CPZE`
+      : 'Método principal indisponível';
+
+    const interpretation = res.primaryResult
+      ? `A dose de ${res.drug.name} ${res.inputDoseMg} mg/dia corresponde a aproximadamente ${res.primaryResult.equivalentCpzeMg} mg/dia de Clorpromazina equivalente pelo método de Dose Média Clássica (Leucht et al., 2015).`
+      : `Não há coeficiente de dose média em RCTs para ${res.drug.name} em Leucht et al. (2015). Consulte métodos comparativos ou dados de utilização.`;
+
+    return {
+      id: 'antipsychotic-eq',
+      title: 'Equivalência de Antipsicóticos (CPZE)',
+      value: primaryVal,
+      interpretation,
+      soapText: res.soapText,
+    };
+  } catch {
+    return {
+      id: 'antipsychotic-eq',
+      title: 'Equivalência de Antipsicóticos',
+      value: 'Dado indisponível',
+      interpretation: 'Parâmetros de dose ou medicamento fora do intervalo validado.',
+      soapText: `Equivalência de antipsicóticos: dados indisponíveis para ${drug} ${doseMg} mg/dia.`,
+    };
+  }
 }

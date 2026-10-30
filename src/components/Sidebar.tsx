@@ -39,30 +39,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       onClick: () => onSelectView('scales'),
     },
     {
-      id: 'calculators' as const,
-      label: 'Calculadoras',
-      icon: <Calculator className="w-4 h-4" strokeWidth={1.75} />,
-      isActive: currentView === 'calculators',
-      onClick: () => onSelectView('calculators'),
-    },
-    {
       id: 'soap' as const,
       label: 'EEM + SOAP',
       icon: <FileText className="w-4 h-4" strokeWidth={1.75} />,
       badge: importedCount > 0 ? importedCount : undefined,
       isActive: isWorkstationActive,
       onClick: () => onSelectView('soap'),
-    },
-    {
-      id: 'evidence' as const,
-      label: 'Evidências',
-      icon: <BookOpen className="w-4 h-4" strokeWidth={1.75} />,
-      isActive: false,
-      onClick: () => {
-        if (onOpenEvidence) {
-          onOpenEvidence();
-        }
-      },
     },
   ];
 

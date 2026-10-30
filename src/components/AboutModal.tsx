@@ -151,7 +151,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 </div>
 
                 <h3 className="font-serif text-lg sm:text-xl font-bold text-[#1A1C1E] leading-snug">
-                  Mais Agilidade, Maior Precisão Semiológica e Registro Clínico de Excelência.
+                  SOAP, EEM e instrumentos padronizados com revisão e decisão médica.
                 </h3>
 
                 <p className="font-sans leading-relaxed text-[#1A1C1E]/80 text-xs sm:text-sm">
@@ -165,7 +165,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   </span>
                   <span className="bg-white border border-[#1A1C1E]/20 text-[#115E59] px-2.5 py-1 rounded-[2px] font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#115E59]" />
-                    <span>Escalas Validadas</span>
+                    <span>Instrumentos Padronizados</span>
                   </span>
                   <span className="bg-white border border-[#1A1C1E]/20 text-[#115E59] px-2.5 py-1 rounded-[2px] font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#115E59]" />
@@ -181,7 +181,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     <span>Motivação & Propósito</span>
                   </div>
                   <p className="leading-relaxed text-[#1A1C1E]/70 text-[11px]">
-                    Reduzir a carga cognitiva e o tempo de documentação manual, permitindo focar na escuta qualificada e no vínculo terapêutico longitudinal.
+                    Apoiar a organização da documentação clínica, preservando o tempo de escuta e a avaliação centrada na pessoa. A redução do tempo de consulta ainda não foi demonstrada.
                   </p>
                 </div>
 
@@ -191,7 +191,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     <span>Cuidado Compartilhado</span>
                   </div>
                   <p className="leading-relaxed text-[#1A1C1E]/70 text-[11px]">
-                    Facilitar a articulação e referência entre a APS (MFC) e a Atenção Especializada (CAPS / Psiquiatria), garantindo transições farmacológicas seguras.
+                    Apoiar registros clínicos legíveis e revisáveis, úteis à continuidade do cuidado e à articulação entre APS e atenção especializada.
                   </p>
                 </div>
               </div>

@@ -394,5 +394,144 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Troca Cruzada (Cross-Taper): Estratégia de escolha para transições entre classes distintas (ISRS para ISRN, tricíclicos, etc.) e em doses elevadas.',
       'Janela Livre Obrigatória (Washout): Exigência inegociável em trocas envolvendo IMAOs (14 dias gerais e 5 semanas para fluoxetina) para prevenção de síndrome serotoninérgica fatal.'
     ]
+  },
+  {
+    id: 'leucht-2015-mean-dose',
+    topic: 'Equivalência de Antipsicóticos (Método Principal: Dose Média Clássica)',
+    title: 'Dose Equivalents for Antipsychotic Drugs: The Classical Mean Dose Method',
+    source: 'Leucht S, Samara M, Heres S, Patel MX, Furukawa T, Cipriani A, Geddes J, Davis JM. Schizophrenia Bulletin (DOI: 10.1093/schbul/sbv037)',
+    year: '2015',
+    summary: 'Estudo metodológico que estabeleceu os coeficientes clássicos de dose média equivalente em relação a 100 mg/dia de Clorpromazina oral, com base em ensaios clínicos randomizados duplo-cegos.',
+    keyPoints: [
+      'Método Principal: Utiliza a razão de doses médias em RCTs para determinar o fator de conversão de antipsicóticos de primeira e segunda geração.',
+      'Doses Equivalentes a 100 mg de Clorpromazina: Haloperidol 2,0 mg; Risperidona 1,4 mg; Olanzapina 4,2 mg; Quetiapina 111,0 mg; Aripiprazol 4,1 mg; Clozapina 88,0 mg.',
+      'Limitações Metodológicas: Reflete médias de ensaios clínicos em populações predominantemente com esquizofrenia crônica ou subaguda; não deve ser aplicada como faixa estrita nem confundida com curva dose-resposta fixa.'
+    ]
+  },
+  {
+    id: 'leucht-2014-min-effective',
+    topic: 'Dose-Resposta & Dose Mínima Eficaz de Antipsicóticos',
+    title: 'Dose-Response Meta-Analysis of Antipsychotic Drugs for Schizophrenia: A Minimum Effective Dose Method',
+    source: 'Leucht S, Cipriani A, Spineli L, Mavridis D, Orey D, Richter F, Samara M, Barbui C, Engel RR, Geddes JR, Higgins JP, Lovdahl MJ, Longo N, Papakostas GI, Reichhart S, Salanti G, Davis JM. Schizophrenia Bulletin (DOI: 10.1093/schbul/sbu001)',
+    year: '2014',
+    summary: 'Meta-análise de dose-resposta em ensaios clínicos de dose fixa que determinou a dose mínima eficaz (ED95 e platô terapêutico) de antipsicóticos de segunda geração comparados a haloperidol.',
+    keyPoints: [
+      'Método Comparativo Independente: Mapeia o ponto em que a curva dose-resposta atinge 95% da eficácia máxima (ED95), identificando que doses elevadas frequentemente aumentam efeitos adversos sem ganho terapêutico adicional.',
+      'Platô de Eficácia: Risperidona (~4 mg/dia), Olanzapina (~15 mg/dia), Aripiprazol (~10-15 mg/dia), Haloperidol (~4 mg/dia).',
+      'Distinção Metodológica: Fornece um método independente de comparação e NÃO deve ser fundido matematicamente com o método de dose média (Leucht 2015) para gerar faixas artificiais.'
+    ]
+  },
+  {
+    id: 'leucht-2016-ddd-method',
+    topic: 'Equivalência de Antipsicóticos: O Método DDD (Utilização Populacional)',
+    title: 'Dose Equivalents for Antipsychotic Drugs: The Defined Daily Dose (DDD) Method',
+    source: 'Leucht S, Samara M, Heres S, Davis JM. Schizophrenia Bulletin (DOI: 10.1093/schbul/sbv167)',
+    year: '2016',
+    summary: 'Análise metodológica sobre o uso da Defined Daily Dose (DDD) da Organização Mundial da Saúde (OMS) como métrica de equivalência de antipsicóticos em estudos farmacoepidemiológicos.',
+    keyPoints: [
+      'Finalidade Exclusivamente Complementar: A DDD é uma unidade técnica internacional de mensuração de consumo e utilização de medicamentos, estabelecida para comparações populacionais.',
+      'Não é Desenvolvida para Uso Clínico Individual: A DDD frequentemente diverge das doses médias clinicamente eficazes e dos platôs observados em RCTs.',
+      'Utilização Correta no Nexus: Apresentada apenas como informação complementar de referência estatística, nunca como substituto de dosagem clínica.'
+    ]
+  },
+  {
+    id: 'gardner-2010-consensus',
+    topic: 'Equivalência Internacional de Antipsicóticos por Consenso Clínico',
+    title: 'International Consensus Study of Antipsychotic Dosing',
+    source: 'Gardner DM, Murphy AL, O\'Donnell H, Centorrino F, Baldessarini RJ. American Journal of Psychiatry (DOI: 10.1176/appi.ajp.2009.09060802)',
+    year: '2010',
+    summary: 'Consenso Delphi internacional com 45 especialistas mundiais em esquizofrenia estabelecendo estimativas de dose equivalente em Clorpromazina e faixas posológicas usuais.',
+    keyPoints: [
+      'Método de Consenso de Especialistas: Fornece valores de referência derivados da prática clínica consolidada internacionalmente.',
+      'Valores de Equivalência para 100 mg CPZ: Haloperidol 2 mg; Risperidona 1,5 mg; Olanzapina 5 mg; Quetiapina 75 mg; Aripiprazol 7,5 mg.',
+      'Dispersão e Heterogeneidade: Demonstra que estimativas de consenso podem diferir de coeficientes matemáticos de RCTs, justificando a apresentação independente de cada fonte.'
+    ]
+  },
+  {
+    id: 'furukawa-2026-dose-response',
+    topic: 'Dose-Resposta Contemporânea & Limitações da Equivalência Antipsicótica',
+    title: 'Dose-response relationships of antipsychotics in acute schizophrenia: systematic review and dose-response meta-analysis',
+    source: 'Furukawa TA, et al. eClinicalMedicine (The Lancet Discovery Science) (DOI: 10.1016/j.eclinm.2026.103847)',
+    year: '2026',
+    summary: 'Revisão sistemática contemporânea consolidando a evidência de dose-resposta em esquizofrenia aguda e as limitações de extrapolações lineares de equivalência.',
+    keyPoints: [
+      'Curvas Não Lineares: A resposta terapêutica a antipsicóticos não segue um comportamento linear; saturações receptoras ocorrem em faixas distintas para cada agente.',
+      'Limitação de Razões Fixas: Razões CPZE simplificam a complexidade biológica e não predizem o risco metabólico (desproporcional em olanzapina/clozapina) ou extrapiramidal (em haloperidol/risperidona).',
+      'Individualização da Conduta: Reforça que o cálculo de equivalência serve para mapear a exposição teórica prévia, mas a titulação deve ser individualizada com base no perfil de tolerabilidade e resposta.'
+    ]
+  },
+  // Fundamentação acadêmica do TCR — documentação, EEM, integração e método DSR.
+  // Estes estudos não validam diretamente o Nexus Clínico nem suas regras de escore.
+  {
+    id: 'tcr-lobo-2015',
+    topic: 'Pesquisa TCR: EEM e registro semiestruturado',
+    title: 'A comparison of mental state examination documentation before and after a semi-structured assessment template',
+    source: 'Lobo SEM et al. International Journal of Medical Informatics. DOI: 10.1016/j.ijmedinf.2015.05.001',
+    year: '2015',
+    summary: 'Comparação de registros de EEM em serviço especializado antes e depois de um modelo eletrônico semiestruturado; não é prova de efetividade na APS brasileira.',
+    keyPoints: [
+      'Evidência direta para estudar organização e abrangência documental do EEM.',
+      'Não demonstra redução de tempo ou melhora de desfechos clínicos no Nexus.'
+    ]
+  },
+  {
+    id: 'tcr-zurynski-2021',
+    topic: 'Pesquisa TCR: narrativa e prontuário em saúde mental',
+    title: 'Implementation of Electronic Medical Records in Mental Health Settings: Scoping Review',
+    source: 'Zurynski Y et al. JMIR Mental Health. DOI: 10.2196/30564',
+    year: '2021',
+    summary: 'Revisão de escopo sobre implementação de registros eletrônicos em serviços de saúde mental e desafios da documentação narrativa.',
+    keyPoints: [
+      'Examina compatibilidade entre prontuário e necessidades próprias do atendimento em saúde mental.',
+      'A implementação de registro eletrônico não garante maior qualidade assistencial.'
+    ]
+  },
+  {
+    id: 'tcr-seinen-2025',
+    topic: 'Pesquisa TCR: registro estruturado e texto livre',
+    title: 'Using Structured Codes and Free-Text Notes to Measure Information Complementarity in Electronic Health Records',
+    source: 'Seinen TM et al. Journal of Medical Internet Research. DOI: 10.2196/66910',
+    year: '2025',
+    summary: 'Estudo sobre a complementaridade das informações presentes em códigos estruturados e notas livres no prontuário.',
+    keyPoints: [
+      'Sustenta preservar texto livre mesmo com documentação estruturada.',
+      'Não testa o Nexus nem demonstra que uma interface específica melhora desfechos.'
+    ]
+  },
+  {
+    id: 'tcr-gaspary-2026',
+    topic: 'Pesquisa TCR: prontuários em saúde mental brasileira',
+    title: 'A structured framework to improve usability in EHR implementation: a user-centered case study in Brazilian mental healthcare',
+    source: 'Gaspary FP et al. Frontiers in Digital Health. DOI: 10.3389/fdgth.2025.1676631',
+    year: '2026',
+    summary: 'Estudo brasileiro de usabilidade e implementação de prontuário em saúde mental, útil para contextualização sociotécnica.',
+    keyPoints: [
+      'Discute dificuldades de navegação, integração e flexibilidade documental.',
+      'Usabilidade observada em outro serviço não equivale a avaliação técnico-funcional do Nexus.'
+    ]
+  },
+  {
+    id: 'tcr-peffers-2007',
+    topic: 'Pesquisa TCR: Design Science Research',
+    title: 'A Design Science Research Methodology for Information Systems Research',
+    source: 'Peffers K et al. Journal of Management Information Systems. DOI: 10.2753/MIS0742-1222240302',
+    year: '2007',
+    summary: 'Propõe seis atividades de pesquisa orientada ao desenvolvimento e à avaliação de artefatos de sistemas de informação.',
+    keyPoints: [
+      'Distingue a construção e demonstração da avaliação efetiva do artefato.',
+      'A unidade de análise é a instanciação de software em versão identificada.'
+    ]
+  },
+  {
+    id: 'tcr-venable-2016',
+    topic: 'Pesquisa TCR: avaliação de artefatos DSR',
+    title: 'FEDS: A Framework for Evaluation in Design Science Research',
+    source: 'Venable J, Pries-Heje J, Baskerville R. European Journal of Information Systems. DOI: 10.1057/ejis.2014.36',
+    year: '2016',
+    summary: 'Framework de planejamento da avaliação de artefatos, distinguindo avaliação artificial/naturalística e formativa/somativa.',
+    keyPoints: [
+      'A avaliação preliminar com dados sintéticos é artificial e delimitada à consistência técnico-funcional.',
+      'Testes de bancada não demonstram eficácia clínica nem usabilidade por profissionais.'
+    ]
   }
 ];

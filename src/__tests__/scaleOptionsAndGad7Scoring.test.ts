@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ALL_SCALES, GAD7_SCALE } from '../data/scalesData';
+import { ALL_SCALES, GAD7_SCALE, TCR_SCALES, TCR_SCALE_IDS } from '../data/scalesData';
 import { cleanOptionLabel } from '../components/ScalesView';
 
 describe('Option Labels Neutrality & Score Protection (Anti-Induction)', () => {
@@ -119,5 +119,16 @@ describe('GAD-7 Scoring Accuracy & Completeness', () => {
     expect(resPos.isComplete).toBe(true);
     expect(resPos.totalScore).toBe(18);
     expect(resPos.classification).toMatch(/combinada/i);
+  });
+
+  it('exposes exactly the 7 TCR instruments in TCR_SCALES for interface accessibility', () => {
+    expect(TCR_SCALES).toHaveLength(7);
+    const ids = TCR_SCALES.map((s) => s.id);
+    expect(ids).toEqual(['phq-9', 'gad-7', 'audit', 'epds', 'meem', 'asrs-18', 'snap-iv']);
+    expect(TCR_SCALE_IDS).toEqual(['phq-9', 'gad-7', 'audit', 'epds', 'meem', 'asrs-18', 'snap-iv']);
+    TCR_SCALES.forEach((s) => {
+      expect(s.questions.length).toBeGreaterThan(0);
+      expect(typeof s.calculateResult).toBe('function');
+    });
   });
 });
