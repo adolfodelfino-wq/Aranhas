@@ -19,10 +19,18 @@ import {
   Zap,
   CheckCircle2,
 } from 'lucide-react';
-import { EVIDENCE_REFERENCES } from '../data/evidenceData';
+import { ALL_EVIDENCE_REFERENCES, TCR_EVIDENCE_GROUPS, TCR_EVIDENCE_REFERENCES } from '../data/evidenceData';
+import { TCR_SCALES } from '../data/scalesData';
 import { NexusLogo } from './NexusLogo';
 
 export type AboutModalTab = 'sobre' | 'desenvolvedor' | 'contato' | 'evidencias';
+type EvidenceGroup = 'all' | typeof TCR_EVIDENCE_GROUPS[number]['id'];
+
+const evidenceScopes = [
+  { id: 'tcr', label: 'Escopo do TCR', references: TCR_EVIDENCE_REFERENCES },
+  { id: 'general', label: 'Acervo geral', references: ALL_EVIDENCE_REFERENCES },
+] as const;
+const evidenceGroups = [{ id: 'all', label: 'Todas' }, ...TCR_EVIDENCE_GROUPS] as const;
 
 interface AboutModalProps {
   onClose: () => void;
@@ -38,6 +46,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const [activeTab, setActiveTab] = useState<AboutModalTab>(initialTab);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [evidenceScope, setEvidenceScope] = useState<typeof evidenceScopes[number]>(evidenceScopes[0]);
+  const [evidenceGroup, setEvidenceGroup] = useState<EvidenceGroup>('all');
 
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('adolfodelfino@gmail.com');
@@ -45,15 +55,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({
     setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  const filteredReferences = EVIDENCE_REFERENCES.filter((ref) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (ref.title || '').toLowerCase().includes(q) ||
-      (ref.source || '').toLowerCase().includes(q) ||
-      (ref.topic || '').toLowerCase().includes(q) ||
-      (ref.summary || '').toLowerCase().includes(q)
-    );
-  });
+  const group = TCR_EVIDENCE_GROUPS.find((entry) => entry.id === evidenceGroup);
+  const query = searchQuery.trim().toLowerCase();
+  const filteredReferences = evidenceScope.references.filter((ref) =>
+    (!group || group.referenceIds.some((id) => id === ref.id)) &&
+    [ref.title, ref.source, ref.topic, ref.summary].some((field) => field.toLowerCase().includes(query))
+  );
 
   return (
     <div className="fixed inset-0 bg-[#1A1C1E]/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 animate-in fade-in duration-200">
@@ -298,6 +305,52 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           {/* TAB 4: EVIDÊNCIAS & DIRETRIZES */}
           {activeTab === 'evidencias' && (
             <div className="space-y-4 text-xs text-[#1A1C1E]/80">
+              <div role="group" aria-label="Escopo das evidências" className="flex flex-wrap gap-2">
+                {evidenceScopes.map((scope) => (
+                  <button
+                    key={scope.id}
+                    type="button"
+                    aria-pressed={evidenceScope.id === scope.id}
+                    onClick={() => {
+                      setEvidenceScope(scope);
+                      setEvidenceGroup('all');
+                    }}
+                    className={`rounded border px-3 py-2 font-semibold transition-colors ${
+                      evidenceScope.id === scope.id
+                        ? 'border-teal-700 bg-teal-700 text-white'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {scope.label} ({scope.references.length})
+                  </button>
+                ))}
+              </div>
+              {evidenceScope.id === 'tcr' && (
+                <div className="space-y-2">
+                  <p className="text-slate-700">
+                    Núcleo avaliado no TCR: SOAP, EEM, {TCR_SCALES.map((scale) => scale.acronym).join(' e ')}.
+                    {' '}As referências dos demais instrumentos e das calculadoras estão no acervo geral.
+                  </p>
+                  <div role="group" aria-label="Categorias de evidências do TCR" className="flex flex-wrap gap-2">
+                    {evidenceGroups.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        aria-pressed={evidenceGroup === entry.id}
+                        onClick={() => setEvidenceGroup(entry.id)}
+                        className={`rounded border px-2.5 py-1.5 transition-colors ${
+                          evidenceGroup === entry.id
+                            ? 'border-teal-300 bg-teal-50 text-teal-900'
+                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {entry.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Search filter */}
               <div className="relative">
                 <Search className="w-4 h-4 text-[#1A1C1E]/40 absolute left-3 top-3" />
@@ -305,7 +358,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Pesquisar diretriz por título, fonte ou palavra-chave (ex: Hayasaka, Maudsley, PCDT, DSM)..."
+                  aria-label="Pesquisar evidências"
+                  placeholder="Pesquisar por título, fonte ou palavra-chave"
                   className="w-full bg-[#F8F7F4] border border-[#1A1C1E]/20 rounded-[4px] pl-9 pr-3 py-2.5 text-xs text-[#1A1C1E] placeholder-[#1A1C1E]/40 focus:outline-none focus:ring-1 focus:ring-[#115E59]"
                 />
               </div>

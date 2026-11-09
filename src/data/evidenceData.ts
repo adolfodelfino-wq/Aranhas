@@ -1,6 +1,7 @@
 import { EvidenceReference } from '../types';
+import { TCR_SCALE_IDS, type TcrScaleId } from './scalesData';
 
-export const EVIDENCE_REFERENCES: EvidenceReference[] = [
+export const ALL_EVIDENCE_REFERENCES: EvidenceReference[] = [
   // 1. HCL-32 / Transtorno Bipolar
   {
     id: 'hcl32-soares-moreno',
@@ -20,28 +21,26 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
   {
     id: 'phq9-kroenke-osorio',
     topic: 'Transtorno Depressivo Maior na APS',
-    title: 'The PHQ-9: Validity of a Brief Depression Severity Measure & Validação Brasileira na Atenção Primária',
+    title: 'The PHQ-9: Validity of a Brief Depression Severity Measure e estudos brasileiros',
     source: 'Kroenke K, Spitzer RL, Williams JB (2001) / de Lima Osório F et al. (2009) / Santos IS et al. (2013)',
     year: '2001-2013',
-    summary: 'Instrumento padrão-ouro mundial e do SUS para triagem e monitoramento da gravidade de sintomas depressivos alinhado aos critérios do DSM-IV e DSM-5.',
+    summary: 'Questionário breve para rastrear e acompanhar a intensidade de sintomas depressivos. A confirmação diagnóstica depende de avaliação clínica.',
     keyPoints: [
-      'Ponto de corte padrão: escore ≥ 10 com sensibilidade de 88% e especificidade de 88% para episódio depressivo maior.',
-      'Item 9 avalia ideação suicida e necessita de desdobramento imediato com protocolo de segurança (C-SSRS).',
-      'Excelente sensibilidade à mudança terapêutica para avaliar resposta ao tratamento após 4 a 6 semanas.'
+      'No estudo original de Kroenke et al. (2001), o corte ≥ 10 teve sensibilidade de 88% e especificidade de 88%. Os estudos brasileiros examinaram a escala em suas próprias amostras.',
+      'Uma resposta positiva ao item 9 requer avaliação clínica de segurança, qualquer que seja o escore total.'
     ]
   },
   // 3. GAD-7 / Ansiedade
   {
     id: 'gad7-spitzer-moreno',
     topic: 'Transtorno de Ansiedade Generalizada (TAG)',
-    title: 'A Brief Measure for Assessing Generalized Anxiety Disorder: The GAD-7 & Validação Brasileira',
+    title: 'A Brief Measure for Assessing Generalized Anxiety Disorder: The GAD-7 e estudo da versão brasileira',
     source: 'Spitzer RL, Kroenke K, Williams JB, Löwe B (2006) / Moreno AL et al. (2016)',
     year: '2006-2016',
-    summary: 'Escala breve e autoadministrada para triagem e mensuração da severidade do TAG e transtornos ansiosos na Atenção Primária.',
+    summary: 'Escala breve para rastrear e medir a intensidade de sintomas ansiosos. A confirmação diagnóstica depende de avaliação clínica.',
     keyPoints: [
-      'Ponto de corte: escore ≥ 10 pontos (Sensibilidade 89%, Especificidade 82%).',
-      'Estratificação: 0-4 (mínima), 5-9 (leve), 10-14 (moderada), 15-21 (grave).',
-      'Permite diferenciar queixas ansiosas subclínicas de transtornos ansiosos com impacto funcional que demandam intervenção.'
+      'No estudo original de Spitzer et al. (2006), o corte ≥ 10 teve sensibilidade de 89% e especificidade de 82%. Moreno et al. (2016) examinaram a estrutura e a confiabilidade da versão brasileira.',
+      'Faixas de intensidade dos sintomas: 0 a 4 (mínima), 5 a 9 (leve), 10 a 14 (moderada) e 15 a 21 (grave).'
     ]
   },
   // 4. AUDIT / Álcool
@@ -105,10 +104,9 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'The Columbia-Suicide Severity Rating Scale (C-SSRS): Initial Validity and Internal Consistency Findings',
     source: 'Posner K, Brown GK, Stanley B et al. (Am J Psychiatry, 2011) / Associação Brasileira de Psiquiatria (ABP)',
     year: '2011',
-    summary: 'Instrumento padronizado de triagem de ideação e comportamento suicida que gradua o risco de ideação passiva até planos com intenção imediata.',
+    summary: 'Instrumento estruturado para investigar ideação e comportamento suicida. Referência complementar de segurança no escopo do TCR.',
     keyPoints: [
-      'Classifica o risco em Baixo, Moderado e Alto/Emergência para guiar a conduta imediata na UBS.',
-      'Enfatiza a criação do Plano de Segurança Pessoal, remoção de meios letais e envolvimento de suporte familiar com consentimento.'
+      'A avaliação clínica de segurança considera a ideação, a intenção, o plano, o comportamento e o contexto da pessoa.'
     ]
   },
   // 9. MEEM / Cognição
@@ -535,3 +533,45 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     ]
   }
 ];
+
+// Mantém o acervo completo disponível aos consumidores da exportação original.
+export const EVIDENCE_REFERENCES = ALL_EVIDENCE_REFERENCES;
+
+const scaleReferenceIds: Record<TcrScaleId, string> = {
+  'phq-9': 'phq9-kroenke-osorio',
+  'gad-7': 'gad7-spitzer-moreno',
+};
+
+export const TCR_EVIDENCE_GROUPS = [
+  {
+    id: 'scales',
+    label: 'Escalas e segurança',
+    referenceIds: [...TCR_SCALE_IDS.map((id) => scaleReferenceIds[id]), 'cssrs-posner'],
+  },
+  {
+    id: 'eem',
+    label: 'Exame do Estado Mental',
+    referenceIds: [
+      'dalgalarrondo-semiologia-psicopatologia',
+      'kaplan-sadock-compendio-psiquiatria',
+      'statpearls-mental-status-examination',
+    ],
+  },
+  {
+    id: 'primary-care',
+    label: 'APS e MFC',
+    referenceIds: ['cab-34', 'sbmfc-saude-mental', 'aps-protocolo-sm', 'who-mhgap'],
+  },
+  {
+    id: 'research',
+    label: 'Pesquisa e DSR',
+    referenceIds: [
+      'tcr-lobo-2015', 'tcr-zurynski-2021', 'tcr-seinen-2025',
+      'tcr-gaspary-2026', 'tcr-peffers-2007', 'tcr-venable-2016',
+    ],
+  },
+] as const;
+
+const tcrReferenceIds = new Set<string>(TCR_EVIDENCE_GROUPS.flatMap((group) => [...group.referenceIds]));
+
+export const TCR_EVIDENCE_REFERENCES = ALL_EVIDENCE_REFERENCES.filter((ref) => tcrReferenceIds.has(ref.id));
