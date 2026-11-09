@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ALL_SCALES, TCR_SCALES } from '../data/scalesData';
+import { ALL_SCALES, TCR_SCALES, hasTcrConductSuggestions } from '../data/scalesData';
 import { ScaleDefinition, ScaleResult } from '../types';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WhatsappShareModal } from './WhatsappShareModal';
@@ -132,6 +132,8 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
     TCR_SCALES.find((s) => s.id === selectedScaleId) ||
     ALL_SCALES.find((s) => s.id === selectedScaleId) ||
     TCR_SCALES[0];
+
+  const showConductSuggestions = hasTcrConductSuggestions(scale.id);
 
   // Reset answers when switching scales or when patient is reset
   useEffect(() => {
@@ -735,7 +737,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               )}
 
               {/* Clinical Next Steps Summary Box */}
-              <div className="space-y-2 text-xs">
+              {showConductSuggestions && <div className="space-y-2 text-xs">
                 <span className="font-sans text-xs font-semibold text-slate-700 block">
                   Orientações clínicas
                 </span>
@@ -755,7 +757,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                       : `Aguardando conclusão de ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length} ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length === 1 ? 'item restante' : 'itens restantes'} para orientações clínicas.`}
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* Action Buttons (Export to SOAP & Copy) */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
@@ -814,7 +816,12 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
       )}
 
       {/* TAB 2: NEXT STEPS (Conduta detalhada) */}
-      {activeTab === 'next_steps' && (
+      {activeTab === 'next_steps' && !showConductSuggestions && (
+        <div className="bg-white border border-slate-200 rounded-lg p-6 text-sm text-slate-700">
+          Instrumento complementar disponível para avaliação e registro. Não são exibidas sugestões automatizadas de conduta para este instrumento.
+        </div>
+      )}
+      {activeTab === 'next_steps' && showConductSuggestions && (
         <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -822,7 +829,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               <span>Orientações clínicas e manejo — {scale.acronym}</span>
             </h2>
             <p className="text-xs text-slate-600">
-              Diretrizes de manejo e estratificação baseadas em evidências científicas e protocolos da Atenção Primária / SUS.
+              Apoio à revisão clínica dos sintomas e ao registro. O escore não determina tratamento; as decisões dependem da avaliação profissional.
             </p>
           </div>
 
@@ -830,7 +837,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           {scale.clinicalConductSteps && scale.clinicalConductSteps.length > 0 ? (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-slate-700">
-                1. Estratificação de risco e intervenções
+                Revisão clínica e acompanhamento
               </h3>
               <div className="space-y-2.5">
                 {scale.clinicalConductSteps.map((step, idx) => (

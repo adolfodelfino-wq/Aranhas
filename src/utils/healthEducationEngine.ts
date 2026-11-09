@@ -1,4 +1,4 @@
-import { ScaleResult, EemState, EducationSuggestion } from '../types';
+import type { ScaleResult, EemState, EducationSuggestion } from '../types';
 
 export interface EducationEngineResult {
   suggestions: EducationSuggestion[];
@@ -30,17 +30,19 @@ export function generateHealthEducationSuggestions(
   const whoqol = safeScales.find((s) => s.scaleId === 'whoqol-srpb');
   const cssrs = safeScales.find((s) => s.scaleId === 'cssrs');
 
-  // Checar ideação/risco no PHQ-9 item 9 ou C-SSRS
+  // O resultado pode chegar pelo formulário (answersSummary) ou pelo histórico
+  // (answersArray e hasCriticalAlert); uma forma ausente não invalida a outra.
   const phq9Risk = phq9?.answersSummary?.find((a) => a.questionText?.toLowerCase().includes('morto') || a.questionText?.toLowerCase().includes('ferir'))?.value ?? 0;
   const cssrsRisk = cssrs?.totalScore ?? 0;
+  const eemSuicidalIdeation = Array.isArray(safeEem.pensamentoConteudo)
+    && safeEem.pensamentoConteudo.includes('conteudo_ideacao_suicida');
 
-  if (phq9Risk > 0 || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
+  if (phq9Risk > 0 || (phq9?.answersArray?.[8] ?? 0) > 0 || phq9?.hasCriticalAlert === true || eemSuicidalIdeation || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
     hasHighRiskWarning = true;
     warningMessage = 'Avaliação clínica e manejo de segurança têm prioridade antes das orientações educativas.';
   }
 
   // 2. Análise dos achados do EEM com checagem segura
-  const obs = (safeEem.observacoesLivres || '').toLowerCase();
   const humorList = Array.isArray(safeEem.humor) ? safeEem.humor : [];
   const afetoList = Array.isArray(safeEem.afeto) ? safeEem.afeto : [];
   const atitudeList = Array.isArray(safeEem.atitude) ? safeEem.atitude : [];
@@ -49,13 +51,11 @@ export function generateHealthEducationSuggestions(
   const julgamentoList = Array.isArray(safeEem.julgamento) ? safeEem.julgamento : [];
   const atencaoMemoriaList = Array.isArray(safeEem.atencaoMemoria) ? safeEem.atencaoMemoria : [];
 
-  const eemHasSleep =
-    obs.includes('sono') ||
-    obs.includes('insonia') ||
-    obs.includes('insônia') ||
-    humorList.includes('ansioso') ||
-    humorList.includes('distimico') ||
-    atitudeList.includes('agita_psicomotora');
+  // Não inferir alteração do sono a partir de humor, inquietação ou texto livre.
+  // A interpretação de negação e contexto no texto exige solução específica.
+  const phq9Sleep = phq9?.answersSummary?.find((a) => /^\s*3\./.test(a.questionText || ''))?.value
+    ?? phq9?.answersArray?.[2]
+    ?? 0;
 
   const eemHasPsychomotor =
     atitudeList.includes('agita_psicomotora') ||
@@ -86,15 +86,9 @@ export function generateHealthEducationSuggestions(
   const candidates: (EducationSuggestion & { score: number })[] = [];
 
   // SUGGESTION 1: Sono e Higiene Circadiana
-  const scaleSleepTrigger = (phq9 && phq9.totalScore >= 5) || (gad7 && gad7.totalScore >= 5);
-  if (scaleSleepTrigger || eemHasSleep) {
-    const matchedSources: string[] = [];
-    if (phq9 && phq9.totalScore >= 5) matchedSources.push(`PHQ-9 (${phq9.totalScore} pts)`);
-    if (gad7 && gad7.totalScore >= 5) matchedSources.push(`GAD-7 (${gad7.totalScore} pts)`);
-    if (eemHasSleep) matchedSources.push('EEM (Queixa/alteração de sono ou inquietação)');
-
-    const isCombo = (phq9 || gad7) && eemHasSleep;
-    const score = isCombo ? 3 : 2;
+  if (phq9Sleep > 0) {
+    const matchedSources = ['PHQ-9 (resposta ao item 3 sobre sono)'];
+    const score = 2;
 
     candidates.push({
       id: 'sug-sono',
@@ -104,13 +98,9 @@ export function generateHealthEducationSuggestions(
         'Manter horários regulares para dormir e acordar, desacelerar o uso de telas 1 hora antes de deitar e evitar estimulantes à noite.',
       soapPhrase:
         'Realizadas orientações sobre higiene do sono e regulação do ciclo circadiano, incluindo horários fixos de despertar e redução de estimulantes noturnos.',
-      reasonText: isCombo
-        ? 'Relacionada ao resultado da escala e a alterações de sono/inquietação no EEM.'
-        : matchedSources.some((s) => (s || '').includes('PHQ-9') || (s || '').includes('GAD-7'))
-        ? 'Relacionada ao resultado da escala aplicada.'
-        : 'Relacionada aos achados de sono do EEM.',
+      reasonText: 'Relacionada à resposta ao item 3 do PHQ-9, a ser avaliada no contexto clínico.',
       matchedSources,
-      isComboMatch: !!isCombo,
+      isComboMatch: false,
       selected: true,
       score,
     });

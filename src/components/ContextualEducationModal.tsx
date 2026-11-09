@@ -106,11 +106,11 @@ export const ContextualEducationModal: React.FC<ContextualEducationModalProps> =
 
         {/* Banner de Risco Clínico Prioritário (Se houver) */}
         {hasHighRiskWarning && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-950 p-3.5 rounded-lg text-xs flex items-start gap-3 shrink-0">
-            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="bg-red-50 border border-red-500 text-red-900 p-3.5 rounded-lg text-xs flex items-start gap-3 shrink-0">
+            <ShieldAlert className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <p className="font-bold text-amber-900 font-mono text-[11px] uppercase tracking-wider">Prioridade de Risco Clínico</p>
-              <p className="text-amber-800 leading-relaxed text-xs">
+              <p className="font-bold text-red-900 font-mono text-[11px] uppercase tracking-wider">Prioridade de avaliação clínica</p>
+              <p className="text-red-900 leading-relaxed text-xs">
                 {warningMessage ||
                   'Avaliação clínica e manejo de segurança têm prioridade antes das orientações educativas.'}
               </p>

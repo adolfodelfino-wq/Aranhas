@@ -189,25 +189,16 @@ export const EvolutionChartsView: React.FC<EvolutionChartsViewProps> = ({
 
   // Prepare Radar / Spider Chart data
   const maxDomainMark = Math.max(...profile.domains.map((d) => d.fullMark), 1);
-  const radarData = profile.domains.map((item) => {
-    const valBaseline =
-      firstConsult?.answersArray?.[item.keyIdx] ??
-      profile.demoInitialAnswers[item.keyIdx] ??
-      Math.round(item.fullMark * 0.75);
-
-    const valCurrent =
-      lastConsult?.answersArray?.[item.keyIdx] ??
-      profile.demoCurrentAnswers[item.keyIdx] ??
-      Math.round(item.fullMark * 0.25);
-
-    return {
-      domain: item.domain,
-      description: item.description,
-      'Linha de Base': valBaseline,
-      'Avaliação Recente': valCurrent,
-      fullMark: item.fullMark,
-    };
-  });
+  const radarData = profile.domains.map((item) => ({
+    domain: item.domain,
+    description: item.description,
+    'Linha de Base': firstConsult?.answersArray?.[item.keyIdx],
+    'Avaliação Recente': lastConsult?.answersArray?.[item.keyIdx],
+    fullMark: item.fullMark,
+  }));
+  const canShowRadar = radarData.length > 0 && radarData.every((item) =>
+    Number.isFinite(item['Linha de Base']) && Number.isFinite(item['Avaliação Recente'])
+  );
 
   const handleExportChartSummary = () => {
     if (!onImportToSoap) return;
@@ -529,7 +520,7 @@ ${variation.formattedSummary}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          ) : (
+          ) : canShowRadar ? (
             <div className="w-full h-84 sm:h-96 pt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
@@ -590,6 +581,10 @@ ${variation.formattedSummary}
                 </RadarChart>
               </ResponsiveContainer>
             </div>
+          ) : (
+            <p className="p-4 text-sm text-slate-700" role="status">
+              O radar precisa das respostas dos itens nas avaliações comparadas.
+            </p>
           )}
 
           {/* Safety & Methodological Governance Note */}
