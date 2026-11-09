@@ -57,6 +57,19 @@ export const ALL_EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Escore ≥ 20 indica Provável Síndrome de Dependência, exigindo avaliação médica para Síndrome de Abstinência Alcoólica e articulação com CAPS AD.'
     ]
   },
+  // EPDS / Depressão pós-parto
+  {
+    id: 'epds-cox-santos',
+    topic: 'Saúde Mental no Pós-Parto',
+    title: 'Edinburgh Postnatal Depression Scale (EPDS) e validação na Coorte de Pelotas',
+    source: 'Cox JL, Holden JM, Sagovsky R (1987) / Santos IS, Matijasevich A et al. (2007)',
+    year: '1987-2007',
+    summary: 'Escala de rastreamento de sintomas depressivos no pós-parto. O estudo brasileiro avaliou 378 mães aos três meses pós-parto.',
+    keyPoints: [
+      'Na amostra de Pelotas, o corte > 10 apresentou sensibilidade de 82,6% e especificidade de 65,4% para rastreamento.',
+    ],
+    url: 'https://doi.org/10.1590/S0102-311X2007001100005',
+  },
   // 5. ASRS-18 / TDAH Adulto
   {
     id: 'asrs18-kessler-mattos',

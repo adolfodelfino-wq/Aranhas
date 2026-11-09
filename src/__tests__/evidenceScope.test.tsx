@@ -16,7 +16,7 @@ describe('Escopo de evidências do TCR', () => {
       'dalgalarrondo-semiologia-psicopatologia',
       'tcr-peffers-2007',
     ]));
-    for (const id of ['audit-oms-mendez', 'meem-folstein-brucki', 'asrs18-kessler-mattos', 'snap4-swanson-mattos', 'leucht-2015-mean-dose']) {
+    for (const id of ['audit-oms-mendez', 'epds-cox-santos', 'meem-folstein-brucki', 'asrs18-kessler-mattos', 'snap4-swanson-mattos', 'leucht-2015-mean-dose']) {
       expect(allIds).toContain(id);
       expect(tcrIds).not.toContain(id);
     }

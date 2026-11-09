@@ -3,6 +3,8 @@ import { EEM_DOMAINS } from '../data/eemData';
 import { EemState, SoapState, PatientSession, ScaleResult } from '../types';
 import { generateEemSummary, formatEemIntoObjective } from '../utils/eemFormatter';
 import { getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
+import { generateClinicalSuggestions } from '../utils/clinicalDecisionSupport';
+import { hasPositivePhq9Item9 } from '../utils/scaleValidation';
 import {
   Stethoscope,
   FileText,
@@ -38,6 +40,10 @@ interface EemSoapWorkstationViewProps {
   focusSubjectiveTrigger?: number;
 }
 
+type DraftField = 'assessment' | 'plan';
+type SelectedScales = Partial<Record<'phq-9' | 'gad-7', ScaleResult>>;
+type ClinicalDraft = { field: DraftField; text: string; source: string; patientKey: string };
+
 export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   soapState,
   patient,
@@ -68,6 +74,47 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   const [eemInserted, setEemInserted] = useState(false);
   // Mobile responsive view switcher
   const [activeMobileView, setActiveMobileView] = useState<'consulta' | 'soap'>('consulta');
+  const [clinicalSelection, setClinicalSelection] = useState<{ patientKey: string; scales: SelectedScales }>();
+  const [clinicalDraft, setClinicalDraft] = useState<ClinicalDraft>();
+
+  const patientKey = JSON.stringify([patient.prontuario, patient.name, patient.date, patient.isDemo]);
+  const selectedScales = clinicalSelection?.patientKey === patientKey ? clinicalSelection.scales : undefined;
+  const phq9 = selectedScales?.['phq-9'];
+  const gad7 = selectedScales?.['gad-7'];
+  const suggestions = generateClinicalSuggestions({
+    phq9Result: phq9 && scaleHistory.includes(phq9) ? phq9 : undefined,
+    gad7Result: gad7 && scaleHistory.includes(gad7) ? gad7 : undefined,
+    eemState,
+  });
+  const draftSources = { assessment: suggestions.assessmentText, plan: suggestions.planText };
+  const activeDraft = clinicalDraft?.patientKey === patientKey
+    && clinicalDraft.source === draftSources[clinicalDraft.field] ? clinicalDraft : undefined;
+
+  const toggleScaleForDraft = (result: ScaleResult) => {
+    const id = result.scaleId;
+    if (id !== 'phq-9' && id !== 'gad-7') return;
+    setClinicalSelection((current) => {
+      const scales = current?.patientKey === patientKey ? current.scales : {};
+      return { patientKey, scales: { ...scales, [id]: scales[id] === result ? undefined : result } };
+    });
+  };
+
+  const reviewDraft = (field: DraftField) => {
+    const source = draftSources[field];
+    if (source) setClinicalDraft({ field, source, text: source, patientKey });
+  };
+
+  const confirmDraft = () => {
+    if (!activeDraft) return;
+    const text = activeDraft.text.trim();
+    if (!text) return;
+    const field = activeDraft.field;
+    const current = soapState[field] ?? '';
+    if (!current.includes(text)) {
+      onUpdateSoap({ ...soapState, [field]: current.trim() ? `${current}\n\n${text}` : text });
+    }
+    setClinicalDraft(undefined);
+  };
 
   // Auto-focus Subjective when triggered by "Iniciar nova consulta"
   useEffect(() => {
@@ -492,10 +539,9 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 {scaleHistory.map((res, idx) => {
                   const isJustInserted = insertedScaleId === (res.id || res.scaleId);
                   const isIncomplete = res.isComplete === false || res.completionStatus === 'incomplete' || res.completionStatus === 'invalid';
-                  const hasItem9Alert =
-                    res.scaleId === 'phq-9' &&
-                    ((res.answersArray && res.answersArray[8] > 0) ||
-                      res.recommendations?.some((r) => r.includes('pergunta 9') || r.includes('autolesão')));
+                  const hasItem9Alert = hasPositivePhq9Item9(res);
+                  const canUseInDraft = hasItem9Alert || (!isIncomplete && (res.scaleId === 'phq-9' || res.scaleId === 'gad-7'));
+                  const isSelectedForDraft = phq9 === res || gad7 === res;
 
                   return (
                     <div
@@ -506,8 +552,9 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-semibold text-slate-900 truncate">{res.scaleTitle}</span>
                           <span className="font-mono text-slate-500 shrink-0">
-                            {res.totalScore}/{res.maxScore} pts
+                            {isIncomplete ? 'Incompleto' : `${res.totalScore}/${res.maxScore} pts`}
                           </span>
+                          {res.date && <span className="text-slate-500 shrink-0">{res.date}</span>}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className={`px-2 py-0.5 rounded border text-[11px] font-medium ${getSeverityBadgeClass(res.severityLevel)}`}>
@@ -528,13 +575,23 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                       </div>
 
                       {hasItem9Alert && (
-                        <div className="p-2 rounded bg-red-50 border border-red-200 text-red-900 flex items-center gap-2">
+                        <div className="p-2 rounded bg-red-50 border border-red-500 text-red-900 flex items-center gap-2">
                           <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                          <span>Item 9 positivo (risco de autoagressão). Realizar avaliação clínica direta.</span>
+                          <span>Item 9 positivo. Realizar avaliação clínica direta de segurança.</span>
                         </div>
                       )}
 
-                      <div className="flex justify-end pt-1">
+                      <div className="flex flex-wrap justify-end gap-3 pt-1">
+                        {canUseInDraft && (
+                          <button
+                            type="button"
+                            aria-pressed={isSelectedForDraft}
+                            onClick={() => toggleScaleForDraft(res)}
+                            className="text-xs font-medium text-teal-800 hover:text-teal-950"
+                          >
+                            {isSelectedForDraft ? 'Selecionado para A/P' : 'Usar em A/P'}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleInsertScaleToSoap(res)}
@@ -551,6 +608,35 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 })}
               </div>
             )}
+          </section>
+
+          <section className="space-y-2 border-t border-slate-200 pt-3" aria-labelledby="clinical-support-heading">
+            <h2 id="clinical-support-heading" className="text-sm font-semibold text-slate-800">Apoio à Avaliação e ao Plano</h2>
+            <p className="text-xs text-slate-600">
+              Selecione os resultados de PHQ-9 e GAD-7 pertinentes à consulta. Revise o rascunho antes de inserir no SOAP.
+            </p>
+            {suggestions.safetySignals.length > 0 && (
+              <div role="alert" className="rounded-lg border border-red-500 bg-red-50 p-3 text-xs text-red-900">
+                <div className="flex items-center gap-2 font-semibold">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Avaliação clínica de segurança prioritária</span>
+                </div>
+                <ul className="mt-1 list-disc pl-6">
+                  {suggestions.safetySignals.map((signal) => <li key={signal}>{signal}</li>)}
+                </ul>
+                <p className="mt-1">Se houver risco iminente, acione a rede de urgência.</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button type="button" disabled={!suggestions.assessmentText} onClick={() => reviewDraft('assessment')}
+                className="rounded border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 disabled:opacity-50">
+                Revisar Avaliação [A]
+              </button>
+              <button type="button" disabled={!suggestions.planText} onClick={() => reviewDraft('plan')}
+                className="rounded border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-medium text-white disabled:opacity-50">
+                Revisar Plano [P]
+              </button>
+            </div>
           </section>
         </div>
 
@@ -654,8 +740,13 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 <span className="w-6 h-6 rounded-md bg-amber-100 text-amber-950 font-bold font-mono text-xs flex items-center justify-center shrink-0">
                   A
                 </span>
-                <span>Avaliação & Diagnósticos</span>
+                <span>Avaliação e Diagnósticos</span>
               </label>
+              {suggestions.assessmentText && (
+                <button type="button" onClick={() => reviewDraft('assessment')} className="text-xs font-medium text-teal-800">
+                  Revisar [A]
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleCopySection(soapState.assessment, 'A')}
@@ -681,8 +772,13 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-950 font-bold font-mono text-xs flex items-center justify-center shrink-0">
                   P
                 </span>
-                <span>Plano & Conduta</span>
+                <span>Plano e Conduta</span>
               </label>
+              {suggestions.planText && (
+                <button type="button" onClick={() => reviewDraft('plan')} className="text-xs font-medium text-teal-800">
+                  Revisar [P]
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleCopySection(soapState.plan, 'P')}
@@ -777,6 +873,31 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors cursor-pointer"
               >
                 Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="clinical-draft-title"
+            onKeyDown={(event) => { if (event.key === 'Escape') setClinicalDraft(undefined); }}
+            className="w-full max-w-lg space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+            <label id="clinical-draft-title" htmlFor="clinical-draft-text" className="block font-semibold text-slate-900">
+              {activeDraft.field === 'assessment' ? 'Revisar Avaliação [A]' : 'Revisar Plano [P]'}
+            </label>
+            <textarea id="clinical-draft-text" autoFocus rows={7} value={activeDraft.text}
+              onChange={(event) => setClinicalDraft({ ...activeDraft, text: event.target.value })}
+              className="w-full resize-y rounded border border-slate-200 p-3 text-sm text-slate-800" />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setClinicalDraft(undefined)}
+                className="rounded border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700">
+                Cancelar
+              </button>
+              <button type="button" disabled={!activeDraft.text.trim()} onClick={confirmDraft}
+                className="rounded bg-teal-700 px-3 py-2 text-xs font-medium text-white disabled:opacity-50">
+                {activeDraft.field === 'assessment' ? 'Inserir na Avaliação [A]' : 'Inserir no Plano [P]'}
               </button>
             </div>
           </div>

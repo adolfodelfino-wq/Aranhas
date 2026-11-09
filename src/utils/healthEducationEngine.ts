@@ -1,4 +1,5 @@
 import type { ScaleResult, EemState, EducationSuggestion } from '../types';
+import { hasPositivePhq9Item9 } from './scaleValidation';
 
 export interface EducationEngineResult {
   suggestions: EducationSuggestion[];
@@ -30,14 +31,11 @@ export function generateHealthEducationSuggestions(
   const whoqol = safeScales.find((s) => s.scaleId === 'whoqol-srpb');
   const cssrs = safeScales.find((s) => s.scaleId === 'cssrs');
 
-  // O resultado pode chegar pelo formulário (answersSummary) ou pelo histórico
-  // (answersArray e hasCriticalAlert); uma forma ausente não invalida a outra.
-  const phq9Risk = phq9?.answersSummary?.find((a) => a.questionText?.toLowerCase().includes('morto') || a.questionText?.toLowerCase().includes('ferir'))?.value ?? 0;
   const cssrsRisk = cssrs?.totalScore ?? 0;
   const eemSuicidalIdeation = Array.isArray(safeEem.pensamentoConteudo)
     && safeEem.pensamentoConteudo.includes('conteudo_ideacao_suicida');
 
-  if (phq9Risk > 0 || (phq9?.answersArray?.[8] ?? 0) > 0 || phq9?.hasCriticalAlert === true || eemSuicidalIdeation || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
+  if (hasPositivePhq9Item9(phq9) || eemSuicidalIdeation || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
     hasHighRiskWarning = true;
     warningMessage = 'Avaliação clínica e manejo de segurança têm prioridade antes das orientações educativas.';
   }

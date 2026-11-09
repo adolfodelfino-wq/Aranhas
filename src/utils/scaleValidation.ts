@@ -18,6 +18,20 @@ export interface ScaleValidationReport {
   individualAlerts: string[];
 }
 
+/** Lê o aviso individual do PHQ-9 em resultados atuais e no histórico. */
+export function hasPositivePhq9Item9(result?: ScaleResult): boolean {
+  if (result?.scaleId !== 'phq-9') return false;
+  const positive = (value?: number) => value === 1 || value === 2 || value === 3;
+  return result.hasCriticalAlert === true
+    || positive(result.answersArray?.[8])
+    || (result.answersSummary?.some(({ questionText, value }) =>
+      positive(value) && /^\s*9\.|morto|ferir/i.test(questionText ?? '')
+    ) ?? false)
+    || [...(result.individualAlerts ?? []), ...(result.recommendations ?? [])].some((message) =>
+      /(?:item|pergunta)\s*9\b.*resposta positiva/i.test(message)
+    );
+}
+
 /**
  * Validates responses for any clinical scale:
  * - Checks that answers is an object and values are valid numbers.
