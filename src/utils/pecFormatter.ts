@@ -13,14 +13,14 @@ export interface CiapCidItem {
 }
 
 export const COMMON_APS_CODES: CiapCidItem[] = [
-  { ciap2: 'P76', cid10: 'F32.9', label: 'Transtorno Depressivo / Depressão', category: 'mental' },
-  { ciap2: 'P74', cid10: 'F41.9', label: 'Transtorno de Ansiedade / Ansiedade generalizada', category: 'mental' },
-  { ciap2: 'P18', cid10: 'F13.2', label: 'Uso crônico / Dependência de sedativos ou hipnóticos', category: 'desprescricao' },
-  { ciap2: 'P03', cid10: 'F51.0', label: 'Insônia / Distúrbios do sono', category: 'mental' },
-  { ciap2: 'P01', cid10: 'R45.0', label: 'Sensação de ansiedade / Nervosismo / Tensão', category: 'mental' },
-  { ciap2: 'P19', cid10: 'F10.2', label: 'Uso nocivo de álcool / Outras substâncias', category: 'mental' },
-  { ciap2: 'A98', cid10: 'Z00.0', label: 'Manutenção da saúde / Prevenção / Desprescrição', category: 'geriatria' },
-  { ciap2: 'P20', cid10: 'F06.7', label: 'Déficit cognitivo leve / Queixa de memória', category: 'geriatria' },
+  { ciap2: 'P76', cid10: 'F32.9', label: 'Transtorno depressivo', category: 'mental' },
+  { ciap2: 'P74', cid10: 'F41.9', label: 'Transtorno de ansiedade generalizada', category: 'mental' },
+  { ciap2: 'P18', cid10: 'F13.2', label: 'Uso crônico ou dependência de sedativos ou hipnóticos', category: 'desprescricao' },
+  { ciap2: 'P03', cid10: 'F51.0', label: 'Insônia e distúrbios do sono', category: 'mental' },
+  { ciap2: 'P01', cid10: 'R45.0', label: 'Sensação de ansiedade, nervosismo ou tensão', category: 'mental' },
+  { ciap2: 'P19', cid10: 'F10.2', label: 'Uso nocivo de álcool ou outras substâncias', category: 'mental' },
+  { ciap2: 'A98', cid10: 'Z00.0', label: 'Manutenção da saúde, prevenção e desprescrição', category: 'geriatria' },
+  { ciap2: 'P20', cid10: 'F06.7', label: 'Déficit cognitivo leve e queixa de memória', category: 'geriatria' },
 ];
 
 export interface PecFormattedOutput {
@@ -48,13 +48,13 @@ export function formatForPec(
 
   let cleanAssessment = soap.assessment?.trim() || missingFieldText;
   if (codesString) {
-    cleanAssessment = `${cleanAssessment}\n\n[CODIFICAÇÃO CIAP-2 / CID-10]:\n${codesString}`;
+    cleanAssessment = `${cleanAssessment}\n\n[CODIFICAÇÃO CIAP-2 e CID-10]:\n${codesString}`;
   }
 
   const cleanPlan = soap.plan?.trim() || missingFieldText;
 
   const fullNarrative = `[ATENDIMENTO MÉDICO - APS / e-SUS PEC]
-PACIENTE: ${patient.name} (${patient.age} anos, Pront: ${patient.prontuario || 'S/N'})
+PACIENTE: ${patient.name} (${patient.age} anos, Pront: ${patient.prontuario || 'não informado'})
 DATA: ${patient.date}
 
 [S - SUBJETIVO]
@@ -70,7 +70,7 @@ ${cleanAssessment}
 ${cleanPlan}
 
 ---
-Registro estruturado via Nexus Clínico - APS/MFC`;
+Registro estruturado via Nexus Clínico - APS e MFC`;
 
   return {
     subjective: cleanSubjective,

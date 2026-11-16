@@ -10,7 +10,6 @@ import { EemSoapWorkstationView } from './components/EemSoapWorkstationView';
 import { CalculatorsView } from './components/CalculatorsView';
 import { ContextualEducationModal } from './components/ContextualEducationModal';
 import { AboutModal, AboutModalTab } from './components/AboutModal';
-import { SourceCodeModal } from './components/SourceCodeModal';
 import { PatientSelfFillModal } from './components/PatientSelfFillModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Footer } from './components/Footer';
@@ -44,7 +43,6 @@ export const App: React.FC = () => {
   const [focusSubjectiveTrigger, setFocusSubjectiveTrigger] = useState(0);
   const [showAbout, setShowAbout] = useState(Boolean(initialRoute.modalTab));
   const [aboutTab, setAboutTab] = useState<AboutModalTab>(initialRoute.modalTab || 'sobre');
-  const [showCodeModal, setShowCodeModal] = useState(false);
   const [showContextualEducation, setShowContextualEducation] = useState(false);
 
   // Check URL parameters for direct patient self-fill access (?mode=patient&scale=phq-9&p=Nome)
@@ -518,10 +516,10 @@ export const App: React.FC = () => {
               isSelfAdministered: true,
               soapText:
                 res.soapText ||
-                `${res.scaleTitle}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no Tablet/PC]`,
+                `${res.scaleTitle}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no tablet ou computador]`,
             };
             handleSaveScaleResult(enriched);
-            const soapEntry = `[Autoaplicação no Tablet/PC - ${res.scaleTitle || res.scaleId}] Pontuação: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Respostas: [${(res.answersArray || []).join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            const soapEntry = `[Autoaplicação no tablet ou computador - ${res.scaleTitle || res.scaleId}] Pontuação: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Respostas: [${(res.answersArray || []).join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
             handleImportToSoapObjective(soapEntry, `Autoaplicação: ${res.scaleTitle || res.scaleId}`);
           }}
         />
@@ -540,7 +538,6 @@ export const App: React.FC = () => {
         onLoadDemoPatient={handleLoadDemoPatient}
         onOpenAbout={() => handleOpenAboutWithTab('sobre')}
         onOpenAboutWithTab={handleOpenAboutWithTab}
-        onOpenCodeExport={() => setShowCodeModal(true)}
         onNavigate={handleNavigate}
         onSelectScale={handleSelectScale}
         isSyncingCloud={isSyncingCloud}
@@ -632,11 +629,9 @@ export const App: React.FC = () => {
       {showAbout && (
         <AboutModal
           onClose={handleCloseAbout}
-          onOpenCodeExport={() => setShowCodeModal(true)}
           initialTab={aboutTab}
         />
       )}
-      {showCodeModal && <SourceCodeModal onClose={() => setShowCodeModal(false)} />}
 
       {showContextualEducation && (
         <ContextualEducationModal

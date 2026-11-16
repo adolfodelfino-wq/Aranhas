@@ -131,7 +131,7 @@ ${soapState.plan || 'Sem registros.'}`;
             <button
               onClick={() => setShowPecModal(true)}
               className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg font-sans text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Assistente de cópia estruturada para o Prontuário Eletrônico do Cidadão (PEC / e-SUS APS)"
+              title="Assistente de cópia estruturada para o Prontuário Eletrônico do Cidadão (PEC do e-SUS APS)"
             >
               <Building2 className="w-3.5 h-3.5 text-teal-700" />
               <span>Assistente PEC</span>
@@ -310,7 +310,7 @@ ${soapState.plan || 'Sem registros.'}`;
             <textarea
               value={soapState.plan}
               onChange={(e) => handleTextChange('plan', e.target.value)}
-              placeholder="Condutas pactuadas, prescrição e posologia, cronograma de troca/desmame de antidepressivos, orientações de autocuidado, plano de segurança e retorno..."
+              placeholder="Condutas pactuadas, prescrição e posologia, cronograma de troca ou desmame de antidepressivos, orientações de autocuidado, plano de segurança e retorno..."
               rows={8}
               className="w-full bg-slate-50/70 border border-slate-200 rounded-lg p-3.5 text-xs sm:text-sm text-slate-800 font-sans leading-relaxed focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all resize-none placeholder:text-slate-400"
             />

@@ -1,6 +1,0 @@
-{
-  "summary": "Plano de implementação para despoluição visual e ergonomia cognitiva na calculadora de desmame de benzodiazepínicos:\n1. Eliminar o texto redundante do protocolo farmacocinético que repete informações dos badges.\n2. Converter as três seções extensas de texto (Alertas Críticos, Sintomas Esperados de Retirada e Intervenções Não-Farmacológicas TCC-I) em acordeões recolhidos em linha (cards clicáveis com prévia e expansão sob demanda).\n3. Preservar o gerador de mensagem do WhatsApp que teve ótima avaliação.\n4. Validar compilação e testes da aplicação.",
-  "updatedAt": "2026-10-12T15:51:38.644454775Z",
-  "requestFeedback": true,
-  "userFacing": true
-}

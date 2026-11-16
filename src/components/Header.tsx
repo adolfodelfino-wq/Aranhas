@@ -5,7 +5,6 @@ import {
   Search,
   Brain,
   Code,
-  Info,
   UserPlus,
   Save,
   Sparkles,
@@ -18,7 +17,6 @@ import {
   Heart,
   Pill,
   ExternalLink,
-  BookOpen,
   Cloud,
   Check,
   Loader2,
@@ -34,7 +32,6 @@ interface HeaderProps {
   onLoadDemoPatient: () => void;
   onOpenAbout: () => void;
   onOpenAboutWithTab?: (tab: AboutModalTab) => void;
-  onOpenCodeExport?: () => void;
   onNavigate?: (view: NavView) => void;
   onSelectScale?: (scaleId: string) => void;
   isSyncingCloud?: boolean;
@@ -50,7 +47,6 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadDemoPatient,
   onOpenAbout,
   onOpenAboutWithTab,
-  onOpenCodeExport,
   onNavigate,
   onSelectScale,
   isSyncingCloud = false,
@@ -115,27 +111,27 @@ export const Header: React.FC<HeaderProps> = ({
   const clinicalCalculators = [
     {
       id: 'antidepressant',
-      title: 'Troca de Antidepressivos (Maudsley/Hayasaka)',
+      title: 'Troca de Antidepressivos (Maudsley e Hayasaka)',
       acronym: 'Troca Antidep',
-      category: 'Farmacologia & Transição',
+      category: 'Farmacologia e Transição',
     },
     {
       id: 'antipsychotic',
       title: 'Equivalência de Antipsicóticos (CPZE)',
       acronym: 'CPZE',
-      category: 'Doses & Farmacologia',
+      category: 'Doses e Farmacologia',
     },
     {
       id: 'egfr',
       title: 'Taxa de Filtração Glomerular (CKD-EPI)',
       acronym: 'CKD-EPI',
-      category: 'Função Renal & Ajuste',
+      category: 'Função Renal e Ajuste',
     },
     {
       id: 'cv',
-      title: 'Risco Cardiovascular Global (SBC / Framingham)',
-      acronym: 'ERG / Framingham',
-      category: 'Risco Clínico & Prevenção',
+      title: 'Risco Cardiovascular Global (SBC e Framingham)',
+      acronym: 'ERG e Framingham',
+      category: 'Risco Clínico e Prevenção',
     },
   ].filter(
     (c) =>
@@ -333,27 +329,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Edit3 className="w-3 h-3" />
             </div>
           </button>
-
-          {/* Evidências Button (Large Screens) */}
-          <button
-            type="button"
-            onClick={() => onOpenAboutWithTab ? onOpenAboutWithTab('evidencias') : onOpenAbout()}
-            className="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 transition-colors cursor-pointer min-h-[38px]"
-            title="Ver referências e fundamentação científica"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-teal-700" />
-            <span>Evidências</span>
-          </button>
-
-          {/* Sobre / Informações */}
-          <button
-            type="button"
-            onClick={onOpenAbout}
-            className="p-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-lg text-slate-500 hover:text-slate-800 transition-colors cursor-pointer flex items-center justify-center min-h-[38px] min-w-[38px]"
-            title="Sobre a plataforma"
-          >
-            <Info className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
@@ -414,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-slate-700">
-                    Prontuário / Cartão SUS:
+                    Prontuário ou Cartão SUS:
                   </label>
                   <input
                     type="text"
@@ -461,7 +436,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="Limpar todos os dados clínicos e iniciar nova sessão de atendimento"
                 >
                   <UserPlus className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Limpar / Novo Paciente</span>
+                  <span>Limpar e Iniciar Novo Paciente</span>
                 </button>
 
                 <div className="pt-1 flex items-center justify-between border-t border-slate-100">

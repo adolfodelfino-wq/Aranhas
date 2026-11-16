@@ -1,18 +1,19 @@
 import { EvidenceReference } from '../types';
+import { TCR_SCALE_IDS, type TcrScaleId } from './scalesData';
 
-export const EVIDENCE_REFERENCES: EvidenceReference[] = [
+export const ALL_EVIDENCE_REFERENCES: EvidenceReference[] = [
   // 1. HCL-32 / Transtorno Bipolar
   {
     id: 'hcl32-soares-moreno',
     topic: 'Transtorno Bipolar e Rastreio de Hipomania',
     title: 'Validation and reliability of the Portuguese version of the Hypomania Checklist-32 (HCL-32) for the detection of bipolar disorder',
-    source: 'Soares OT, Moreno RA, Moura EC, Angst J. Revista Brasileira de Psiquiatria / FMUSP',
+    source: 'Soares OT, Moreno RA, Moura EC, Angst J. Revista Brasileira de Psiquiatria; FMUSP',
     year: '2010',
-    summary: 'Validação psicométrica da versão brasileira do HCL-32 (HCL-32 VB). Instrumento padrão de autorrelato para diferenciar Transtorno Bipolar (especialmente Tipo II) de Transtorno Depressivo Maior.',
+    summary: 'Validação psicométrica da versão brasileira do HCL-32 (HCL-32 VB). Instrumento de autorrelato para diferenciar Transtorno Bipolar (especialmente Tipo II) de Transtorno Depressivo Maior.',
     keyPoints: [
       'Ponto de corte no Brasil: escore ≥ 18 pontos apresentou melhor equilíbrio discriminativo (Sensibilidade: 75%, Especificidade: 58%, Alfa de Cronbach: 0.86).',
-      'Estrutura bifatorial validada: Fator 1 (Ativação/Elação com 19 itens) e Fator 2 (Comportamento de Risco/Irritabilidade com 13 itens).',
-      'Crucial para evitar uso inadvertido de antidepressivos em monoterapia em pacientes com depressão bipolar oculta.',
+      'Estrutura bifatorial validada: Fator 1 (Ativação e Elação com 19 itens) e Fator 2 (Comportamento de Risco e Irritabilidade com 13 itens).',
+      'Importante para evitar uso inadvertido de antidepressivos em monoterapia em pacientes com depressão bipolar oculta.',
       'Referência primária internacional: Angst J et al. (Journal of Affective Disorders, 2005).'
     ]
   },
@@ -20,28 +21,26 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
   {
     id: 'phq9-kroenke-osorio',
     topic: 'Transtorno Depressivo Maior na APS',
-    title: 'The PHQ-9: Validity of a Brief Depression Severity Measure & Validação Brasileira na Atenção Primária',
-    source: 'Kroenke K, Spitzer RL, Williams JB (2001) / de Lima Osório F et al. (2009) / Santos IS et al. (2013)',
+    title: 'The PHQ-9: Validity of a Brief Depression Severity Measure e estudos brasileiros',
+    source: 'Kroenke K, Spitzer RL, Williams JB (2001); de Lima Osório F et al. (2009); Santos IS et al. (2013)',
     year: '2001-2013',
-    summary: 'Instrumento padrão-ouro mundial e do SUS para triagem e monitoramento da gravidade de sintomas depressivos alinhado aos critérios do DSM-IV e DSM-5.',
+    summary: 'Questionário breve para rastrear e acompanhar a intensidade de sintomas depressivos. A confirmação diagnóstica depende de avaliação clínica.',
     keyPoints: [
-      'Ponto de corte padrão: escore ≥ 10 com sensibilidade de 88% e especificidade de 88% para episódio depressivo maior.',
-      'Item 9 avalia ideação suicida e necessita de desdobramento imediato com protocolo de segurança (C-SSRS).',
-      'Excelente sensibilidade à mudança terapêutica para avaliar resposta ao tratamento após 4 a 6 semanas.'
+      'No estudo original de Kroenke et al. (2001), o corte ≥ 10 teve sensibilidade de 88% e especificidade de 88%. Os estudos brasileiros examinaram a escala em suas próprias amostras.',
+      'Uma resposta positiva ao item 9 requer avaliação clínica de segurança, qualquer que seja o escore total.'
     ]
   },
   // 3. GAD-7 / Ansiedade
   {
     id: 'gad7-spitzer-moreno',
     topic: 'Transtorno de Ansiedade Generalizada (TAG)',
-    title: 'A Brief Measure for Assessing Generalized Anxiety Disorder: The GAD-7 & Validação Brasileira',
-    source: 'Spitzer RL, Kroenke K, Williams JB, Löwe B (2006) / Moreno AL et al. (2016)',
+    title: 'A Brief Measure for Assessing Generalized Anxiety Disorder: The GAD-7 e estudo da versão brasileira',
+    source: 'Spitzer RL, Kroenke K, Williams JB, Löwe B (2006); Moreno AL et al. (2016)',
     year: '2006-2016',
-    summary: 'Escala breve e autoadministrada para triagem e mensuração da severidade do TAG e transtornos ansiosos na Atenção Primária.',
+    summary: 'Escala breve para rastrear e medir a intensidade de sintomas ansiosos. A confirmação diagnóstica depende de avaliação clínica.',
     keyPoints: [
-      'Ponto de corte: escore ≥ 10 pontos (Sensibilidade 89%, Especificidade 82%).',
-      'Estratificação: 0-4 (mínima), 5-9 (leve), 10-14 (moderada), 15-21 (grave).',
-      'Permite diferenciar queixas ansiosas subclínicas de transtornos ansiosos com impacto funcional que demandam intervenção.'
+      'No estudo original de Spitzer et al. (2006), o corte ≥ 10 teve sensibilidade de 89% e especificidade de 82%. Moreno et al. (2016) examinaram a estrutura e a confiabilidade da versão brasileira.',
+      'Faixas de intensidade dos sintomas: 0 a 4 (mínima), 5 a 9 (leve), 10 a 14 (moderada) e 15 a 21 (grave).'
     ]
   },
   // 4. AUDIT / Álcool
@@ -49,7 +48,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'audit-oms-mendez',
     topic: 'Uso de Substâncias e Álcool na APS',
     title: 'The Alcohol Use Disorders Identification Test (AUDIT): Guidelines for Use in Primary Care & Validação Brasileira',
-    source: 'Organização Mundial da Saúde (OMS / Babor TF et al., 2001) / Mendez EB (1999) / Moretti-Pires & Corradi-Webster (2011)',
+    source: 'Organização Mundial da Saúde (OMS; Babor TF et al., 2001); Mendez EB (1999); Moretti-Pires & Corradi-Webster (2011)',
     year: '2001-2011',
     summary: 'Instrumento desenvolvido pela OMS especificamente para profissionais da atenção primária identificarem consumo de risco, uso nocivo e dependência de álcool precocemente.',
     keyPoints: [
@@ -58,16 +57,29 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Escore ≥ 20 indica Provável Síndrome de Dependência, exigindo avaliação médica para Síndrome de Abstinência Alcoólica e articulação com CAPS AD.'
     ]
   },
+  // EPDS / Depressão pós-parto
+  {
+    id: 'epds-cox-santos',
+    topic: 'Saúde Mental no Pós-Parto',
+    title: 'Edinburgh Postnatal Depression Scale (EPDS) e validação na Coorte de Pelotas',
+    source: 'Cox JL, Holden JM, Sagovsky R (1987); Santos IS, Matijasevich A et al. (2007)',
+    year: '1987-2007',
+    summary: 'Escala de rastreamento de sintomas depressivos no pós-parto. O estudo brasileiro avaliou 378 mães aos três meses pós-parto.',
+    keyPoints: [
+      'Na amostra de Pelotas, o corte > 10 apresentou sensibilidade de 82,6% e especificidade de 65,4% para rastreamento.',
+    ],
+    url: 'https://doi.org/10.1590/S0102-311X2007001100005',
+  },
   // 5. ASRS-18 / TDAH Adulto
   {
     id: 'asrs18-kessler-mattos',
     topic: 'TDAH em Adultos',
     title: 'Adult ADHD Self-Report Scale (ASRS-v1.1) da OMS & Adaptação Transcultural para o Português',
-    source: 'Kessler RC et al. (Psychological Medicine, 2005) / Mattos P, Segenreich D et al. (Rev Psiquiatr Clín, 2006)',
+    source: 'Kessler RC et al. (Psychological Medicine, 2005); Mattos P, Segenreich D et al. (Rev Psiquiatr Clín, 2006)',
     year: '2005-2006',
-    summary: 'Escala oficial desenvolvida pelo grupo de trabalho da OMS em colaboração com a Harvard Medical School para rastreio de TDAH em adultos.',
+    summary: 'Escala desenvolvida pelo grupo de trabalho da OMS em colaboração com a Harvard Medical School para rastreio de TDAH em adultos.',
     keyPoints: [
-      '18 itens divididos em Desatenção (Parte A/1-9) e Hiperatividade/Impulsividade (Parte B/10-18).',
+      '18 itens divididos em Desatenção (Parte A, itens 1 a 9) e Hiperatividade e Impulsividade (Parte B, itens 10 a 18).',
       'Corte de rastreio positivo: presença de 4 ou mais itens com pontuação positiva em cada domínio.',
       'Auxilia na investigação de histórico de prejuízos executivos desde a infância.'
     ]
@@ -77,9 +89,9 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'snap4-swanson-mattos',
     topic: 'Saúde Mental da Criança e Adolescente',
     title: 'Swanson, Nolan, and Pelham Rating Scale (SNAP-IV) & Validação Brasileira',
-    source: 'Swanson JM et al. (2001) / Mattos P, Serra-Pinheiro MA, Rohde LA, Pinto D (Rev Psiquiatr Rio Gd Sul, 2006)',
+    source: 'Swanson JM et al. (2001); Mattos P, Serra-Pinheiro MA, Rohde LA, Pinto D (Rev Psiquiatr Rio Gd Sul, 2006)',
     year: '2001-2006',
-    summary: 'Escala de 18 itens correspondentes aos critérios diagnósticos do DSM-IV/DSM-5 para TDAH aplicada a pais e educadores.',
+    summary: 'Escala de 18 itens correspondentes aos critérios diagnósticos do DSM-IV e DSM-5 para TDAH aplicada a pais e educadores.',
     keyPoints: [
       'Corte positivo: presença de 6 ou mais itens pontuados como "Bastante" ou "Demais" por domínio.',
       'Recomenda-se preenchimento pareado por pais e professores para comprovação de sintomas em múltiplos ambientes.'
@@ -90,9 +102,9 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'ybocs-goodman-cordioli',
     topic: 'Transtorno Obsessivo-Compulsivo (TOC)',
     title: 'The Yale-Brown Obsessive Compulsive Scale (Y-BOCS) & Validação Brasileira',
-    source: 'Goodman WK et al. (Arch Gen Psychiatry, 1989) / Cordioli AV et al. (Revista ABP-APAL, 1998)',
+    source: 'Goodman WK et al. (Arch Gen Psychiatry, 1989); Cordioli AV et al. (Revista ABP-APAL, 1998)',
     year: '1989-1998',
-    summary: 'Padrão-ouro para quantificar a severidade das obsessões (tempo, interferência, angústia, resistência e controle) e rituais compulsivos.',
+    summary: 'Escala de referência para quantificar a gravidade das obsessões (tempo, interferência, angústia, resistência e controle) e rituais compulsivos.',
     keyPoints: [
       'Escore total de 0 a 40 pontos (0-7 subclínico, 8-15 leve, 16-23 moderado, 24-31 grave, 32-40 extremo).',
       'Orienta indicação de doses elevadas de ISRS e Terapia Cognitivo-Comportamental com Exposição e Prevenção de Resposta (EPR).'
@@ -103,12 +115,11 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'cssrs-posner',
     topic: 'Prevenção do Suicídio e Manejo de Crise',
     title: 'The Columbia-Suicide Severity Rating Scale (C-SSRS): Initial Validity and Internal Consistency Findings',
-    source: 'Posner K, Brown GK, Stanley B et al. (Am J Psychiatry, 2011) / Associação Brasileira de Psiquiatria (ABP)',
+    source: 'Posner K, Brown GK, Stanley B et al. (Am J Psychiatry, 2011); Associação Brasileira de Psiquiatria (ABP)',
     year: '2011',
-    summary: 'Instrumento padronizado de triagem de ideação e comportamento suicida que gradua o risco de ideação passiva até planos com intenção imediata.',
+    summary: 'Instrumento estruturado para investigar ideação e comportamento suicida. Referência complementar de segurança no escopo do TCR.',
     keyPoints: [
-      'Classifica o risco em Baixo, Moderado e Alto/Emergência para guiar a conduta imediata na UBS.',
-      'Enfatiza a criação do Plano de Segurança Pessoal, remoção de meios letais e envolvimento de suporte familiar com consentimento.'
+      'A avaliação clínica de segurança considera a ideação, a intenção, o plano, o comportamento e o contexto da pessoa.'
     ]
   },
   // 9. MEEM / Cognição
@@ -116,21 +127,21 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'meem-folstein-brucki',
     topic: 'Saúde Mental do Idoso e Rastreio Cognitivo na APS',
     title: 'Sugestões para o uso do Mini-Exame do Estado Mental no Brasil (Brucki SMD et al., 2003) e Diretrizes TelessaúdeRS',
-    source: 'Folstein MF (1975) / Brucki SMD, Nitrini R, Caramelli P, Bertolucci PH, Okamoto IH (Arq Neuropsiquiatr, 2003) / TelessaúdeRS-UFRGS',
+    source: 'Folstein MF (1975); Brucki SMD, Nitrini R, Caramelli P, Bertolucci PH, Okamoto IH (Arq Neuropsiquiatr, 2003); TelessaúdeRS-UFRGS',
     year: '1975-2003',
-    summary: 'Estudo seminal de padronização e normatização do MEEM para a população brasileira, estabelecendo pontos de corte estratificados por 5 faixas de escolaridade para aumentar a sensibilidade e especificidade do rastreio cognitivo na Atenção Primária.',
+    summary: 'Estudo de padronização e normatização do MEEM para a população brasileira, com pontos de corte estratificados por 5 faixas de escolaridade para o rastreio cognitivo na Atenção Primária.',
     keyPoints: [
-      'Pontos de corte recomendados no Brasil (Brucki et al., 2003 / TelessaúdeRS / ABN): Analfabetos: 20 pontos; 1 a 4 anos de escolaridade: 25 pontos; 5 a 8 anos: 26,5 pontos; 9 a 11 anos: 28 pontos; Acima de 11 anos (>11): 29 pontos.',
-      'Avalia orientação temporal/espacial, memória imediata, atenção/cálculo, evocação, linguagem e praxia construtiva (total de 0 a 30 pontos).',
-      'Diretrizes TelessaúdeRS: O MEEM é instrumento de triagem e deve sempre ser complementado pela avaliação da funcionalidade (ABVD - Katz e AIVD - Lawton e Brody ou Pfeffer/FAQ), Teste do Desenho do Relógio (TDR) e exclusão laboratorial de causas reversíveis (TSH, Vitamina B12, VDRL, função renal/hepática).'
+      'Pontos de corte recomendados no Brasil (Brucki et al., 2003; TelessaúdeRS; ABN): Analfabetos: 20 pontos; 1 a 4 anos de escolaridade: 25 pontos; 5 a 8 anos: 26,5 pontos; 9 a 11 anos: 28 pontos; Acima de 11 anos (>11): 29 pontos.',
+      'Avalia orientação temporal e espacial, memória imediata, atenção e cálculo, evocação, linguagem e praxia construtiva (total de 0 a 30 pontos).',
+      'Diretrizes TelessaúdeRS: O MEEM é instrumento de triagem e deve ser complementado pela avaliação da funcionalidade (ABVD com Katz e AIVD com Lawton e Brody ou Pfeffer), Teste do Desenho do Relógio (TDR) e exclusão laboratorial de causas reversíveis (TSH, Vitamina B12, VDRL, função renal e hepática).'
     ]
   },
-  // 10. EUROHIS-QOL & WHOQOL
+  // 10. EUROHIS-QOL e WHOQOL
   {
     id: 'eurohis-rocha-fleck',
     topic: 'Qualidade de Vida e Saúde Integral',
     title: 'Desenvolvimento e Validação da Versão em Português do Índice de Qualidade de Vida EUROHIS-QOL de 8 Itens',
-    source: 'Schmidt S et al. (2006) / Rocha NS, Power MJ, Bushnell DM, Fleck MP (Revista de Saúde Pública, 2008)',
+    source: 'Schmidt S et al. (2006); Rocha NS, Power MJ, Bushnell DM, Fleck MP (Revista de Saúde Pública, 2008)',
     year: '2008',
     summary: 'Versão abreviada da OMS para avaliação rápida e confiável da qualidade de vida global, saúde física, relações e condições de moradia.',
     keyPoints: [
@@ -145,10 +156,10 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'Caderno de Atenção Básica nº 34: Saúde Mental',
     source: 'Ministério da Saúde - Brasil',
     year: '2013',
-    summary: 'Documento balizador para o cuidado em saúde mental territorializado, matriciamento e acolhimento na Atenção Primária à Saúde no SUS.',
+    summary: 'Documento de orientação para o cuidado em saúde mental territorializado, matriciamento e acolhimento na Atenção Primária à Saúde no SUS.',
     keyPoints: [
       'Acolhimento humanizado e escuta qualificada como porta de entrada.',
-      'Apoio Matricial com equipes de Saúde Mental / eNASF / CAPS para casos complexos.',
+      'Apoio Matricial com equipes de Saúde Mental, eNASF ou CAPS para casos complexos.',
       'Uso racional de psicofármacos e combate à medicalização excessiva do sofrimento psíquico.',
       'Construção de Projetos Terapêuticos Singulares (PTS) pactuados com o usuário.'
     ]
@@ -157,7 +168,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'sbmfc-saude-mental',
     topic: 'Medicina de Família e Comunidade (MFC)',
     title: 'Tratado de Medicina de Família e Comunidade (2ª Edição) - Abordagem em Saúde Mental',
-    source: 'Sociedade Brasileira de Medicina de Família e Comunidade (SBMFC) / Gusso G, Lopes JMC, Dias LC',
+    source: 'Sociedade Brasileira de Medicina de Família e Comunidade (SBMFC); Gusso G, Lopes JMC, Dias LC',
     year: '2019',
     summary: 'Princípios da clínica ampliada, método clínico centrado na pessoa, abordagem familiar e seguimento longitudinal na APS.',
     keyPoints: [
@@ -170,7 +181,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'aps-protocolo-sm',
     topic: 'Linha de Cuidado Territorial',
     title: 'Diretrizes de Apoio Matricial e Saúde Mental na APS',
-    source: 'Cadernos de Atenção Básica / MFC Brasil',
+    source: 'Cadernos de Atenção Básica; MFC Brasil',
     year: '2022',
     summary: 'Orientações práticas para o matriciamento e cuidado compartilhado entre equipes de Saúde da Família e Saúde Mental.',
     keyPoints: [
@@ -183,7 +194,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'who-mhgap',
     topic: 'Saúde Mental Global',
     title: 'Manual de Intervenções mhGAP (versão 2.0)',
-    source: 'Organização Mundial da Saúde (OMS / WHO)',
+    source: 'Organização Mundial da Saúde (OMS)',
     year: '2019',
     summary: 'Guia de suporte à decisão clínica para manejo de transtornos mentais, neurológicos e por uso de substâncias em serviços de atenção não especializada.',
     keyPoints: [
@@ -197,9 +208,9 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     id: 'maudsley-prescribing-guidelines-2021',
     topic: 'Diretrizes de Troca de Psicofármacos & Segurança',
     title: 'The Maudsley Prescribing Guidelines in Psychiatry (14th Edition) - Switching and Deprescribing Antidepressants',
-    source: 'Taylor D, Barnes TRE, Young AH. Wiley-Blackwell / King\'s College London',
+    source: 'Taylor D, Barnes TRE, Young AH. Wiley-Blackwell; King\'s College London',
     year: '2021',
-    summary: 'Principal tratado mundial de psicofarmacologia clínica aplicada, detalhando protocolos sistemáticos para troca direta, troca cruzada (cross-tapering) e troca com períodos de washout entre diferentes classes de antidepressivos.',
+    summary: 'Referência internacional de psicofarmacologia clínica aplicada, com protocolos sistemáticos para troca direta, troca cruzada (cross-tapering) e troca com períodos de washout entre diferentes classes de antidepressivos.',
     keyPoints: [
       'Troca Cruzada (Cross-tapering): Estratégia de primeira escolha para a maioria das trocas de classe para mitigar a Síndrome de Descontinuação e evitar recaídas depressivas.',
       'Meia-vida da Norfluoxetina (7-15 dias): Possibilita a troca direta facilitada de Fluoxetina para outros ISRS sem necessidade de desmame lento prévio.',
@@ -215,7 +226,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     summary: 'Demonstração farmacológica da curva hiperbólica de ocupação do transportador de serotonina (SERT) e a necessidade de desmame proporcional gradual para prevenir sintomas de descontinuação (FINISH).',
     keyPoints: [
       'Reduções lineares de dose produzem quedas hiperbólicas desproporcionais na ocupação do receptor SERT em doses baixas.',
-      'Alerta clínico para sintomas FINISH (Flu-like, Insomnia, Nausea, Imbalance/tonturas, Sensory "brain zaps", Hyperarousal).',
+      'Alerta clínico para sintomas FINISH (Flu-like, Insomnia, Nausea, Imbalance ou tonturas, Sensory "brain zaps", Hyperarousal).',
       'Paroxetina e Venlafaxina requerem cuidados redobrados devido à meia-vida curta e alta afinidade de recaptação.'
     ]
   },
@@ -232,16 +243,16 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
       'Monitoramento de interações metabólicas no Citocromo P450 (CYP2D6, CYP1A2, CYP2C19, CYP3A4).'
     ]
   },
-  // 13. Prevenção Cardiovascular & Monitoramento Metabólico na APS / Saúde Mental
+  // 13. Prevenção Cardiovascular e Monitoramento Metabólico na APS e Saúde Mental
   {
     id: 'sbc-prevencao-cv-2019',
-    topic: 'Cardiologia Preventiva & Risco Cardiovascular na APS',
-    title: 'Atualização da Diretriz de Prevenção Cardiovascular da Sociedade Brasileira de Cardiologia - 2019/2021',
+    topic: 'Cardiologia Preventiva e Risco Cardiovascular na APS',
+    title: 'Atualização da Diretriz de Prevenção Cardiovascular da Sociedade Brasileira de Cardiologia - 2019 e 2021',
     source: 'Précoma DB, Oliveira GMM, Simão AF et al. Arquivos Brasileiros de Cardiologia (SBC)',
     year: '2019-2021',
-    summary: 'Diretriz nacional padrão-ouro para estratificação do risco cardiovascular global em 10 anos, identificação de condições de muito alto e alto risco direto, fatores agravantes reclassificadores e metas lipídicas/pressóricas estritas na Atenção Primária.',
+    summary: 'Diretriz nacional de referência para estratificação do risco cardiovascular global em 10 anos, identificação de condições de muito alto e alto risco direto, fatores agravantes e metas lipídicas e pressóricas na Atenção Primária.',
     keyPoints: [
-      'Estratificação em 4 categorias de risco: Baixo (<5%), Intermediário (5-20% M / 5-10% F), Alto (>20% M / >10% F ou DM/DRC/LDL≥190) e Muito Alto (DAC/AVC/DAP clinicamente manifestos).',
+      'Estratificação em 4 categorias de risco: Baixo (<5%), Intermediário (5-20% M e 5-10% F), Alto (>20% M, >10% F, ou DM, DRC e LDL ≥ 190) e Muito Alto (DAC, AVC ou DAP clinicamente manifestos).',
       'Fatores agravantes reclassificam risco intermediário para alto: história familiar prematura de DCV, síndrome metabólica, microalbuminúria e PCR-us > 2 mg/L.',
       'Metas de LDL-C por estrato: Muito Alto Risco < 50 mg/dL (e redução ≥ 50%); Alto Risco < 70 mg/dL; Risco Intermediário < 100 mg/dL; Baixo Risco < 130 mg/dL.',
       'Estatina de Alta Potência (Atorvastatina 40-80mg ou Rosuvastatina 20-40mg) indicada formalmente para muito alto e alto risco.'
@@ -253,7 +264,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'General Cardiovascular Risk Profile for Use in Primary Care: The Framingham Heart Study',
     source: 'D\'Agostino RB Sr, Vasan RS, Pencina MJ, Wolf PA, Cobain M, Massaro JM, Kannel WB. Circulation',
     year: '2008',
-    summary: 'Estudo seminal do Framingham Heart Study que validou a função de regressão de Cox para estimar o risco global de eventos cardiovasculares maiores em 10 anos na atenção primária, com variantes baseadas em perfil lipídico ou em IMC para contextos sem exames laboratoriais imediatos.',
+    summary: 'Estudo do Framingham Heart Study que validou a função de regressão de Cox para estimar o risco global de eventos cardiovasculares maiores em 10 anos na atenção primária, com variantes baseadas em perfil lipídico ou em IMC para contextos sem exames laboratoriais imediatos.',
     keyPoints: [
       'Modelo validado para homens e mulheres de 30 a 74 anos para predição de DAC, IAM, AVC, AIT, insuficiência cardíaca e doença arterial periférica.',
       'Permite uso da variante baseada no Índice de Massa Corporal (IMC) com acurácia clínica comparável quando não há dosagem de colesterol disponível na UBS.',
@@ -262,54 +273,54 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
   },
   {
     id: 'ada-apa-metabolic-antipsychotics',
-    topic: 'Saúde Mental & Síndrome Metabólica em Psicofármacos',
+    topic: 'Saúde Mental e Síndrome Metabólica em Psicofármacos',
     title: 'Consensus Development Conference on Antipsychotic Drugs and Obesity and Diabetes',
-    source: 'American Diabetes Association (ADA) / American Psychiatric Association (APA) / Diabetes Care',
+    source: 'American Diabetes Association (ADA); American Psychiatric Association (APA); Diabetes Care',
     year: '2004-2020',
     summary: 'Consenso intersocietário sobre o impacto metabólico dos antipsicóticos de segunda geração, risco de ganho de peso acelerado, disglicemia e dislipidemia, estabelecendo o calendário padrão de monitoramento metabólico na atenção primária.',
     keyPoints: [
       'Classificação de risco metabólico: Alto risco (Clozapina, Olanzapina); Risco intermediário (Quetiapina, Risperidona); Baixo risco (Aripiprazol, Ziprasidona, Lurasidona).',
-      'Protocolo de rastreio na APS: Peso/IMC (basal, 4, 8 e 12 semanas, depois trimestral); PA, Glicemia de jejum e Perfil Lipídico (basal, 12 semanas e anual).',
+      'Protocolo de rastreio na APS: Peso e IMC (basal, 4, 8 e 12 semanas, depois trimestral); PA, Glicemia de jejum e Perfil Lipídico (basal, 12 semanas e anual).',
       'Alerta clínico: Ganho de peso > 5% do peso corporal no primeiro trimestre é preditor de obesidade grave e deve motivar discussão de troca ou intervenção precoce de estilo de vida.'
     ]
   },
-  // 14. Semiologia Psiquiátrica & Exame do Estado Mental (EEM)
+  // 14. Semiologia Psiquiátrica e Exame do Estado Mental (EEM)
   {
     id: 'dalgalarrondo-semiologia-psicopatologia',
-    topic: 'Semiologia Psiquiátrica & Exame do Estado Mental',
+    topic: 'Semiologia Psiquiátrica e Exame do Estado Mental',
     title: 'Psicopatologia e Semiologia dos Transtornos Mentais (3ª Edição)',
     source: 'Dalgalarrondo, Paulo. Artmed Editora',
     year: '2019',
-    summary: 'Tratado clássico brasileiro de semiologia psiquiátrica. Estabelece a distinção conceitual rigorosa das funções psíquicas: Consciência (vigília/rebaixamento), Orientação (autopsíquica e alopsíquica: tempo e espaço), Atenção (tenacidade e vigilância), Memória (fixação e evocação), Sensopercepção, Pensamento (curso, forma e conteúdo), Afetividade (humor e afeto), Vontade/Psicomotricidade e Juízo Crítico/Insight.',
+    summary: 'Tratado brasileiro de semiologia psiquiátrica. Estabelece a distinção conceitual das funções psíquicas: Consciência (vigília e rebaixamento), Orientação (autopsíquica e alopsíquica: tempo e espaço), Atenção (tenacidade e vigilância), Memória (fixação e evocação), Sensopercepção, Pensamento (curso, forma e conteúdo), Afetividade (humor e afeto), Vontade, Psicomotricidade, Juízo Crítico e Insight.',
     keyPoints: [
       'Orientação: subdividida estritamente em Autopsíquica (orientação quanto à própria pessoa) e Alopsíquica (orientação no Tempo e no Espaço).',
       'Atenção e Concentração: função autônoma (tenacidade, vigilância, normoprosexia, hipoprosexia, aprosexia e hiperprosexia), distinguindo-se do teste de orientação.',
-      'Memória: diferenciação entre memória de fixação (imediata/recente) e evocação (remota).',
-      'Pensamento: tripartição indispensável em Curso (velocidade/ritmo), Forma (estrutura/encadeamento) e Conteúdo (temática/juízo de realidade).'
+      'Memória: diferenciação entre memória de fixação (imediata e recente) e evocação (remota).',
+      'Pensamento: tripartição em Curso (velocidade e ritmo), Forma (estrutura e encadeamento) e Conteúdo (temática e juízo de realidade).'
     ]
   },
   {
     id: 'kaplan-sadock-compendio-psiquiatria',
-    topic: 'Exame Psiquiátrico & Mental Status Examination (MSE)',
-    title: 'Compêndio de Psiquiatria: Ciência do Comportamento e Psiquiatria Clínica (11ª/12ª Edição)',
-    source: 'Sadock BJ, Sadock VA, Ruiz P. Kaplan & Sadock / Artmed / Wolters Kluwer',
+    topic: 'Exame Psiquiátrico e Mental Status Examination (MSE)',
+    title: 'Compêndio de Psiquiatria: Ciência do Comportamento e Psiquiatria Clínica (11ª e 12ª Edições)',
+    source: 'Sadock BJ, Sadock VA, Ruiz P. Kaplan & Sadock; Artmed; Wolters Kluwer',
     year: '2017-2022',
-    summary: 'Referência internacional padrão-ouro para a condução estruturada do Mental Status Examination (MSE). Organiza o exame sistemático em: Descrição Geral (Aparência, Atitude, Comportamento psicomotor), Fala, Humor e Afeto, Pensamento (Processo/Forma e Conteúdo), Percepção (Sensopercepção), Sensório e Cognição (Consciência, Orientação nos 3 eixos, Atenção/Cálculo, Memória e Linguagem), Insight e Julgamento.',
+    summary: 'Referência internacional para a condução estruturada do Mental Status Examination (MSE). Organiza o exame sistemático em: Descrição Geral (Aparência, Atitude, Comportamento psicomotor), Fala, Humor e Afeto, Pensamento (Processo, Forma e Conteúdo), Percepção (Sensopercepção), Sensório e Cognição (Consciência, Orientação nos 3 eixos, Atenção, Cálculo, Memória e Linguagem), Insight e Julgamento.',
     keyPoints: [
-      'Sensório & Cognição: Orientação avaliada especificamente nos três eixos (Tempo, Lugar/Espaço e Pessoa).',
+      'Sensório e Cognição: Orientação avaliada especificamente nos três eixos (Tempo, Lugar e Pessoa).',
       'Atenção e Concentração testadas separadamente (ex: subtração seriada de 7, soletrar "MUNDO" de trás para frente).',
       'Distinção precisa entre Humor (estado subjetivo sustentado ao longo do tempo) e Afeto (expressão objetiva e modulação no momento da entrevista).'
     ]
   },
   {
     id: 'statpearls-mental-status-examination',
-    topic: 'Semiologia Médica & Mental Status Examination (MSE)',
-    title: 'Mental Status Examination (StatPearls / NCBI Bookshelf)',
-    source: 'Soni P, Gossman W, Munakomi S. StatPearls Publishing, Treasure Island (FL) / National Center for Biotechnology Information (NCBI) NBK546682',
+    topic: 'Semiologia Médica e Mental Status Examination (MSE)',
+    title: 'Mental Status Examination (StatPearls - NCBI Bookshelf)',
+    source: 'Soni P, Gossman W, Munakomi S. StatPearls Publishing, Treasure Island (FL); National Center for Biotechnology Information (NCBI) NBK546682',
     year: '2023',
-    summary: 'Revisão clínica estruturada do StatPearls/NCBI para o Exame do Estado Mental no atendimento médico ambulatorial e de emergência, destacando a avaliação metódica das funções cognitivas isoladas (Orientação, Atenção/Concentração, Memória, Insight e Julgamento).',
+    summary: 'Revisão clínica estruturada do StatPearls (NCBI) para o Exame do Estado Mental no atendimento médico ambulatorial e de emergência, destacando a avaliação metódica das funções cognitivas isoladas (Orientação, Atenção e Concentração, Memória, Insight e Julgamento).',
     keyPoints: [
-      'Estrutura em domínios claros: Appearance & Behavior, Speech, Mood & Affect, Thought Process, Thought Content, Perceptions, Cognition (Orientation, Attention/Calculation, Memory), Insight, and Judgment.',
+      'Estrutura em domínios claros: Appearance & Behavior, Speech, Mood & Affect, Thought Process, Thought Content, Perceptions, Cognition (Orientation, Attention & Calculation, Memory), Insight, and Judgment.',
       'Orientação (Tempo, Lugar, Pessoa) é o primeiro índice cognitivo de rastreio de delirium e estados confusionais agudos.',
       'Atenção e Concentração representam a capacidade de focar e sustentar o esforço cognitivo em tarefas direcionadas.'
     ]
@@ -320,7 +331,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'The Maudsley Prescribing Guidelines in Psychiatry (15ª Edição)',
     source: 'Taylor DM, Barnes TRE, Young AH. Wiley-Blackwell',
     year: '2025',
-    summary: 'Referência global padrão-ouro para prescrição psicofarmacológica clínica baseada em evidências. Estabelece faixas posológicas terapêuticas de referência, doses de introdução, monitoramento de intervalo QTc e estratégias de transição posológica.',
+    summary: 'Referência clínica para prescrição psicofarmacológica baseada em evidências. Estabelece faixas posológicas terapêuticas de referência, doses de introdução, monitoramento de intervalo QTc e estratégias de transição posológica.',
     keyPoints: [
       'Faixas Terapêuticas de Referência: Estabelece as janelas de eficácia e doses máximas para todos os antidepressivos maiores na prática ambulatorial e hospitalar.',
       'Transição entre Psicofármacos: Detalha o manejo das trocas diretas, trocas cruzadas e janelas estritas de intervalo livre (washout).',
@@ -334,11 +345,11 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'The Maudsley Deprescribing Guidelines: Antidepressants, Benzodiazepines, Gabapentinoids and Z-drugs',
     source: 'Horowitz MA, Taylor DM. Wiley-Blackwell (DOI: 10.1002/9781394291052)',
     year: '2024',
-    summary: 'Primeiro compêndio clínico internacional sistemático dedicado exclusivamente à desprescrição segura de psicofármacos. Apresenta o método do Desmame Hiperbólico fundamentado em estudos de neuroimagem PET da ocupação de receptores.',
+    summary: 'Primeiro compêndio clínico internacional dedicado exclusivamente à desprescrição segura de psicofármacos. Apresenta o método do Desmame Hiperbólico fundamentado em estudos de neuroimagem PET da ocupação de receptores.',
     keyPoints: [
       'Princípio Hiperbólico: Reduções de dose devem ser proporcionais à dose remanescente atual (e não cortes lineares fixos em mg), prevenindo o choque de receptores nas etapas finais ("the difficult last mile").',
       'Desmame Guiado pelo Paciente (Patient-Led Tapering): O paciente controla o ritmo dos degraus. Se houver abstinência moderada a severa, a dose deve ser mantida (regra do "hold") por 2 a 4 semanas até estabilização biológica.',
-      'Diferencial Clínico: Estabelece a distinção semiológica precisa entre Síndrome de Retirada (início precoce, curso em ondas, sintomas sensoriais/choques) e Recaída (início insidioso e tardio, sintomas puramente psíquicos).',
+      'Diferencial Clínico: Estabelece a distinção semiológica precisa entre Síndrome de Retirada (início precoce, curso em ondas, sintomas sensoriais e choques) e Recaída (início insidioso e tardio, sintomas puramente psíquicos).',
       'Microescalonamento: Enfatiza a utilização de formulações líquidas (gotas) e fracionamento fino para viabilizar microdoses sem forçar a interrupção prematura para zero.'
     ]
   },
@@ -352,7 +363,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     keyPoints: [
       'Doses Equivalentes Primárias a Fluoxetina 40 mg/dia: Paroxetina 34,0 mg; Sertralina 98,5 mg; Escitalopram 18,0 mg; Fluvoxamina 143,3 mg; Venlafaxina 149,4 mg; Mirtazapina 50,9 mg; Bupropiona 348,5 mg; Amitriptilina 122,3 mg; Nortriptilina 100,9 mg; Clomipramina 116,1 mg; Agomelatina 53,2 mg.',
       'Escopo e Limitações: Citalopram e antidepressivos mais recentes (Desvenlafaxina, Duloxetina, Vortioxetina) não tiveram coeficientes de equivalência primários estabelecidos no resumo da meta-análise.',
-      'Aplicação Clínica: Fornece um balizador populacional baseado em RCTs, mas NÃO substitui a titulação individualizada e a consideração da dose de introdução clínica na prescrição.'
+      'Aplicação Clínica: Fornece referência populacional baseada em ensaios clínicos, mas NÃO substitui a titulação individualizada e a dose de introdução clínica na prescrição.'
     ]
   },
   {
@@ -392,7 +403,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     keyPoints: [
       'Troca Direta (Direct Switch): Indicada principalmente entre ISRSs da mesma classe em doses baixas ou moderadas.',
       'Troca Cruzada (Cross-Taper): Estratégia de escolha para transições entre classes distintas (ISRS para ISRN, tricíclicos, etc.) e em doses elevadas.',
-      'Janela Livre Obrigatória (Washout): Exigência inegociável em trocas envolvendo IMAOs (14 dias gerais e 5 semanas para fluoxetina) para prevenção de síndrome serotoninérgica fatal.'
+      'Janela Livre Obrigatória (Washout): Exigência clínica obrigatória em trocas envolvendo IMAOs (14 dias gerais e 5 semanas para fluoxetina) para prevenção de síndrome serotoninérgica fatal.'
     ]
   },
   {
@@ -456,7 +467,7 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     summary: 'Revisão sistemática contemporânea consolidando a evidência de dose-resposta em esquizofrenia aguda e as limitações de extrapolações lineares de equivalência.',
     keyPoints: [
       'Curvas Não Lineares: A resposta terapêutica a antipsicóticos não segue um comportamento linear; saturações receptoras ocorrem em faixas distintas para cada agente.',
-      'Limitação de Razões Fixas: Razões CPZE simplificam a complexidade biológica e não predizem o risco metabólico (desproporcional em olanzapina/clozapina) ou extrapiramidal (em haloperidol/risperidona).',
+      'Limitação de Razões Fixas: Razões CPZE simplificam a complexidade biológica e não predizem o risco metabólico (desproporcional em olanzapina e clozapina) ou extrapiramidal (em haloperidol e risperidona).',
       'Individualização da Conduta: Reforça que o cálculo de equivalência serve para mapear a exposição teórica prévia, mas a titulação deve ser individualizada com base no perfil de tolerabilidade e resposta.'
     ]
   },
@@ -528,10 +539,52 @@ export const EVIDENCE_REFERENCES: EvidenceReference[] = [
     title: 'FEDS: A Framework for Evaluation in Design Science Research',
     source: 'Venable J, Pries-Heje J, Baskerville R. European Journal of Information Systems. DOI: 10.1057/ejis.2014.36',
     year: '2016',
-    summary: 'Framework de planejamento da avaliação de artefatos, distinguindo avaliação artificial/naturalística e formativa/somativa.',
+    summary: 'Framework de planejamento da avaliação de artefatos, distinguindo avaliação artificial e naturalística e formativa e somativa.',
     keyPoints: [
       'A avaliação preliminar com dados sintéticos é artificial e delimitada à consistência técnico-funcional.',
       'Testes de bancada não demonstram eficácia clínica nem usabilidade por profissionais.'
     ]
   }
 ];
+
+// Mantém o acervo completo disponível aos consumidores da exportação original.
+export const EVIDENCE_REFERENCES = ALL_EVIDENCE_REFERENCES;
+
+const scaleReferenceIds: Record<TcrScaleId, string> = {
+  'phq-9': 'phq9-kroenke-osorio',
+  'gad-7': 'gad7-spitzer-moreno',
+};
+
+export const TCR_EVIDENCE_GROUPS = [
+  {
+    id: 'scales',
+    label: 'Escalas e segurança',
+    referenceIds: [...TCR_SCALE_IDS.map((id) => scaleReferenceIds[id]), 'cssrs-posner'],
+  },
+  {
+    id: 'eem',
+    label: 'Exame do Estado Mental',
+    referenceIds: [
+      'dalgalarrondo-semiologia-psicopatologia',
+      'kaplan-sadock-compendio-psiquiatria',
+      'statpearls-mental-status-examination',
+    ],
+  },
+  {
+    id: 'primary-care',
+    label: 'APS e MFC',
+    referenceIds: ['cab-34', 'sbmfc-saude-mental', 'aps-protocolo-sm', 'who-mhgap'],
+  },
+  {
+    id: 'research',
+    label: 'Pesquisa e DSR',
+    referenceIds: [
+      'tcr-lobo-2015', 'tcr-zurynski-2021', 'tcr-seinen-2025',
+      'tcr-gaspary-2026', 'tcr-peffers-2007', 'tcr-venable-2016',
+    ],
+  },
+] as const;
+
+const tcrReferenceIds = new Set<string>(TCR_EVIDENCE_GROUPS.flatMap((group) => [...group.referenceIds]));
+
+export const TCR_EVIDENCE_REFERENCES = ALL_EVIDENCE_REFERENCES.filter((ref) => tcrReferenceIds.has(ref.id));

@@ -150,4 +150,34 @@ describe('MRC-SOAP v1.0 | verificação automatizada de registro e exportação'
     expect(importedAgain).not.toContain('Humor: ansioso.');
     expect(importedAgain.match(/Exame do Estado Mental \(EEM\):/gi)).toHaveLength(1);
   });
+
+  it('[SOAP-08-ADJ] preserva sinais vitais, texto livre e múltiplos escores mesmo quando o primeiro escore está na linha imediatamente após o EEM', () => {
+    // Cenário clínico exato: sinais vitais, texto livre, EEM seguido imediatamente de PHQ-9 e GAD-7 na linha seguinte
+    const initialObjective = [
+      'PA 120/80 mmHg, FC 74 bpm. Paciente orientado, acompanhado pela filha.',
+      '',
+      'Exame do Estado Mental (EEM):',
+      'Aparência e Higiene: higienizado, vestuário adequado.',
+      'Humor: ansioso.',
+      '• PHQ-9 (Hoje): 14/27 pts — Sintomas depressivos moderados.',
+      '• GAD-7 (Hoje): 11/21 pts — Ansiedade moderada.',
+    ].join('\n');
+
+    const revisedEem = [
+      'Exame do Estado Mental (EEM):',
+      'Aparência e Higiene: higienizado, vestuário adequado.',
+      'Humor: eutímico.',
+    ].join('\n');
+
+    const updated = formatEemIntoObjective(initialObjective, revisedEem);
+
+    // Verificações estritas:
+    expect(updated).toContain('PA 120/80 mmHg, FC 74 bpm. Paciente orientado, acompanhado pela filha.');
+    expect(updated).toContain('• PHQ-9 (Hoje): 14/27 pts — Sintomas depressivos moderados.');
+    expect(updated).toContain('• GAD-7 (Hoje): 11/21 pts — Ansiedade moderada.');
+    expect(updated).toContain('Humor: eutímico.');
+    expect(updated).not.toContain('Humor: ansioso.');
+    expect(updated.match(/Exame do Estado Mental \(EEM\):/gi)).toHaveLength(1);
+  });
 });
+

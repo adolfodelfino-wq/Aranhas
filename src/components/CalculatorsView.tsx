@@ -239,7 +239,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             }`}
           >
             <Pill className="w-4 h-4 text-amber-600" />
-            <span>Desmame Benzodiazepínicos (Maudsley/Ashton)</span>
+            <span>Desmame Benzodiazepínicos (Maudsley e Ashton)</span>
           </button>
 
           <button
@@ -281,7 +281,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
             }`}
           >
             <Heart className="w-4 h-4 text-rose-600" />
-            <span>Risco Cardiovascular (SBC / Framingham)</span>
+            <span>Risco Cardiovascular (SBC e Framingham)</span>
           </button>
         </nav>
       </div>
@@ -318,7 +318,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                   className="text-xs text-teal-700 hover:text-teal-900 font-medium flex items-center gap-1 cursor-pointer"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>Ver Evidências (Leucht / Gardner)</span>
+                  <span>Ver Evidências (Leucht e Gardner)</span>
                 </button>
               )}
             </div>
@@ -335,7 +335,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                 >
                   {Object.values(ANTIPSYCHOTIC_DATABASE).map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.name} {d.isClozapine ? '— Uso Restrito (ERT)' : ''}
+                      {d.name} {d.isClozapine ? '- Uso Restrito (ERT)' : ''}
                     </option>
                   ))}
                 </select>
@@ -366,10 +366,10 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                   />
                   <div className="space-y-0.5">
                     <span className="font-semibold text-slate-800 block">
-                      Paciente em Primeiro Episódio Psicótico (PEP / FEP)
+                      Paciente em Primeiro Episódio Psicótico (PEP)
                     </span>
                     <span className="text-[11px] text-slate-500 block leading-relaxed">
-                      Sensibilidade biológica aumentada a doses reduzidas e maior risco de efeitos extrapiramidais/metabólicos.
+                      Sensibilidade biológica aumentada a doses reduzidas e maior risco de efeitos extrapiramidais e metabólicos.
                     </span>
                   </div>
                 </label>
@@ -957,7 +957,7 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({
                           className="rounded border-red-300 text-red-600 w-4 h-4 mt-0.5 cursor-pointer"
                         />
                         <span className="text-slate-800 leading-tight">
-                          <strong>Doença Aterosclerótica Manifesta:</strong> IAM prévio, DAC (angina/revascularização), AVC/AIT ou Doença Arterial Periférica.
+                          <strong>Doença Aterosclerótica Manifesta:</strong> IAM prévio, DAC (angina ou revascularização), AVC, AIT ou Doença Arterial Periférica.
                         </span>
                       </label>
 

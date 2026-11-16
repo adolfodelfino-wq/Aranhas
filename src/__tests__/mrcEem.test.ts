@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { EEM_DOMAINS } from '../data/eemData';
 import { formatEemIntoObjective, generateEemSummary } from '../utils/eemFormatter';
-import { getEmptyEemState, getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
+import {
+  getEmptyEemState,
+  getEuthymicEemPreset,
+  applyEuthymicPreset,
+  hasSelectedEemFindings,
+  toggleEemSelection,
+} from '../utils/eemSelection';
 import type { EemState } from '../types';
 
 /**
@@ -171,4 +177,49 @@ describe('MRC-EEM v1.0 | semiologia, documentação e integração', () => {
     expect(arbitrary).toBe(preset);
   });
 
+  it('[EEM-10b] aplicação do Padrão Eutímico preserva observações livres gerais e observações em domínios (*Outros)', () => {
+    // Cenário: preenche observação geral e observações em dois domínios, com um achado selecionado
+    const customEem: EemState = {
+      ...emptyEem(),
+      humor: ['ansioso'],
+      humorOutros: 'Choro fácil no início da consulta.',
+      pensamentoOutros: 'Ideias supervalorizadas de culpa sem delírio.',
+      observacoesLivres: 'Paciente comparece acompanhado pela esposa; sonolência diurna.',
+    };
+
+    expect(hasSelectedEemFindings(customEem)).toBe(true);
+
+    // Cancelar mantém o exame intacto:
+    const canceledState = { ...customEem };
+    expect(canceledState.humor).toEqual(['ansioso']);
+    expect(canceledState.humorOutros).toBe('Choro fácil no início da consulta.');
+    expect(canceledState.pensamentoOutros).toBe('Ideias supervalorizadas de culpa sem delírio.');
+    expect(canceledState.observacoesLivres).toBe('Paciente comparece acompanhado pela esposa; sonolência diurna.');
+
+    // Confirmar aplica o padrão eutímico substituindo os achados estruturados, mas preservando TODO o texto digitado:
+    const applied = applyEuthymicPreset(customEem);
+    expect(applied.humor).toEqual(['eutimico']);
+    expect(applied.afeto).toEqual(['normoemotivo']);
+    expect(applied.pensamentoCurso).toEqual(['curso_normopsiquico']);
+    expect(applied.humorOutros).toBe('Choro fácil no início da consulta.');
+    expect(applied.pensamentoOutros).toBe('Ideias supervalorizadas de culpa sem delírio.');
+    expect(applied.observacoesLivres).toBe('Paciente comparece acompanhado pela esposa; sonolência diurna.');
+  });
+
+  it('[EEM-10c] hasSelectedEemFindings detecta achados estruturados e retorna false para estado vazio ou apenas com notas de texto', () => {
+    expect(hasSelectedEemFindings(emptyEem())).toBe(false);
+
+    const onlyText: EemState = {
+      ...emptyEem(),
+      observacoesLivres: 'Apenas anotação livre.',
+      humorOutros: 'Apenas texto.',
+    };
+    expect(hasSelectedEemFindings(onlyText)).toBe(false);
+
+    const withFinding: EemState = {
+      ...emptyEem(),
+      atitude: ['cooperativo'],
+    };
+    expect(hasSelectedEemFindings(withFinding)).toBe(true);
+  });
 });

@@ -7,11 +7,11 @@ export const PHQ9_SCALE: ScaleDefinition = {
   title: 'PHQ-9 (Patient Health Questionnaire-9)',
   acronym: 'PHQ-9',
   targetGroup: 'Adultos na APS com suspeita de episódio depressivo',
-  description: 'Instrumento padrão-ouro para rastreamento e estratificação de gravidade dos sintomas depressivos nas últimas duas semanas.',
+  description: 'Questionário de autorrelato para rastreamento e mensuração de sintomas depressivos nas últimas duas semanas; não estabelece diagnóstico isoladamente.',
   shortInstruction: 'Avalie a frequência de cada sintoma nas últimas 2 semanas.',
   instructions: 'Para cada item abaixo, selecione com que frequência você (ou o paciente) foi incomodado(a) por esse problema nas últimas 2 semanas.',
   referenceCitation: 'Kroenke K, Spitzer RL, Williams JB. J Gen Intern Med. 2001; 16(9):606-13. Validação brasileira: de Lima Osório F et al. (2009) e Santos IS et al. (2013).',
-  validationInfo: 'Validada no Brasil na APS. Sensibilidade: 88%, Especificidade: 88% (para corte ≥ 10).',
+  validationInfo: 'No estudo original (Kroenke et al., 2001), o corte ≥ 10 apresentou sensibilidade e especificidade de 88%. Esses valores não são estimativas universais nem resultados da validação brasileira; população e referência diagnóstica modificam a acurácia.',
   cutoffInfo: '0-4: Mínimo | 5-9: Leve | 10-14: Moderado | 15-19: Mod. Grave | 20-27: Grave (Corte ≥ 10)',
   estimatedMinutes: 3,
   questions: [
@@ -128,35 +128,35 @@ export const PHQ9_SCALE: ScaleDefinition = {
     if (totalScore <= 4) {
       classification = 'Sintomas depressivos mínimos ou ausentes';
       severityLevel = 'low';
-      interpretation = 'Escore baixo (0-4 pts), sem indicação de intervenção farmacológica para depressão.';
-      recs.push('Acompanhamento longitudinal de rotina na APS', 'Orientações gerais de estilo de vida e higiene do sono');
+      interpretation = 'Escore 0-4: intensidade mínima de sintomas depressivos. O escore não define diagnóstico, prejuízo funcional ou indicação de tratamento.';
+      recs.push('Revisar os sintomas e o contexto com o paciente; investigar duração, funcionalidade e diagnósticos diferenciais', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else if (totalScore <= 9) {
-      classification = 'Depressão leve';
+      classification = 'Intensidade leve de sintomas depressivos';
       severityLevel = 'low';
-      interpretation = 'Sintomas leves (5-9 pts). Avaliar contexto psicossocial e impacto funcional.';
-      recs.push('Psicoeducação e suporte na APS', 'Ativação comportamental e atividade física orientada', 'Reavaliação em 4 a 8 semanas');
+      interpretation = 'Escore 5-9: intensidade leve de sintomas depressivos. O escore não define diagnóstico, prejuízo funcional ou indicação de tratamento.';
+      recs.push('Revisar os sintomas e o contexto com o paciente; investigar duração, funcionalidade e diagnósticos diferenciais', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else if (totalScore <= 14) {
-      classification = 'Depressão moderada';
+      classification = 'Intensidade moderada de sintomas depressivos';
       severityLevel = 'moderate';
-      interpretation = 'Sintomas moderados (10-14 pts, corte ≥ 10 atingido) com comprometimento das atividades diárias.';
-      recs.push('Considerar psicoterapia (TCC/interpessoal) e/ou farmacoterapia (ISRS de 1ª linha)', 'Pactuar plano de acompanhamento em APS');
+      interpretation = 'Escore 10-14: intensidade moderada de sintomas depressivos. O escore não define diagnóstico, prejuízo funcional ou indicação de tratamento.';
+      recs.push('Revisar os sintomas e o contexto com o paciente; investigar duração, funcionalidade e diagnósticos diferenciais', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else if (totalScore <= 19) {
-      classification = 'Depressão moderadamente grave';
+      classification = 'Intensidade moderadamente grave de sintomas depressivos';
       severityLevel = 'high';
-      interpretation = 'Sintomas significativos (15-19 pts) exigindo intervenção clínica e medicamentosa estruturada.';
-      recs.push('Iniciar tratamento medicamentoso com ISRS', 'Pactuar retorno em 2 semanas', 'Avaliar suporte familiar e rede de apoio social');
+      interpretation = 'Escore 15-19: intensidade moderadamente grave de sintomas depressivos. O escore não define diagnóstico, prejuízo funcional ou indicação de tratamento.';
+      recs.push('Revisar os sintomas e o contexto com o paciente; investigar duração, funcionalidade e diagnósticos diferenciais', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else {
-      classification = 'Depressão grave';
+      classification = 'Intensidade grave de sintomas depressivos';
       severityLevel = 'severe';
-      interpretation = 'Sintomas graves (20-27 pts) com alto risco de prejuízo funcional e sofrimento psíquico severo.';
-      recs.push('Iniciar farmacoterapia combinada/otimizada', 'Investigar ativamente ideação e planejamento suicida', 'Considerar discussão de caso em Apoio Matricial / Psiquiatria');
+      interpretation = 'Escore 20-27: intensidade grave de sintomas depressivos. O escore não define diagnóstico, prejuízo funcional ou indicação de tratamento.';
+      recs.push('Revisar os sintomas e o contexto com o paciente; investigar duração, funcionalidade e diagnósticos diferenciais', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     }
 
     const individualAlerts: string[] = [];
     if (answers['q9'] && answers['q9'] > 0) {
       const q9Val = answers['q9'];
       const optLabel = PHQ9_SCALE.questions[8]?.options.find((o) => o.value === q9Val)?.label || `${q9Val} pts`;
-      const alertMsg = `⚠️ ALERTA DE SEGURANÇA (PHQ-9 - Pergunta 9): Resposta positiva ("${optLabel}"). Exige avaliação clínica direta e presencial do risco de ideação de morte/autolesão (investigar planos, meios, intencionalidade e fatores de proteção). Não classificar automaticamente como alto risco de suicídio antes da avaliação médica.`;
+      const alertMsg = `⚠️ ALERTA DE SEGURANÇA (PHQ-9 - Pergunta 9): Resposta positiva ("${optLabel}"). Exige avaliação clínica direta e oportuna do risco de ideação de morte ou autolesão (investigar planos, meios, intencionalidade e fatores de proteção). Não classificar automaticamente como alto risco de suicídio antes da avaliação médica.`;
       recs.unshift(alertMsg);
       individualAlerts.push(alertMsg);
     }
@@ -186,56 +186,43 @@ export const PHQ9_SCALE: ScaleDefinition = {
   },
   clinicalConductSteps: [
     {
-      title: 'Escore 0 a 4 — Sintomas Mínimos ou Ausentes',
-      description: 'Conduta habitual na APS. Reforçar hábitos de vida saudáveis, prática regular de atividade física (150 min/semana), higiene do sono e estratégias de redução do estresse. Não há indicação de antidepressivos.',
-      badge: '0-4 pts: Mínimo',
+      title: 'Escore 0-4: intensidade mínima de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '0-4 pts',
       badgeType: 'neutral',
     },
     {
-      title: 'Escore 5 a 9 — Depressão Leve (Watchful Waiting)',
-      description: 'Estratégia de monitoramento vigilante ativo ("Watchful Waiting") associada à psicoeducação e ativação comportamental. Estimular engajamento social, autocuidado e reavaliar em 4 a 8 semanas antes de cogitar intervenção farmacológica.',
-      badge: '5-9 pts: Leve',
+      title: 'Escore 5-9: intensidade leve de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '5-9 pts',
       badgeType: 'neutral',
     },
     {
-      title: 'Escore 10 a 14 — Depressão Moderada (Corte ≥ 10)',
-      description: 'Ponto de corte clínico positivo. Indicação formal de Psicoterapia baseada em evidências (Terapia Cognitivo-Comportamental ou Interpessoal) e/ou Farmacoterapia com ISRS de 1ª linha (Sertralina 50-100mg, Fluoxetina 20-40mg, Escitalopram 10-20mg). Pactuar consultas mensais na APS.',
-      badge: '10-14 pts: Moderado',
-      badgeType: 'warning',
+      title: 'Escore 10-14: intensidade moderada de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '10-14 pts',
+      badgeType: 'neutral',
     },
     {
-      title: 'Escore 15 a 19 — Depressão Moderadamente Grave',
-      description: 'Iniciar tratamento medicamentoso estruturado com ISRS/ISRN em doses terapêuticas plenas. Retorno em 2 semanas para avaliação de tolerabilidade e adesão. Avaliar suporte familiar e articulação com equipe multiprofissional (eMulti).',
-      badge: '15-19 pts: Mod. Grave',
-      badgeType: 'warning',
+      title: 'Escore 15-19: intensidade moderadamente grave de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '15-19 pts',
+      badgeType: 'neutral',
     },
     {
-      title: 'Escore 20 a 27 — Depressão Grave',
-      description: 'Tratamento farmacológico imediato em dose otimizada associado a acompanhamento intensivo. Investigação sistemática de ideação suicida, suporte familiar e discussão do caso com Apoio Matricial em Saúde Mental ou CAPS.',
-      badge: '20-27 pts: Grave',
+      title: 'Escore 20-27: intensidade grave de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '20-27 pts',
+      badgeType: 'neutral',
+    },
+    {
+      title: 'Item 9 positivo: avaliação clínica de segurança',
+      description: 'Investigar diretamente pensamentos de morte ou autolesão, intenção, planos, acesso a meios e proteção. Definir a resposta conforme a avaliação clínica e o contexto. O item isolado não classifica o risco e não torna obrigatória uma escala específica.',
+      badge: 'Avaliação individual',
       badgeType: 'danger',
-    },
-    {
-      title: '⚠️ Manejo Obrigatório do Item 9 (Ideação Suicida / Autolesão)',
-      description: 'Qualquer pontuação > 0 no item 9 exige aplicação imediata do protocolo C-SSRS (Columbia), investigação de plano/meios, bloqueio de meios letais e pactuação de Plano de Segurança Pessoal.',
-      badge: 'Alerta Item 9',
-      badgeType: 'danger',
-    },
+    }
   ],
-  monitoringGoals: [
-    {
-      title: 'Resposta Clínica Inicial (4 a 6 semanas)',
-      description: 'Redução ≥ 50% na pontuação basal do PHQ-9 após 4 a 6 semanas de uso do antidepressivo em dose terapêutica plena (CANMAT / APA / SUS).',
-    },
-    {
-      title: 'Remissão Sintomática Completa',
-      description: 'Escore PHQ-9 < 5 pontos mantido de forma contínua por pelo menos 6 a 12 meses na fase de manutenção para consolidação neurobiológica e prevenção de recaídas.',
-    },
-    {
-      title: 'Conduta em Falha Terapêutica (< 25% de melhora)',
-      description: 'Ausência de resposta significativa (< 25% de redução no PHQ-9) após 4-6 semanas em dose terapêutica exige: 1. Confirmar adesão; 2. Otimizar dose até o teto terapêutico; 3. Trocar de classe ou potencializar (ex: Lítio, Quetiapina, TCC).',
-    },
-  ],
+
   clinicalPearls: [
     {
       type: 'evidence',
@@ -261,12 +248,12 @@ export const GAD7_SCALE: ScaleDefinition = {
   title: 'GAD-7 (Generalized Anxiety Disorder-7)',
   acronym: 'GAD-7',
   targetGroup: 'Adultos na APS com queixas de ansiedade, tensão ou preocupação excessiva',
-  description: 'Instrumento validado para triagem e mensuração da gravidade do Transtorno de Ansiedade Generalizada.',
+  description: 'Questionário de autorrelato para rastreamento e mensuração de sintomas ansiosos nas últimas duas semanas; não estabelece diagnóstico de TAG isoladamente.',
   shortInstruction: 'Avalie a frequência dos sintomas ansiosos nas últimas 2 semanas.',
   instructions: 'Para cada item abaixo, selecione com que frequência você (ou o paciente) foi incomodado(a) pelo sintoma nas últimas 2 semanas.',
   referenceCitation: 'Spitzer RL, Kroenke K, Williams JB, Löwe B. Arch Intern Med. 2006; 166(10):1092-7. Validação brasileira: Moreno AL et al. (2016).',
-  validationInfo: 'Versão brasileira validada. Sensibilidade: 89%, Especificidade: 82% para corte ≥ 10.',
-  cutoffInfo: '0-4: Mínima | 5-9: Leve | 10-14: Moderada | 15-21: Grave (Corte ≥ 10 para TAG provável)',
+  validationInfo: 'Sensibilidade de 89% e especificidade de 82% no corte ≥ 10 referem-se ao estudo original norte-americano (Spitzer et al., 2006). Moreno et al. (2016) investigaram estrutura e confiabilidade na versão brasileira, não esses índices de acurácia na APS brasileira.',
+  cutoffInfo: '0-4: Mínima | 5-9: Leve | 10-14: Moderada | 15-21: Grave (≥ 10 indica necessidade de investigação clínica)',
   estimatedMinutes: 2,
   questions: [
     {
@@ -291,7 +278,7 @@ export const GAD7_SCALE: ScaleDefinition = {
     },
     {
       id: 'q3',
-      text: '3. Preocupar-se demais com diversas coisas',
+      text: '3. Preocupar-se muito com diversas coisas',
       options: [
         { label: 'Nenhuma vez', value: 0 },
         { label: 'Vários dias', value: 1 },
@@ -321,7 +308,7 @@ export const GAD7_SCALE: ScaleDefinition = {
     },
     {
       id: 'q6',
-      text: '6. Ficar facilmente irritado(a) ou chateado(a)',
+      text: '6. Ficar facilmente aborrecido(a) ou irritado(a)',
       options: [
         { label: 'Nenhuma vez', value: 0 },
         { label: 'Vários dias', value: 1 },
@@ -331,7 +318,7 @@ export const GAD7_SCALE: ScaleDefinition = {
     },
     {
       id: 'q7',
-      text: '7. Sentir medo como se algo terrível fosse acontecer',
+      text: '7. Sentir medo como se algo horrível fosse acontecer',
       options: [
         { label: 'Nenhuma vez', value: 0 },
         { label: 'Vários dias', value: 1 },
@@ -362,23 +349,23 @@ export const GAD7_SCALE: ScaleDefinition = {
     if (totalScore <= 4) {
       classification = 'Ansiedade mínima ou ausente';
       severityLevel = 'low';
-      interpretation = 'Sintomas dentro do espectro fisiológico (0-4 pts).';
-      recs.push('Acompanhamento longitudinal habitual na APS', 'Orientações para manejo do estresse e estilo de vida');
+      interpretation = 'Escore 0-4: intensidade mínima de sintomas ansiosos. Investigar duração, contexto, funcionalidade e diferenciais; o escore não define diagnóstico ou tratamento.';
+      recs.push('Revisar as preocupações e os sintomas com o paciente, incluindo repercussões e contexto clínico', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else if (totalScore <= 9) {
       classification = 'Ansiedade leve';
       severityLevel = 'low';
-      interpretation = 'Sintomas leves (5-9 pts). Benefício com psicoeducação e técnicas de relaxamento.';
-      recs.push('Técnicas de respiração diafragmática e higiene do sono', 'Acompanhamento periódico na APS');
+      interpretation = 'Escore 5-9: intensidade leve de sintomas ansiosos. Investigar duração, contexto, funcionalidade e diferenciais; o escore não define diagnóstico ou tratamento.';
+      recs.push('Revisar as preocupações e os sintomas com o paciente, incluindo repercussões e contexto clínico', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else if (totalScore <= 14) {
       classification = 'Ansiedade moderada';
       severityLevel = 'moderate';
-      interpretation = 'Sintomas moderados (10-14 pts, corte ≥ 10 atingido). Indicação de investigação detalhada para TAG.';
-      recs.push('Avaliar indicação de psicoterapia (TCC) e/ou farmacoterapia (ISRS)', 'Pactuar consultas de acompanhamento');
+      interpretation = 'Escore 10-14: intensidade moderada de sintomas ansiosos. Investigar duração, contexto, funcionalidade e diferenciais; o escore não define diagnóstico ou tratamento.';
+      recs.push('Revisar as preocupações e os sintomas com o paciente, incluindo repercussões e contexto clínico', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     } else {
       classification = 'Ansiedade grave';
       severityLevel = 'severe';
-      interpretation = 'Sintomas graves (15-21 pts) com prejuízo funcional marcante.';
-      recs.push('Pactuar plano terapêutico medicamentoso e psicoterápico', 'Reavaliação em 2 semanas', 'Considerar apoio matricial se refratário');
+      interpretation = 'Escore 15-21: intensidade grave de sintomas ansiosos. Investigar duração, contexto, funcionalidade e diferenciais; o escore não define diagnóstico ou tratamento.';
+      recs.push('Revisar as preocupações e os sintomas com o paciente, incluindo repercussões e contexto clínico', 'Pactuar avaliação e acompanhamento conforme julgamento clínico e preferências do paciente');
     }
 
     const soapText = `GAD-7: ${totalScore}/21 pts (${classification}) | Respostas: [${answersArray.join(', ')}] | Fonte: Spitzer et al., 2006 (Validação BR: Moreno, 2016)`;
@@ -402,50 +389,37 @@ export const GAD7_SCALE: ScaleDefinition = {
   },
   clinicalConductSteps: [
     {
-      title: 'Escore 0 a 4 — Ansiedade Mínima ou Ausente',
-      description: 'Sintomas dentro do espectro adaptativo. Reforçar hábitos de vida saudáveis, manejo do estresse no trabalho e higiene do sono. Não há indicação de ansiolíticos ou antidepressivos.',
-      badge: '0-4 pts: Mínimo',
+      title: 'Escore 0-4: intensidade mínima de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '0-4 pts',
       badgeType: 'neutral',
     },
     {
-      title: 'Escore 5 a 9 — Ansiedade Leve',
-      description: 'Oferecer psicoeducação sobre o ciclo da ansiedade, treino de respiração diafragmática (respiração 4-7-8) e incentivo à atividade física aeróbica regular. Reavaliar em 4 a 6 semanas.',
-      badge: '5-9 pts: Leve',
+      title: 'Escore 5-9: intensidade leve de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '5-9 pts',
       badgeType: 'neutral',
     },
     {
-      title: 'Escore 10 a 14 — Ansiedade Moderada (Corte ≥ 10 para TAG)',
-      description: 'Rastreio positivo para Transtorno de Ansiedade Generalizada. Indicação formal de Psicoterapia (TCC) e/ou Farmacoterapia de 1ª linha com ISRS (Sertralina 50-100mg, Escitalopram 10-20mg) ou Venlafaxina 75-150mg. Evitar benzodiazepínicos em monoterapia contínua.',
-      badge: '10-14 pts: Moderado',
-      badgeType: 'warning',
+      title: 'Escore 10-14: intensidade moderada de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '10-14 pts',
+      badgeType: 'neutral',
     },
     {
-      title: 'Escore 15 a 21 — Ansiedade Grave',
-      description: 'Tratamento combinado (ISRS/ISRN em dose otimizada + TCC estruturada). Retorno em 2 semanas para monitorar sintomas de ativação inicial do ISRS e pactuar plano de enfrentamento de crises.',
-      badge: '15-21 pts: Grave',
-      badgeType: 'danger',
+      title: 'Escore 15-21: intensidade grave de sintomas',
+      description: 'Revisar as respostas com o paciente e investigar duração, funcionalidade, contexto e diagnósticos diferenciais. Registrar o julgamento clínico e pactuar acompanhamento. A faixa do escore não determina prescrição, dose ou encaminhamento.',
+      badge: '15-21 pts',
+      badgeType: 'neutral',
     },
     {
-      title: '⚠️ Uso Racional de Benzodiazepínicos na APS',
-      description: 'Se prescritos para alívio agudo de crises graves de ansiedade ou insônia inicial, restringir a dose mínima eficaz por no máximo 2 a 4 semanas (ex: Clonazepam 0,5mg ou Diazepam 5mg), sempre combinados ao ISRS e com plano de desmame explícito.',
-      badge: 'Alerta Farmacológico',
-      badgeType: 'warning',
-    },
+      title: 'Interpretação longitudinal contextualizada',
+      description: 'Comparar medidas repetidas com data e contexto, revendo com o paciente a evolução e a funcionalidade. O GAD-7 não mede sozinho todos os transtornos de ansiedade e não substitui entrevista e EEM.',
+      badge: 'Acompanhamento',
+      badgeType: 'neutral',
+    }
   ],
-  monitoringGoals: [
-    {
-      title: 'Resposta Clínica Inicial (4 a 6 semanas)',
-      description: 'Redução ≥ 50% no escore basal do GAD-7 após atingir a dose terapêutica do ISRS/ISRN.',
-    },
-    {
-      title: 'Remissão e Manutenção',
-      description: 'Escore final do GAD-7 < 5 pontos mantido por 6 a 12 meses após a estabilização para consolidação e prevenção de recidivas.',
-    },
-    {
-      title: 'Descontinuação Gradual e Segura',
-      description: 'Após período de manutenção, realizar desmame lento e hiperbólico do antidepressivo ao longo de 2 a 4 meses para prevenir a síndrome de descontinuação (vertigem, parestesia, insônia).',
-    },
-  ],
+
   clinicalPearls: [
     {
       type: 'evidence',
@@ -456,12 +430,12 @@ export const GAD7_SCALE: ScaleDefinition = {
     {
       type: 'pearl',
       title: 'Pérola Prática: Piora Paradoxal Inicial com ISRS',
-      text: 'Nos primeiros 7 a 14 dias de início de ISRS/ISRN, pode ocorrer aumento transitório da ansiedade e inquietude ("ansiedade de ativação"). Oriente previamente o paciente para evitar abandono do tratamento e inicie com metade da dose na primeira semana.',
+      text: 'Nos primeiros 7 a 14 dias de início de ISRS ou ISRN, pode ocorrer aumento transitório da ansiedade e inquietude ("ansiedade de ativação"). Oriente previamente o paciente para evitar abandono do tratamento e inicie com metade da dose na primeira semana.',
     },
     {
       type: 'pitfall',
       title: 'Armadilha Clínica: Causas Orgânicas e Estimulantes Mascarados',
-      text: 'Sempre descarte causas secundárias de ansiedade: hipertireoidismo (dosar TSH), arritmias cardíacas, consumo excessivo de café/energéticos (> 400mg cafeína/dia), abuso de descongestionantes nasais (pseudoefedrina), broncodilatadores e abstinência oculta de álcool ou sedativos.',
+      text: 'Sempre descarte causas secundárias de ansiedade: hipertireoidismo (dosar TSH), arritmias cardíacas, consumo excessivo de café e energéticos (> 400mg cafeína/dia), abuso de descongestionantes nasais (pseudoefedrina), broncodilatadores e abstinência oculta de álcool ou sedativos.',
     },
   ],
 };
@@ -2424,25 +2398,11 @@ export const ALL_SCALES: ScaleDefinition[] = [
   ...ADDITIONAL_SCALES,
 ];
 
-/**
- * Escopo do TCR (20/11/2026): 7 instrumentos prioritários e validados na APS:
- * 1. PHQ-9 (Depressão)
- * 2. GAD-7 (Ansiedade)
- * 3. AUDIT (Padrão de uso de álcool - 10 itens)
- * 4. EPDS (Depressão perinatal / pós-parto)
- * 5. MEEM (Rastreio cognitivo)
- * 6. ASRS-18 (TDAH em adultos)
- * 7. SNAP-IV (TDAH / Desatenção e Hiperatividade)
- */
-export const TCR_SCALE_IDS = [
-  'phq-9',
-  'gad-7',
-  'audit',
-  'epds',
-  'meem',
-  'asrs-18',
-  'snap-iv',
-] as const;
+/** Núcleo do TCR: sintomas depressivos e ansiosos em adultos na APS. */
+export const TCR_SCALE_IDS = ['phq-9', 'gad-7'] as const;
+
+export const hasTcrConductSuggestions = (scaleId: string): boolean =>
+  TCR_SCALE_IDS.some((id) => id === scaleId);
 
 export type TcrScaleId = typeof TCR_SCALE_IDS[number];
 

@@ -1,6 +1,8 @@
 # MRC-ESC v1.0 — Rastreabilidade e fidelidade clínico-científica das escalas
 
-**Escopo:** PHQ-9, GAD-7, AUDIT de dez itens, EPDS, MEEM, ASRS-18 e SNAP-IV. Excluídas calculadoras e demais instrumentos do aplicativo. **Sem uso de dados assistenciais reais.**
+**Núcleo vigente do TCR (30/10/2026): PHQ-9 e GAD-7, articulados a SOAP e EEM.** As matrizes e contagens das sete escalas abaixo são registro histórico do desenvolvimento, não o denominador do núcleo final. Ver `TCR-NUCLEO-20261030.md`.
+
+**Escopo histórico:** PHQ-9, GAD-7, AUDIT de dez itens, EPDS, MEEM, ASRS-18 e SNAP-IV. Excluídas calculadoras e demais instrumentos do aplicativo. **Sem uso de dados assistenciais reais.**
 
 ## Dois eixos independentes
 

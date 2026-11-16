@@ -287,7 +287,7 @@ export const BenzodiazepineTaperCalculator: React.FC<BenzodiazepineTaperCalculat
               >
                 {Object.values(BZD_DATABASE).map((drug) => (
                   <option key={drug.id} value={drug.id}>
-                    {drug.name} ({drug.commercialNames.slice(0, 2).join(', ')}) — {drug.standardDoseRange}
+                    {drug.name} ({drug.commercialNames.slice(0, 2).join(', ')}) - {drug.standardDoseRange}
                   </option>
                 ))}
               </select>

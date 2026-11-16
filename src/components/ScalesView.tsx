@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ALL_SCALES, TCR_SCALES } from '../data/scalesData';
+import { ALL_SCALES, TCR_SCALES, hasTcrConductSuggestions } from '../data/scalesData';
 import { ScaleDefinition, ScaleResult } from '../types';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WhatsappShareModal } from './WhatsappShareModal';
@@ -106,7 +106,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
       scaleId: scale.id,
       scaleTitle: scale.title,
       isSelfAdministered: true,
-      soapText: res.soapText || `${scale.acronym}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no PC/Tablet]`,
+      soapText: res.soapText || `${scale.acronym}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) [Autoaplicação no computador ou tablet]`,
     };
 
     if (onSaveScaleResult) {
@@ -114,7 +114,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
     }
 
     const answersArr = enrichedResult.answersArray || scale.questions.map((q) => (rawAnswers ? rawAnswers[q.id] : 0) ?? 0);
-    const soapEntry = `[Autoaplicação pelo Paciente no PC/Tablet - ${scale.acronym}] ${scale.title}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Itens: [${answersArr.join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    const soapEntry = `[Autoaplicação pelo Paciente no computador ou tablet - ${scale.acronym}] ${scale.title}: ${res.totalScore}/${res.maxScore} pts (${res.classification}) | Itens: [${answersArr.join(', ')}] | Registro eletrônico às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     onImportToSoap(soapEntry, `Autoaplicação: ${scale.acronym}`);
 
     setPatientAutoAppliedNotification({
@@ -132,6 +132,8 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
     TCR_SCALES.find((s) => s.id === selectedScaleId) ||
     ALL_SCALES.find((s) => s.id === selectedScaleId) ||
     TCR_SCALES[0];
+
+  const showConductSuggestions = hasTcrConductSuggestions(scale.id);
 
   // Reset answers when switching scales or when patient is reset
   useEffect(() => {
@@ -253,7 +255,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
             >
               {TCR_SCALES.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.acronym} — {s.title} ({s.questions.length} itens)
+                  {s.acronym} - {s.title} ({s.questions.length} itens)
                 </option>
               ))}
             </select>
@@ -276,7 +278,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               title="Abrir escala para o paciente responder neste computador ou tablet"
             >
               <Smartphone className="w-3.5 h-3.5 text-slate-500" />
-              <span>Autoaplicação (PC / Tablet)</span>
+              <span>Autoaplicação (PC ou Tablet)</span>
             </button>
           </div>
         </div>
@@ -306,7 +308,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                   'epds': 'Depressão pós-parto e gestacional · 10 questões · Últimos 7 dias',
                   'meem': 'Rastreio cognitivo · 11 tarefas · Avaliação no momento',
                   'asrs-18': 'Rastreio de TDAH em adultos · 18 questões · Últimos 6 meses',
-                  'snap-iv': 'TDAH / Desatenção e Hiperatividade · 18 itens · Avaliação por pais/professores',
+                  'snap-iv': 'TDAH, Desatenção e Hiperatividade · 18 itens · Avaliação por pais e professores',
                 };
                 return map[scale.id] || `${scale.title} · ${scale.questions.length} itens · ~${scale.estimatedMinutes || 2} min`;
               })()}
@@ -333,7 +335,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-sm text-emerald-900">
-                    Autoaplicação no PC/Tablet registrada no sistema com sucesso!
+                    Autoaplicação no computador ou tablet registrada com sucesso.
                   </span>
                   <span className="text-xs bg-emerald-100 text-emerald-800 font-mono px-2 py-0.5 rounded">
                     {patientAutoAppliedNotification.timestamp}
@@ -615,7 +617,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                 {scale.questions.filter((q) => answers[q.id] !== undefined).length === 0 ? (
                   <>
                     <div className="font-mono text-3xl sm:text-4xl font-normal text-slate-400 tracking-tight">
-                      —{' '}
+                      -{' '}
                       <span className="text-sm font-normal text-slate-400">
                         / {computedResult.maxScore} pts
                       </span>
@@ -735,7 +737,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
               )}
 
               {/* Clinical Next Steps Summary Box */}
-              <div className="space-y-2 text-xs">
+              {showConductSuggestions && <div className="space-y-2 text-xs">
                 <span className="font-sans text-xs font-semibold text-slate-700 block">
                   Orientações clínicas
                 </span>
@@ -755,7 +757,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
                       : `Aguardando conclusão de ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length} ${scale.questions.length - scale.questions.filter((q) => answers[q.id] !== undefined).length === 1 ? 'item restante' : 'itens restantes'} para orientações clínicas.`}
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* Action Buttons (Export to SOAP & Copy) */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
@@ -814,15 +816,20 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
       )}
 
       {/* TAB 2: NEXT STEPS (Conduta detalhada) */}
-      {activeTab === 'next_steps' && (
+      {activeTab === 'next_steps' && !showConductSuggestions && (
+        <div className="bg-white border border-slate-200 rounded-lg p-6 text-sm text-slate-700">
+          Instrumento complementar disponível para avaliação e registro. Não são exibidas sugestões automatizadas de conduta para este instrumento.
+        </div>
+      )}
+      {activeTab === 'next_steps' && showConductSuggestions && (
         <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6 shadow-xs">
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-teal-600" />
-              <span>Orientações clínicas e manejo — {scale.acronym}</span>
+              <span>Orientações clínicas e manejo - {scale.acronym}</span>
             </h2>
             <p className="text-xs text-slate-600">
-              Diretrizes de manejo e estratificação baseadas em evidências científicas e protocolos da Atenção Primária / SUS.
+              Apoio à revisão clínica dos sintomas e ao registro. O escore não determina tratamento; as decisões dependem da avaliação profissional.
             </p>
           </div>
 
@@ -830,7 +837,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           {scale.clinicalConductSteps && scale.clinicalConductSteps.length > 0 ? (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-slate-700">
-                1. Estratificação de risco e intervenções
+                Revisão clínica e acompanhamento
               </h3>
               <div className="space-y-2.5">
                 {scale.clinicalConductSteps.map((step, idx) => (
@@ -900,7 +907,7 @@ export const ScalesView: React.FC<ScalesViewProps> = ({
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-600" />
-              <span>Evidências e validação — {scale.acronym}</span>
+              <span>Evidências e validação - {scale.acronym}</span>
             </h2>
             <p className="text-xs text-slate-600">
               Metodologia, validação científica no Brasil e pontos de corte clínicos.

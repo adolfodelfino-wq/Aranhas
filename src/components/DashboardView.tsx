@@ -8,7 +8,6 @@ import {
   FileText,
   TrendingUp,
   ArrowRight,
-  BookOpen,
 } from 'lucide-react';
 import { AboutModalTab } from './AboutModal';
 
@@ -150,17 +149,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {patient.age ? ` (${patient.age} anos)` : ''}
           {patient.prontuario ? ` · Prontuário: ${patient.prontuario}` : ''}
         </div>
-
-        {onOpenAboutWithTab && (
-          <button
-            type="button"
-            onClick={() => onOpenAboutWithTab('evidencias')}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-teal-700 cursor-pointer transition-colors"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Consultar referências e evidências</span>
-          </button>
-        )}
       </section>
     </div>
   );

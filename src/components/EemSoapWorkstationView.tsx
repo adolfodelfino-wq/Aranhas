@@ -2,24 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState, SoapState, PatientSession, ScaleResult } from '../types';
 import { generateEemSummary, formatEemIntoObjective } from '../utils/eemFormatter';
-import { getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
+import { applyEuthymicPreset, hasSelectedEemFindings, toggleEemSelection } from '../utils/eemSelection';
+import { hasPositivePhq9Item9 } from '../utils/scaleValidation';
 import {
-  Stethoscope,
-  FileText,
   Copy,
   Check,
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  ArrowRight,
-  ClipboardList,
   AlertTriangle,
   FileCheck,
   Trash2,
   Plus,
-  Share2,
-  Edit3,
-  BookOpen,
   Building2,
 } from 'lucide-react';
 import { PecExportModal } from './PecExportModal';
@@ -47,7 +41,7 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   onUpdateEem,
   onNavigate,
   onResetConsultation,
-  onOpenEvidence,
+  onOpenEvidence: _onOpenEvidence,
   onDeleteScaleResult,
   focusSubjectiveTrigger,
 }) => {
@@ -68,6 +62,28 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   const [eemInserted, setEemInserted] = useState(false);
   // Mobile responsive view switcher
   const [activeMobileView, setActiveMobileView] = useState<'consulta' | 'soap'>('consulta');
+  const [showEuthymicConfirm, setShowEuthymicConfirm] = useState(false);
+
+  const hasEemSuicidalIdeation =
+    Array.isArray(eemState.pensamentoConteudo) &&
+    eemState.pensamentoConteudo.includes('conteudo_ideacao_suicida');
+
+  const handleRequestEuthymicPreset = () => {
+    if (hasSelectedEemFindings(eemState)) {
+      setShowEuthymicConfirm(true);
+    } else {
+      onUpdateEem(applyEuthymicPreset(eemState));
+    }
+  };
+
+  const handleConfirmEuthymicPreset = () => {
+    onUpdateEem(applyEuthymicPreset(eemState));
+    setShowEuthymicConfirm(false);
+  };
+
+  const handleCancelEuthymicPreset = () => {
+    setShowEuthymicConfirm(false);
+  };
 
   // Auto-focus Subjective when triggered by "Iniciar nova consulta"
   useEffect(() => {
@@ -112,9 +128,14 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   };
 
   const currentEemNarrative = generateEemSummary(eemState);
+  const [editableEemNarrative, setEditableEemNarrative] = useState(currentEemNarrative);
+
+  useEffect(() => {
+    setEditableEemNarrative(currentEemNarrative);
+  }, [currentEemNarrative]);
 
   const handleInsertEemToSoap = () => {
-    const updatedObjective = formatEemIntoObjective(soapState.objective, currentEemNarrative);
+    const updatedObjective = formatEemIntoObjective(soapState.objective, editableEemNarrative);
 
     onUpdateSoap({
       ...soapState,
@@ -129,7 +150,7 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
     // A partial result must not be rendered as a final numerical assessment.
     if (scaleRes.isComplete === false || scaleRes.completionStatus === 'incomplete' || scaleRes.completionStatus === 'invalid') return;
     const currentObjective = soapState.objective ? soapState.objective.trim() : '';
-    const scaleLine = `• ${scaleRes.scaleTitle} (${scaleRes.date || 'Hoje'}): ${scaleRes.totalScore}/${scaleRes.maxScore} pts — ${scaleRes.classification}.`;
+    const scaleLine = `• ${scaleRes.scaleTitle} (${scaleRes.date || 'Hoje'}): ${scaleRes.totalScore}/${scaleRes.maxScore} pts - ${scaleRes.classification}.`;
 
     if (currentObjective.includes(scaleRes.scaleTitle)) {
       setInsertedScaleId(scaleRes.id || scaleRes.scaleId);
@@ -163,8 +184,8 @@ export const EemSoapWorkstationView: React.FC<EemSoapWorkstationViewProps> = ({
   };
 
   const handleCopyFullSoap = () => {
-    const full = `REGISTRO CLÍNICO SOAP - APS / MEDICINA DE FAMÍLIA
-PACIENTE: ${patient.name} (${patient.age} anos, Prontuário: ${patient.prontuario || 'S/N'})
+    const full = `REGISTRO CLÍNICO SOAP - APS E MEDICINA DE FAMÍLIA
+PACIENTE: ${patient.name} (${patient.age} anos, Prontuário: ${patient.prontuario || 'não informado'})
 DATA: ${patient.date}
 
 [S - SUBJETIVO]
@@ -186,19 +207,19 @@ ${soapState.plan || 'Sem anotações.'}`;
 
   const handleExportConsultationSummary = () => {
     const summary = `RESUMO DE ATENDIMENTO CLÍNICO - APS
-Paciente: ${patient.name} | Idade: ${patient.age} anos | Prontuário: ${patient.prontuario || 'S/N'}
+Paciente: ${patient.name} | Idade: ${patient.age} anos | Prontuário: ${patient.prontuario || 'não informado'}
 Data: ${patient.date}
 
 1. SÍNTESE CLÍNICA (SUBJETIVO):
 ${soapState.subjective || 'Sem anotações.'}
 
-2. ACHADOS OBJETIVOS & ESCALAS:
+2. ACHADOS OBJETIVOS E ESCALAS:
 ${soapState.objective || 'Sem anotações.'}
 
-3. IMPRESSÃO DIAGNÓSTICA & RISCO:
+3. AVALIAÇÃO E RISCO:
 ${soapState.assessment || 'Sem anotações.'}
 
-4. PLANO TERAPÊUTICO & PACTUAÇÃO:
+4. PLANO TERAPÊUTICO E PACTUAÇÃO:
 ${soapState.plan || 'Sem anotações.'}
 
 Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão permanece médica`;
@@ -241,7 +262,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
             type="button"
             onClick={() => setShowPecModal(true)}
             className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Assistente de cópia estruturada para o Prontuário Eletrônico do Cidadão (PEC / e-SUS APS)"
+            title="Assistente de cópia estruturada para o Prontuário Eletrônico do Cidadão (PEC do e-SUS APS)"
           >
             <Building2 className="w-3.5 h-3.5 text-teal-700" />
             <span>Assistente PEC</span>
@@ -352,7 +373,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
 
               <button
                 type="button"
-                onClick={() => onUpdateEem(getEuthymicEemPreset())}
+                onClick={handleRequestEuthymicPreset}
                 className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 cursor-pointer transition-colors px-3 py-1.5 rounded-md bg-white border border-slate-200/90 shadow-2xs font-medium"
                 title="Preencher padrão eutímico"
               >
@@ -423,17 +444,20 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
               })}
             </div>
 
-            {/* Narrativa Semiológica Gerada */}
+            {/* Narrativa Semiológica Gerada (editável diretamente) */}
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-700">
+                <label
+                  htmlFor="eem-generated-summary"
+                  className="text-xs font-semibold text-slate-700"
+                >
                   Síntese semiológica gerada
-                </span>
+                </label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(currentEemNarrative);
+                      navigator.clipboard.writeText(editableEemNarrative);
                       setEemCopied(true);
                       setTimeout(() => setEemCopied(false), 2000);
                     }}
@@ -454,10 +478,24 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 </div>
               </div>
 
-              <div className="p-3.5 bg-slate-50/80 border border-slate-200/80 rounded-xl text-xs sm:text-sm text-slate-800 leading-relaxed font-sans whitespace-pre-wrap max-h-36 overflow-y-auto">
-                {currentEemNarrative}
-              </div>
+              <textarea
+                id="eem-generated-summary"
+                value={editableEemNarrative}
+                onChange={(e) => setEditableEemNarrative(e.target.value)}
+                rows={5}
+                className="w-full p-3.5 bg-white text-slate-900 border border-slate-200/90 focus:border-teal-700 focus:outline-hidden rounded-xl text-xs sm:text-sm leading-relaxed font-sans resize-y shadow-2xs"
+              />
             </div>
+
+            {hasEemSuicidalIdeation && (
+              <div role="alert" className="rounded-lg border border-red-500 bg-red-50 p-3 text-xs text-red-900 space-y-1">
+                <div className="flex items-center gap-2 font-semibold">
+                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+                  <span>Ideação suicida registrada no EEM. Realizar avaliação clínica direta de segurança.</span>
+                </div>
+                <p>Investigar intenção, plano e acesso a meios. Se houver risco iminente, acionar a rede de urgência.</p>
+              </div>
+            )}
           </section>
 
           {/* INSTRUMENTOS APLICADOS NA CONSULTA */}
@@ -492,10 +530,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 {scaleHistory.map((res, idx) => {
                   const isJustInserted = insertedScaleId === (res.id || res.scaleId);
                   const isIncomplete = res.isComplete === false || res.completionStatus === 'incomplete' || res.completionStatus === 'invalid';
-                  const hasItem9Alert =
-                    res.scaleId === 'phq-9' &&
-                    ((res.answersArray && res.answersArray[8] > 0) ||
-                      res.recommendations?.some((r) => r.includes('pergunta 9') || r.includes('autolesão')));
+                  const hasItem9Alert = hasPositivePhq9Item9(res);
 
                   return (
                     <div
@@ -506,8 +541,9 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-semibold text-slate-900 truncate">{res.scaleTitle}</span>
                           <span className="font-mono text-slate-500 shrink-0">
-                            {res.totalScore}/{res.maxScore} pts
+                            {isIncomplete ? 'Incompleto' : `${res.totalScore}/${res.maxScore} pts`}
                           </span>
+                          {res.date && <span className="text-slate-500 shrink-0">{res.date}</span>}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className={`px-2 py-0.5 rounded border text-[11px] font-medium ${getSeverityBadgeClass(res.severityLevel)}`}>
@@ -528,13 +564,13 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                       </div>
 
                       {hasItem9Alert && (
-                        <div className="p-2 rounded bg-red-50 border border-red-200 text-red-900 flex items-center gap-2">
+                        <div className="p-2 rounded bg-red-50 border border-red-500 text-red-900 flex items-center gap-2">
                           <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                          <span>Item 9 positivo (risco de autoagressão). Realizar avaliação clínica direta.</span>
+                          <span>Item 9 positivo. Realizar avaliação clínica direta de segurança.</span>
                         </div>
                       )}
 
-                      <div className="flex justify-end pt-1">
+                      <div className="flex flex-wrap justify-end gap-3 pt-1">
                         <button
                           type="button"
                           onClick={() => handleInsertScaleToSoap(res)}
@@ -620,14 +656,14 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
             </div>
           </div>
 
-          {/* O — Objetivo */}
+          {/* O - Objetivo */}
           <div className="space-y-1.5 pt-3 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <label htmlFor="soap-o-input" className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-md bg-sky-100 text-sky-900 font-bold font-mono text-xs flex items-center justify-center shrink-0">
                   O
                 </span>
-                <span>Objetivo (EEM & Escalas)</span>
+                <span>Objetivo (EEM e Escalas)</span>
               </label>
               <button
                 type="button"
@@ -647,14 +683,14 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
             />
           </div>
 
-          {/* A — Avaliação */}
+          {/* A - Avaliação */}
           <div className="space-y-1.5 pt-3 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <label htmlFor="soap-a-input" className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-md bg-amber-100 text-amber-950 font-bold font-mono text-xs flex items-center justify-center shrink-0">
                   A
                 </span>
-                <span>Avaliação & Diagnósticos</span>
+                <span>Avaliação</span>
               </label>
               <button
                 type="button"
@@ -674,14 +710,14 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
             />
           </div>
 
-          {/* P — Plano */}
+          {/* P - Plano */}
           <div className="space-y-1.5 pt-3 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <label htmlFor="soap-p-input" className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-950 font-bold font-mono text-xs flex items-center justify-center shrink-0">
                   P
                 </span>
-                <span>Plano & Conduta</span>
+                <span>Plano e Conduta</span>
               </label>
               <button
                 type="button"
@@ -695,7 +731,7 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
               id="soap-p-input"
               value={soapState.plan}
               onChange={(e) => handleSoapChange('plan', e.target.value)}
-              placeholder="Conduta clínica, plano de desmame/ajuste, orientações não farmacológicas e retorno..."
+              placeholder="Conduta clínica, plano de desmame ou ajuste, orientações não farmacológicas e retorno..."
               rows={4}
               className="w-full bg-slate-50/50 focus:bg-white text-slate-900 text-xs sm:text-sm p-3.5 rounded-lg border border-slate-200/80 focus:border-teal-700 focus:outline-hidden leading-relaxed resize-y font-sans shadow-2xs"
             />
@@ -777,6 +813,52 @@ Nexus Clínico · Escala ≠ diagnóstico · Cálculo ≠ conduta · Decisão pe
                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors cursor-pointer"
               >
                 Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DO PADRÃO EUTÍMICO */}
+      {showEuthymicConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="euthymic-confirm-title"
+            className="w-full max-w-md space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl text-slate-800 animate-in fade-in duration-150"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 id="euthymic-confirm-title" className="text-sm font-semibold text-slate-900">
+                  Substituir achados pelo Padrão Eutímico?
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Já existem achados semiológicos selecionados no EEM. A aplicação do padrão substituirá as opções selecionadas pelo perfil eutímico.
+                </p>
+                <p className="text-xs text-teal-800 font-medium">
+                  Todo o texto digitado e as observações complementares serão preservados integralmente.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleCancelEuthymicPreset}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmEuthymicPreset}
+                className="px-4 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-xs font-medium text-white transition-colors cursor-pointer shadow-xs"
+              >
+                Confirmar Padrão Eutímico
               </button>
             </div>
           </div>

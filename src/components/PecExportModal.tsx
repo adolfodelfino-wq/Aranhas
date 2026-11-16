@@ -72,7 +72,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
-                  e-SUS APS / PEC
+                  e-SUS APS · PEC
                 </span>
                 <span className="text-xs text-slate-500 font-normal">
                   Prontuário Eletrônico do Cidadão
@@ -111,7 +111,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-teal-600" />
-                Vincular Códigos de Problema / Condição (CIAP-2 / CID-10)
+                Vincular Códigos de Problema ou Condição (CIAP-2 e CID-10)
               </label>
               <span className="text-[11px] text-slate-500">
                 {selectedCodes.length} código(s) anexado(s) à Avaliação
@@ -133,7 +133,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
                     }`}
                   >
                     <span className="font-mono font-semibold text-teal-800">{item.ciap2}</span>
-                    <span className="text-slate-400">/</span>
+                    <span className="text-slate-400">·</span>
                     <span className="font-mono text-slate-700">{item.cid10}</span>
                     <span className="text-slate-600 hidden sm:inline">({item.label})</span>
                     {isSelected && <Check className="w-3 h-3 text-teal-700" />}
@@ -149,7 +149,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                 <span className="font-mono font-bold text-xs text-slate-900">
-                  [S] SUBJETIVO (Queixa / HDA)
+                  [S] SUBJETIVO (Queixa e HDA)
                 </span>
                 <button
                   type="button"
@@ -178,7 +178,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                 <span className="font-mono font-bold text-xs text-slate-900">
-                  [O] OBJETIVO (EEM & Escalas)
+                  [O] OBJETIVO (EEM e Escalas)
                 </span>
                 <button
                   type="button"
@@ -207,7 +207,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                 <span className="font-mono font-bold text-xs text-slate-900">
-                  [A] AVALIAÇÃO & DIAGNÓSTICO
+                  [A] AVALIAÇÃO
                 </span>
                 <button
                   type="button"
@@ -236,7 +236,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col justify-between space-y-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                 <span className="font-mono font-bold text-xs text-slate-900">
-                  [P] PLANO & DESPRESCRIÇÃO
+                  [P] PLANO E CONDUTA
                 </span>
                 <button
                   type="button"
@@ -266,7 +266,7 @@ export const PecExportModal: React.FC<PecExportModalProps> = ({
         {/* Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-xs text-slate-500 font-medium text-center sm:text-left">
-            Paciente: <strong>{patient.name}</strong> • Prontuário: {patient.prontuario || 'S/N'}
+            Paciente: <strong>{patient.name}</strong> • Prontuário: {patient.prontuario || 'não informado'}
           </span>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">

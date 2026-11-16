@@ -253,7 +253,7 @@ export const EducationView: React.FC<EducationViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 pb-4 shrink-0">
               <div>
                 <div className="font-bold text-teal-700 text-xs tracking-wider uppercase">
-                  Nexus Clínico — Folheto de Orientação ao Paciente
+                  Nexus Clínico - Folheto de Orientação ao Paciente
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 mt-0.5">
                   {printModalMaterial.title}
@@ -274,7 +274,7 @@ export const EducationView: React.FC<EducationViewProps> = ({
 
             <div className="flex justify-between items-center pt-3 border-t border-slate-200 shrink-0">
               <span className="text-[11px] text-slate-500 italic">
-                Atenção Primária à Saúde • Medicina de Família e Comunidade (MFC/APS)
+                Atenção Primária à Saúde · Medicina de Família e Comunidade (MFC e APS)
               </span>
 
               <div className="flex space-x-2">

@@ -79,38 +79,38 @@ export const WhatsappShareModal: React.FC<WhatsappShareModalProps> = ({
   const getMessageText = () => {
     const nameStr = customName || 'paciente';
     if (scriptPreset === 'pre_consultation') {
-      return `Olá, ${nameStr}! Tudo bem com você? 😊
+      return `Olá, ${nameStr}, tudo bem?
 
-Espero que esteja tendo uma semana tranquila. Para cuidarmos ainda melhor da sua saúde e prepararmos a nossa próxima consulta com todo carinho no *Nexus Clínico*, gostaria que você respondesse a este rápido questionário de bem-estar (${scale.acronym} - ${scale.title}):
+Para preparar a nossa próxima consulta, peço que responda a este questionário breve sobre como você tem se sentido (${scale.acronym} - ${scale.title}):
 
-🔗 *Acessar Questionário:*
+*Acessar Questionário:*
 ${patientFillUrl}
 
-Leva menos de 2 minutos! Não é um teste rígido, é apenas um termômetro para entendermos como esteve seu sono, disposição e humor nestas últimas duas semanas. 
+Leva menos de 2 minutos e ajuda a organizar nossa conversa sobre seu sono, disposição e humor nas últimas duas semanas.
 
-Se preferir, também pode me responder por aqui enviando a pontuação de cada pergunta (Ex: 2, 2, 1, 0...). Estou aqui para o que precisar. Um abraço afetuoso!`;
+Se preferir, você também pode enviar por aqui apenas os números de cada resposta (Ex: 2, 2, 1, 0...). Qualquer dúvida, estou à disposição.`;
     } else if (scriptPreset === 'treatment_monitoring') {
-      return `Olá, ${nameStr}! Como você tem passado? 💛
+      return `Olá, ${nameStr}, como você tem passado?
 
-Como combinamos em nosso último atendimento, estou enviando este breve acompanhamento da sua saúde e do seu tratamento (${scale.acronym} - ${scale.title}):
+Conforme combinamos no último atendimento, envio este questionário breve para acompanhar a evolução do seu quadro e do tratamento (${scale.acronym} - ${scale.title}):
 
-🔗 *Acessar Questionário:*
+*Acessar Questionário:*
 ${patientFillUrl}
 
-Ele nos ajuda a acompanhar de perto a sua evolução, entendendo como você tem se sentido e se precisamos fazer qualquer ajuste para garantir seu conforto e bem-estar.
+As respostas ajudam a verificar como você tem se sentido e se há necessidade de algum ajuste na conduta.
 
-Pode responder no link acima ou me mandar a pontuação de cada pergunta por aqui. Qualquer dúvida ou necessidade, conte sempre comigo!`;
+Você pode responder pelo link acima ou enviar a sequência de respostas por aqui. Se precisar de algo, entre em contato com a equipe.`;
     } else {
-      return `Olá, ${nameStr}! Passando para saber como você está e te deixar um abraço! 🌸
+      return `Olá, ${nameStr}!
 
-Quando tiver um minutinho tranquilo no seu dia, por favor preencha este rápido questionário para acompanharmos seu bem-estar (${scale.acronym} - ${scale.title}):
+Quando tiver um momento disponível, por favor preencha este questionário rápido para o acompanhamento da sua consulta (${scale.acronym} - ${scale.title}):
 
-🔗 *Acessar Questionário:*
+*Acessar Questionário:*
 ${patientFillUrl}
 
-Se for mais prático para você, pode me enviar só os números de cada resposta por aqui mesmo no WhatsApp (Ex: 2, 2, 1, 0...). 
+Se for mais prático, pode enviar apenas os números de cada resposta aqui pelo WhatsApp (Ex: 2, 2, 1, 0...).
 
-Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
+Obrigado!`;
     }
   };
 
@@ -196,9 +196,9 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-                <span>WhatsApp - Integração & Autoaplicação</span>
+                <span>WhatsApp - Integração e Autoaplicação</span>
                 <span className="bg-teal-50 text-teal-700 text-[10px] font-mono px-2 py-0.5 rounded border border-teal-200">
-                  Opções A & B
+                  Opções A e B
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
@@ -335,7 +335,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
             {/* Script Presets Selector */}
             <div className="space-y-1.5 pt-1">
               <label className="font-mono text-[11px] uppercase font-bold text-slate-700 flex items-center justify-between">
-                <span>Tom da Mensagem / Abordagem:</span>
+                <span>Tom da Mensagem e Abordagem:</span>
                 <span className="text-[10px] text-teal-700 font-normal">Acolhimento APS</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -348,7 +348,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
                   }`}
                 >
                   <span className="block font-bold text-[11px]">1. Pré-Consulta</span>
-                  <span className="text-[10px] opacity-80 block mt-0.5">Preparatório & Empático</span>
+                  <span className="text-[10px] opacity-80 block mt-0.5">Preparatório e objetivo</span>
                 </button>
 
                 <button
@@ -359,7 +359,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white'
                   }`}
                 >
-                  <span className="block font-bold text-[11px]">2. Cuidado & Evolução</span>
+                  <span className="block font-bold text-[11px]">2. Cuidado e Evolução</span>
                   <span className="text-[10px] opacity-80 block mt-0.5">Acompanhamento</span>
                 </button>
 
@@ -371,7 +371,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white'
                   }`}
                 >
-                  <span className="block font-bold text-[11px]">3. Lembrete Afetuoso</span>
+                  <span className="block font-bold text-[11px]">3. Lembrete Breve</span>
                   <span className="text-[10px] opacity-80 block mt-0.5">Mensagem Curta</span>
                 </button>
               </div>
@@ -400,7 +400,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
               <div className="flex items-center justify-between font-bold text-teal-800">
                 <span className="flex items-center gap-1.5 font-mono text-[11px] uppercase">
                   <Sparkles className="w-4 h-4 text-teal-600" />
-                  <span>Roteiro de Fala / Áudio para o Paciente:</span>
+                  <span>Roteiro de Fala ou Áudio para o Paciente:</span>
                 </span>
                 <button
                   onClick={() => setShowMedicalTips(!showMedicalTips)}
@@ -413,7 +413,7 @@ Cuidar de você é a nossa prioridade. Tenha um excelente dia!`;
               {showMedicalTips && (
                 <div className="space-y-2 pt-1 border-t border-teal-200 text-slate-700">
                   <p className="italic bg-white p-2.5 rounded-lg border border-slate-200 text-xs leading-relaxed">
-                    🗣️ <strong className="text-teal-800 font-semibold">Exemplo de áudio:</strong> "Oi, {customName || 'Maria'}, tudo bem? Estou te mandando o link de um questionário super rápido. Não é uma prova ou teste rígido, é apenas um termômetro de bem-estar para entender como esteve seu sono, energia e humor nas últimas duas semanas. Responda com tranquilidade. Qualquer dúvida estou por aqui!"
+                    <strong className="text-teal-800 font-semibold">Exemplo de áudio:</strong> "Oi, {customName || 'Maria'}, tudo bem? Estou enviando o link de um questionário rápido. Ele ajuda a entender como esteve seu sono, disposição e humor nas últimas duas semanas. Responda com calma, e se tiver dúvida pode me avisar."
                   </p>
                 </div>
               )}

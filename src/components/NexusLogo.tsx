@@ -74,7 +74,7 @@ export const NexusLogo: React.FC<NexusLogoProps> = ({
                 : 'bg-teal-900/60 text-teal-200 border border-teal-700/60'
             }`}
           >
-            APS / SUS
+            APS · SUS
           </span>
         )}
       </div>
@@ -83,7 +83,7 @@ export const NexusLogo: React.FC<NexusLogoProps> = ({
           isLight ? 'text-slate-500' : 'text-slate-300'
         }`}
       >
-        Suporte à Decisão Clínica & Registro Estruturado
+        Suporte à Decisão Clínica e Registro Estruturado
       </span>
     </div>
   );

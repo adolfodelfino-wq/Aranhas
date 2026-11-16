@@ -1,4 +1,5 @@
-import { ScaleResult, EemState, EducationSuggestion } from '../types';
+import type { ScaleResult, EemState, EducationSuggestion } from '../types';
+import { hasPositivePhq9Item9 } from './scaleValidation';
 
 export interface EducationEngineResult {
   suggestions: EducationSuggestion[];
@@ -30,17 +31,16 @@ export function generateHealthEducationSuggestions(
   const whoqol = safeScales.find((s) => s.scaleId === 'whoqol-srpb');
   const cssrs = safeScales.find((s) => s.scaleId === 'cssrs');
 
-  // Checar ideação/risco no PHQ-9 item 9 ou C-SSRS
-  const phq9Risk = phq9?.answersSummary?.find((a) => a.questionText?.toLowerCase().includes('morto') || a.questionText?.toLowerCase().includes('ferir'))?.value ?? 0;
   const cssrsRisk = cssrs?.totalScore ?? 0;
+  const eemSuicidalIdeation = Array.isArray(safeEem.pensamentoConteudo)
+    && safeEem.pensamentoConteudo.includes('conteudo_ideacao_suicida');
 
-  if (phq9Risk > 0 || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
+  if (hasPositivePhq9Item9(phq9) || eemSuicidalIdeation || cssrsRisk > 0 || cssrs?.severityLevel === 'severe' || cssrs?.severityLevel === 'high') {
     hasHighRiskWarning = true;
     warningMessage = 'Avaliação clínica e manejo de segurança têm prioridade antes das orientações educativas.';
   }
 
   // 2. Análise dos achados do EEM com checagem segura
-  const obs = (safeEem.observacoesLivres || '').toLowerCase();
   const humorList = Array.isArray(safeEem.humor) ? safeEem.humor : [];
   const afetoList = Array.isArray(safeEem.afeto) ? safeEem.afeto : [];
   const atitudeList = Array.isArray(safeEem.atitude) ? safeEem.atitude : [];
@@ -49,13 +49,11 @@ export function generateHealthEducationSuggestions(
   const julgamentoList = Array.isArray(safeEem.julgamento) ? safeEem.julgamento : [];
   const atencaoMemoriaList = Array.isArray(safeEem.atencaoMemoria) ? safeEem.atencaoMemoria : [];
 
-  const eemHasSleep =
-    obs.includes('sono') ||
-    obs.includes('insonia') ||
-    obs.includes('insônia') ||
-    humorList.includes('ansioso') ||
-    humorList.includes('distimico') ||
-    atitudeList.includes('agita_psicomotora');
+  // Não inferir alteração do sono a partir de humor, inquietação ou texto livre.
+  // A interpretação de negação e contexto no texto exige solução específica.
+  const phq9Sleep = phq9?.answersSummary?.find((a) => /^\s*3\./.test(a.questionText || ''))?.value
+    ?? phq9?.answersArray?.[2]
+    ?? 0;
 
   const eemHasPsychomotor =
     atitudeList.includes('agita_psicomotora') ||
@@ -86,15 +84,9 @@ export function generateHealthEducationSuggestions(
   const candidates: (EducationSuggestion & { score: number })[] = [];
 
   // SUGGESTION 1: Sono e Higiene Circadiana
-  const scaleSleepTrigger = (phq9 && phq9.totalScore >= 5) || (gad7 && gad7.totalScore >= 5);
-  if (scaleSleepTrigger || eemHasSleep) {
-    const matchedSources: string[] = [];
-    if (phq9 && phq9.totalScore >= 5) matchedSources.push(`PHQ-9 (${phq9.totalScore} pts)`);
-    if (gad7 && gad7.totalScore >= 5) matchedSources.push(`GAD-7 (${gad7.totalScore} pts)`);
-    if (eemHasSleep) matchedSources.push('EEM (Queixa/alteração de sono ou inquietação)');
-
-    const isCombo = (phq9 || gad7) && eemHasSleep;
-    const score = isCombo ? 3 : 2;
+  if (phq9Sleep > 0) {
+    const matchedSources = ['PHQ-9 (resposta ao item 3 sobre sono)'];
+    const score = 2;
 
     candidates.push({
       id: 'sug-sono',
@@ -104,13 +96,9 @@ export function generateHealthEducationSuggestions(
         'Manter horários regulares para dormir e acordar, desacelerar o uso de telas 1 hora antes de deitar e evitar estimulantes à noite.',
       soapPhrase:
         'Realizadas orientações sobre higiene do sono e regulação do ciclo circadiano, incluindo horários fixos de despertar e redução de estimulantes noturnos.',
-      reasonText: isCombo
-        ? 'Relacionada ao resultado da escala e a alterações de sono/inquietação no EEM.'
-        : matchedSources.some((s) => (s || '').includes('PHQ-9') || (s || '').includes('GAD-7'))
-        ? 'Relacionada ao resultado da escala aplicada.'
-        : 'Relacionada aos achados de sono do EEM.',
+      reasonText: 'Relacionada à resposta ao item 3 do PHQ-9, a ser avaliada no contexto clínico.',
       matchedSources,
-      isComboMatch: !!isCombo,
+      isComboMatch: false,
       selected: true,
       score,
     });
@@ -121,7 +109,7 @@ export function generateHealthEducationSuggestions(
   if (scaleDepressionTrigger || (eemHasMoodDistress && !humorList.includes('ansioso'))) {
     const matchedSources: string[] = [];
     if (phq9) matchedSources.push(`PHQ-9 (${phq9.totalScore} pts - ${phq9.classification})`);
-    if (eemHasMoodDistress) matchedSources.push('EEM (Humor distímico/apático ou afeto alterado)');
+    if (eemHasMoodDistress) matchedSources.push('EEM (Humor distímico, apático ou afeto alterado)');
 
     const isCombo = scaleDepressionTrigger && eemHasMoodDistress;
     const score = isCombo ? 3 : 2;
@@ -131,11 +119,11 @@ export function generateHealthEducationSuggestions(
       topic: 'Depressão',
       title: 'Compreensão de sintomas depressivos e ativação gradual de rotina',
       shortDescription:
-        'Estimular a retomada compassiva de atividades em pequenas metas diárias, reconhecendo o impacto do sofrimento emocional na energia.',
+        'Estimular a retomada gradual de atividades em pequenas metas diárias, considerando o impacto dos sintomas na disposição.',
       soapPhrase:
-        'Orientado sobre compreensão dos sintomas depressivos e pactuação de pequenas metas diárias para ativação gradual da rotina e fortalecimento do autocuidado.',
+        'Orientado sobre sintomas depressivos e pactuadas pequenas metas diárias para retomada gradual da rotina e autocuidado.',
       reasonText: isCombo
-        ? 'Relacionada ao escore do PHQ-9 e ao humor distímico/apático no EEM.'
+        ? 'Relacionada ao escore do PHQ-9 e ao humor distímico ou apático no EEM.'
         : scaleDepressionTrigger
         ? 'Relacionada à pontuação da escala PHQ-9.'
         : 'Relacionada ao estado de humor observado no EEM.',
@@ -166,7 +154,7 @@ export function generateHealthEducationSuggestions(
       soapPhrase:
         'Orientações prestadas sobre estratégias simples para manejo da ansiedade, incluindo técnicas de respiração pausada e desaceleração física.',
       reasonText: isCombo
-        ? 'Relacionada ao resultado do GAD-7 e ao humor ansioso/agitação no EEM.'
+        ? 'Relacionada ao resultado do GAD-7 e ao humor ansioso ou agitação no EEM.'
         : scaleAnxietyTrigger
         ? 'Relacionada ao escore da escala GAD-7.'
         : 'Relacionada ao humor ansioso no EEM.',
@@ -182,7 +170,7 @@ export function generateHealthEducationSuggestions(
     const matchedSources: string[] = [];
     if (phq9 && phq9.totalScore >= 5) matchedSources.push(`PHQ-9 (${phq9.totalScore} pts)`);
     if (gad7 && gad7.totalScore >= 5) matchedSources.push(`GAD-7 (${gad7.totalScore} pts)`);
-    if (eemHasPsychomotor) matchedSources.push('EEM (Alteração da psicomotricidade/fala)');
+    if (eemHasPsychomotor) matchedSources.push('EEM (Alteração da psicomotricidade ou fala)');
 
     const isCombo = (scaleDepressionTrigger || scaleAnxietyTrigger) && eemHasPsychomotor;
     const score = isCombo ? 3 : 2;
@@ -192,9 +180,9 @@ export function generateHealthEducationSuggestions(
       topic: 'Atividade Física',
       title: 'Atividade física leve a moderada na rotina',
       shortDescription:
-        'Caminhadas curtas ao ar livre ou exercícios aeróbicos leves adaptados à rotina para regulação natural do humor e tensão.',
+        'Caminhadas curtas ao ar livre ou exercícios aeróbicos leves adaptados à rotina para auxiliar no controle dos sintomas.',
       soapPhrase:
-        'Incentivada a prática regular de atividade física leve a moderada como aliada no manejo dos sintomas e regulação do humor.',
+        'Incentivada a prática regular de atividade física leve a moderada como parte do manejo dos sintomas e da regulação do humor.',
       reasonText: isCombo
         ? 'Relacionada às escalas de sintomas e alterações psicomotoras registradas no EEM.'
         : 'Relacionada ao plano de cuidados da Atenção Primária.',
@@ -211,7 +199,7 @@ export function generateHealthEducationSuggestions(
     const matchedSources: string[] = [];
     if (asrs18) matchedSources.push(`ASRS-18 (${asrs18.totalScore} pts)`);
     if (snap4) matchedSources.push(`SNAP-IV (${snap4.totalScore} pts)`);
-    if (eemHasAttentionIssue) matchedSources.push('EEM (Atenção/concentração alterada)');
+    if (eemHasAttentionIssue) matchedSources.push('EEM (Atenção e concentração alteradas)');
 
     const isCombo = scaleAdhdTrigger && eemHasAttentionIssue;
     const score = isCombo ? 3 : 2;
@@ -221,9 +209,9 @@ export function generateHealthEducationSuggestions(
       topic: 'TDAH',
       title: 'Estruturação do ambiente e organização do foco',
       shortDescription:
-        'Fragmentação de obrigações em etapas pequenas, checklists visuais e pausas estratégicas durante tarefas exigentes.',
+        'Fragmentação de tarefas em etapas menores, listas visuais e pausas programadas.',
       soapPhrase:
-        'Pactuadas estratégias organizacionais de apoio ao foco, incluindo fragmentação de tarefas em pequenas etapas e uso de rotinas visuais.',
+        'Pactuadas estratégias de organização para apoio ao foco, com divisão de tarefas em etapas menores e uso de rotinas visuais.',
       reasonText: isCombo
         ? 'Relacionada ao rastreio de TDAH e à desatenção registrada no EEM.'
         : scaleAdhdTrigger
@@ -243,7 +231,7 @@ export function generateHealthEducationSuggestions(
   if (scaleHclTrigger || eemEuphoria) {
     const matchedSources: string[] = [];
     if (hcl32) matchedSources.push(`HCL-32 (${hcl32.totalScore} pts)`);
-    if (eemEuphoria) matchedSources.push('EEM (Humor eufórico/disfórico ou afeto lábil)');
+    if (eemEuphoria) matchedSources.push('EEM (Humor eufórico, disfórico ou afeto lábil)');
 
     const isCombo = scaleHclTrigger && eemEuphoria;
 
@@ -252,9 +240,9 @@ export function generateHealthEducationSuggestions(
       topic: 'Humor',
       title: 'Oscilações do humor e acompanhamento longitudinal',
       shortDescription:
-        'Conversar sobre variações de energia, sono, comportamento e humor ao longo do tempo para promover o autocuidado continuado.',
+        'Observar variações de energia, sono, comportamento e humor ao longo do tempo para acompanhar a evolução clínica.',
       soapPhrase:
-        'Realizadas orientações sobre a percepção continuada das variações de energia, padrão de sono e oscilações do humor no acompanhamento longitudinal.',
+        'Orientado sobre o registro contínuo das variações de energia, padrão de sono e humor ao longo do acompanhamento.',
       reasonText: isCombo
         ? 'Relacionada ao resultado do HCL-32 e a alterações de humor registradas no EEM.'
         : scaleHclTrigger
@@ -269,15 +257,15 @@ export function generateHealthEducationSuggestions(
 
   // SUGGESTION 7: Compreensão do Quadro e Adesão (Insight)
   if (eemHasInsightIssue || eemHasJudgmentIssue) {
-    const matchedSources: string[] = ['EEM (Insight parcial/ausente ou juízo crítico)'];
+    const matchedSources: string[] = ['EEM (Insight parcial ou ausente, ou juízo crítico)'];
     candidates.push({
       id: 'sug-insight-adesao',
-      topic: 'Adesão & Insight',
+      topic: 'Adesão e Insight',
       title: 'Compreensão do quadro e adesão ao acompanhamento',
       shortDescription:
-        'Esclarecimento empático sobre os sintomas vivenciados, escuta das dúvidas da pessoa e aliança terapêutica com a equipe de saúde.',
+        'Esclarecimento sobre os sintomas vivenciados e escuta das dúvidas para apoiar o acompanhamento pela equipe de saúde.',
       soapPhrase:
-        'Orientado de forma empática sobre a natureza dos sintomas vivenciados e fortalecida a pactuação para o acompanhamento continuado na UBS.',
+        'Orientado sobre os sintomas vivenciados e pactuado o acompanhamento continuado na UBS.',
       reasonText: 'Relacionada ao achado de insight e juízo crítico registrado no EEM.',
       matchedSources,
       isComboMatch: false,
@@ -318,9 +306,9 @@ export function generateHealthEducationSuggestions(
       topic: 'Recursos Pessoais',
       title: 'Espiritualidade, crenças e recursos pessoais de enfrentamento',
       shortDescription:
-        'Abordagem neutra e respeitosa sobre fontes pessoais de força, fé, sentido de vida e redes de apoio comunitário.',
+        'Abordagem respeitosa sobre crenças, valores e redes de apoio social relevantes para a pessoa.',
       soapPhrase:
-        'Abordados de forma opcional e respeitosa os recursos pessoais e fontes de apoio comunitário e espiritual como fatores de suporte emocional.',
+        'Abordados, conforme interesse da pessoa, valores pessoais e redes de apoio social.',
       reasonText: 'Relacionada ao preenchimento do módulo WHOQOL-SRPB.',
       matchedSources,
       isComboMatch: false,
@@ -332,13 +320,13 @@ export function generateHealthEducationSuggestions(
   // SUGGESTION 10: Sinais de Alerta e Reavaliação na UBS (Geral / Sempre pertinente)
   candidates.push({
     id: 'sug-sinais-alerta',
-    topic: 'Segurança & Reavaliação',
+    topic: 'Segurança e Reavaliação',
     title: 'Sinais de alerta e canais de reavaliação na UBS',
     shortDescription:
-      'Orientação clara sobre quando buscar retorno antecipado na Unidade Básica de Saúde em caso de piora dos sintomas.',
+      'Orientação sobre quando buscar retorno antecipado na Unidade Básica de Saúde em caso de piora dos sintomas.',
     soapPhrase:
-      'Pactuados sinais de alerta para reavaliação precoce e reforçados os canais de contato com a equipe de Saúde da Família.',
-    reasonText: 'Recomendação essencial de segurança no plano de cuidados da APS.',
+      'Pactuados sinais de alerta para reavaliação precoce e canais de contato com a equipe de Saúde da Família.',
+    reasonText: 'Recomendação de segurança no plano de cuidados da APS.',
     matchedSources: ['Protocolo de Segurança APS'],
     isComboMatch: false,
     selected: true,
@@ -369,7 +357,7 @@ export function generateHealthEducationSuggestions(
   const maxLimit = Math.min(Math.max(uniqueSuggestions.length, 3), 5);
   const finalSuggestions = uniqueSuggestions.slice(0, maxLimit);
 
-  // Garantir que pelo menos 2 e no máximo 3 venham pré-selecionadas para facilidade do médico
+  // Deixar 2 a 3 sugestões pré-selecionadas
   finalSuggestions.forEach((s, idx) => {
     if (idx < 3) {
       s.selected = true;
@@ -386,19 +374,17 @@ export function generateHealthEducationSuggestions(
 }
 
 /**
- * Formata as orientações selecionadas e editadas pelo médico em uma frase clínica fluida e natural para o Plano (P) do SOAP.
+ * Formata as orientações selecionadas e editadas pelo médico para o Plano (P) do SOAP.
  */
 export function formatConfirmedEducationToPlan(confirmedSuggestions: EducationSuggestion[]): string {
   const selected = confirmedSuggestions.filter((s) => s.selected);
   if (selected.length === 0) return '';
 
-  // Se o médico editou manualmente o texto das frases do SOAP, usamos as frases editadas
   const phrases = selected.map((s) => s.soapPhrase.trim()).filter(Boolean);
 
   if (phrases.length === 1) {
     return phrases[0];
   }
 
-  // Agrupamento harmônico e sem duplicações para formar um parágrafo clínico natural
   return phrases.join(' ');
 }

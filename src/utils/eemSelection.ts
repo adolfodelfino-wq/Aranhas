@@ -21,36 +21,62 @@ export const getEmptyEemState = (): EemState => ({
 });
 
 /**
+ * Checks whether any structured findings are currently selected in the EEM.
+ */
+export const hasSelectedEemFindings = (state?: EemState): boolean => {
+  if (!state) return false;
+  const domainKeys: (keyof EemState)[] = [
+    'aparencia',
+    'atitude',
+    'fala',
+    'humor',
+    'afeto',
+    'pensamentoCurso',
+    'pensamentoForma',
+    'pensamentoConteudo',
+    'sensopercepcao',
+    'orientacao',
+    'atencaoMemoria',
+    'insight',
+    'julgamento',
+  ];
+  return domainKeys.some((k) => Array.isArray(state[k]) && (state[k] as string[]).length > 0);
+};
+
+/**
  * User-triggered preset only. Never apply it to an unevaluated patient
  * automatically: normal descriptors require explicit confirmation.
+ * Preserves free-text notes and domain-specific custom texts.
  */
-export const getEuthymicEemPreset = (): EemState => ({
+export const applyEuthymicPreset = (currentState?: EemState): EemState => ({
   aparencia: ['higienizado', 'vestuario_adequado', 'aparente_idade'],
-  aparenciaOutros: '',
+  aparenciaOutros: currentState?.aparenciaOutros || '',
   atitude: ['cooperativo'],
-  atitudeOutros: '',
+  atitudeOutros: currentState?.atitudeOutros || '',
   fala: ['fala_normal'],
-  falaOutros: '',
+  falaOutros: currentState?.falaOutros || '',
   humor: ['eutimico'],
-  humorOutros: '',
+  humorOutros: currentState?.humorOutros || '',
   afeto: ['normoemotivo'],
-  afetoOutros: '',
+  afetoOutros: currentState?.afetoOutros || '',
   pensamentoCurso: ['curso_normopsiquico'],
   pensamentoForma: ['forma_coerente'],
   pensamentoConteudo: [],
-  pensamentoOutros: '',
+  pensamentoOutros: currentState?.pensamentoOutros || '',
   sensopercepcao: ['senso_sem_alteracoes'],
-  sensopercepcaoOutros: '',
+  sensopercepcaoOutros: currentState?.sensopercepcaoOutros || '',
   orientacao: ['orientado_global'],
-  orientacaoOutros: '',
+  orientacaoOutros: currentState?.orientacaoOutros || '',
   atencaoMemoria: ['atencao_normoprosexica', 'memoria_preservada'],
-  atencaoMemoriaOutros: '',
+  atencaoMemoriaOutros: currentState?.atencaoMemoriaOutros || '',
   insight: ['insight_preservado'],
-  insightOutros: '',
+  insightOutros: currentState?.insightOutros || '',
   julgamento: ['julgamento_preservado'],
-  julgamentoOutros: '',
-  observacoesLivres: '',
+  julgamentoOutros: currentState?.julgamentoOutros || '',
+  observacoesLivres: currentState?.observacoesLivres || '',
 });
+
+export const getEuthymicEemPreset = (currentState?: EemState): EemState => applyEuthymicPreset(currentState);
 
 /**
  * Pure transition for a clinician-selected descriptor.

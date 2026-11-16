@@ -18,61 +18,83 @@ export const generateEemSummary = (eem: EemState): string => {
   };
 
   const aparencia = getLabels('aparencia', eem.aparencia);
-  if (aparencia.length > 0) {
-    parts.push(`Aparência e Higiene: ${aparencia.join(', ').toLowerCase()}`);
+  const aparenciaOutros = eem.aparenciaOutros?.trim();
+  if (aparencia.length > 0 || aparenciaOutros) {
+    const descriptors = aparencia.join(', ').toLowerCase();
+    parts.push(`Aparência e Higiene: ${[descriptors, aparenciaOutros].filter(Boolean).join('; ')}`);
   }
 
   const atitude = getLabels('atitude', eem.atitude);
-  if (atitude.length > 0) {
-    parts.push(`Atitude: ${atitude.join(', ').toLowerCase()}`);
+  const atitudeOutros = eem.atitudeOutros?.trim();
+  if (atitude.length > 0 || atitudeOutros) {
+    const descriptors = atitude.join(', ').toLowerCase();
+    parts.push(`Atitude: ${[descriptors, atitudeOutros].filter(Boolean).join('; ')}`);
   }
 
   const fala = getLabels('fala', eem.fala);
-  if (fala.length > 0) {
-    parts.push(`Fala e Linguagem: ${fala.join(', ').toLowerCase()}`);
+  const falaOutros = eem.falaOutros?.trim();
+  if (fala.length > 0 || falaOutros) {
+    const descriptors = fala.join(', ').toLowerCase();
+    parts.push(`Fala e Linguagem: ${[descriptors, falaOutros].filter(Boolean).join('; ')}`);
   }
 
   const humor = getLabels('humor', eem.humor);
-  if (humor.length > 0) {
-    parts.push(`Humor: ${humor.join(', ').toLowerCase()}`);
+  const humorOutros = eem.humorOutros?.trim();
+  if (humor.length > 0 || humorOutros) {
+    const descriptors = humor.join(', ').toLowerCase();
+    parts.push(`Humor: ${[descriptors, humorOutros].filter(Boolean).join('; ')}`);
   }
 
   const afeto = getLabels('afeto', eem.afeto);
-  if (afeto.length > 0) {
-    parts.push(`Afeto: ${afeto.join(', ').toLowerCase()}`);
+  const afetoOutros = eem.afetoOutros?.trim();
+  if (afeto.length > 0 || afetoOutros) {
+    const descriptors = afeto.join(', ').toLowerCase();
+    parts.push(`Afeto: ${[descriptors, afetoOutros].filter(Boolean).join('; ')}`);
   }
 
   const pCurso = getLabels('pensamentoCurso', eem.pensamentoCurso);
   const pForma = getLabels('pensamentoForma', eem.pensamentoForma);
   const pConteudo = getLabels('pensamentoConteudo', eem.pensamentoConteudo);
   const pensParts = [...pCurso, ...pForma, ...pConteudo];
-  if (pensParts.length > 0) {
-    parts.push(`Pensamento: ${pensParts.join(', ').toLowerCase()}`);
+  const pensamentoOutros = eem.pensamentoOutros?.trim();
+  if (pensParts.length > 0 || pensamentoOutros) {
+    const descriptors = pensParts.join(', ').toLowerCase();
+    parts.push(`Pensamento: ${[descriptors, pensamentoOutros].filter(Boolean).join('; ')}`);
   }
 
   const senso = getLabels('sensopercepcao', eem.sensopercepcao);
-  if (senso.length > 0) {
-    parts.push(`Sensopercepção: ${senso.join(', ').toLowerCase()}`);
+  const sensopercepcaoOutros = eem.sensopercepcaoOutros?.trim();
+  if (senso.length > 0 || sensopercepcaoOutros) {
+    const descriptors = senso.join(', ').toLowerCase();
+    parts.push(`Sensopercepção: ${[descriptors, sensopercepcaoOutros].filter(Boolean).join('; ')}`);
   }
 
   const orient = getLabels('orientacao', eem.orientacao);
-  if (orient.length > 0) {
-    parts.push(`Orientação (Auto e Alopsíquica): ${orient.join(', ').toLowerCase()}`);
+  const orientacaoOutros = eem.orientacaoOutros?.trim();
+  if (orient.length > 0 || orientacaoOutros) {
+    const descriptors = orient.join(', ').toLowerCase();
+    parts.push(`Orientação (Auto e Alopsíquica): ${[descriptors, orientacaoOutros].filter(Boolean).join('; ')}`);
   }
 
   const atencaoMem = getLabels('atencaoMemoria', eem.atencaoMemoria);
-  if (atencaoMem.length > 0) {
-    parts.push(`Atenção, Concentração e Memória: ${atencaoMem.join(', ').toLowerCase()}`);
+  const atencaoMemoriaOutros = eem.atencaoMemoriaOutros?.trim();
+  if (atencaoMem.length > 0 || atencaoMemoriaOutros) {
+    const descriptors = atencaoMem.join(', ').toLowerCase();
+    parts.push(`Atenção, Concentração e Memória: ${[descriptors, atencaoMemoriaOutros].filter(Boolean).join('; ')}`);
   }
 
   const insight = getLabels('insight', eem.insight);
-  if (insight.length > 0) {
-    parts.push(`Insight / Consciência de Mórbida: ${insight.join(', ').toLowerCase()}`);
+  const insightOutros = eem.insightOutros?.trim();
+  if (insight.length > 0 || insightOutros) {
+    const descriptors = insight.join(', ').toLowerCase();
+    parts.push(`Insight e consciência de morbidade: ${[descriptors, insightOutros].filter(Boolean).join('; ')}`);
   }
 
   const julgamento = getLabels('julgamento', eem.julgamento);
-  if (julgamento.length > 0) {
-    parts.push(`Julgamento e Crítica da Realidade: ${julgamento.join(', ').toLowerCase()}`);
+  const julgamentoOutros = eem.julgamentoOutros?.trim();
+  if (julgamento.length > 0 || julgamentoOutros) {
+    const descriptors = julgamento.join(', ').toLowerCase();
+    parts.push(`Julgamento e Crítica da Realidade: ${[descriptors, julgamentoOutros].filter(Boolean).join('; ')}`);
   }
 
   if (eem.observacoesLivres && eem.observacoesLivres.trim()) {
@@ -106,18 +128,68 @@ export const sanitizeDuplicateEemHeader = (text: string): string => {
  */
 export const formatEemIntoObjective = (currentObjective: string, eemNarrative: string): string => {
   const trimmed = (currentObjective || '').trim();
-  if (!trimmed) return eemNarrative;
+  if (!trimmed) return eemNarrative.trim();
 
-  const eemBlockRegex = /(?:EXAME DO ESTADO MENTAL \(EEM\):?\s*\n*)?(?:Exame do Estado Mental \(EEM\):?)(?:[^\n\r]|\n(?!\n))*/i;
-  const eemUpperRegex = /(?:EXAME DO ESTADO MENTAL \(EEM\):?)(?:[^\n\r]|\n(?!\n))*/i;
+  const sanitizedInput = sanitizeDuplicateEemHeader(trimmed);
+  const lines = sanitizedInput.split('\n');
+  const eemHeaderRegex = /^(?:EXAME DO ESTADO MENTAL|Exame do Estado Mental)\s*\(EEM\):?/i;
+
+  let startIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (eemHeaderRegex.test(lines[i].trim())) {
+      startIndex = i;
+      break;
+    }
+  }
+
+  if (startIndex === -1) {
+    return `${sanitizedInput}\n\n${eemNarrative.trim()}`;
+  }
+
+  // Encontrar onde termina o bloco EEM
+  let endIndex = startIndex + 1;
+  while (endIndex < lines.length) {
+    const line = lines[endIndex];
+    const trimmedLine = line.trim();
+
+    // Se encontrar linha de escala (bullet ou nome de instrumento)
+    if (/^[•*-]\s*/.test(trimmedLine) || /^(?:PHQ-9|GAD-7|AUDIT|EPDS|MEEM|ASRS|SNAP)\b/i.test(trimmedLine)) {
+      break;
+    }
+    // Se encontrar outro cabeçalho conhecido em maiúsculas
+    if (/^(?:SINAIS VITAIS|CONDUTA|AVALIAÇÃO|PLANO|DIAGNÓSTICO|EXAMES)\s*:/i.test(trimmedLine)) {
+      break;
+    }
+    // Se for linha em branco, verificar se o que vem depois ainda pertence ao EEM
+    if (trimmedLine === '') {
+      const rest = lines.slice(endIndex + 1).find((l) => l.trim() !== '');
+      if (
+        !rest ||
+        !/^(?:Aparência|Atitude|Fala|Humor|Afeto|Pensamento|Sensopercepção|Orientação|Atenção|Insight|Julgamento|Observações complementares|Nenhum parâmetro)/i.test(
+          rest.trim()
+        )
+      ) {
+        break;
+      }
+    }
+    endIndex++;
+  }
+
+  // Recua linhas vazias do final do bloco EEM
+  while (endIndex > startIndex + 1 && lines[endIndex - 1].trim() === '') {
+    endIndex--;
+  }
+
+  const before = lines.slice(0, startIndex).join('\n').trimEnd();
+  const after = lines.slice(endIndex).join('\n').trimStart();
 
   let result = '';
-  if (eemBlockRegex.test(trimmed)) {
-    result = trimmed.replace(eemBlockRegex, eemNarrative);
-  } else if (eemUpperRegex.test(trimmed)) {
-    result = trimmed.replace(eemUpperRegex, eemNarrative);
-  } else {
-    result = `${trimmed}\n\n${eemNarrative}`;
+  if (before) {
+    result += before + '\n\n';
+  }
+  result += eemNarrative.trim();
+  if (after) {
+    result += '\n\n' + after;
   }
 
   return sanitizeDuplicateEemHeader(result);

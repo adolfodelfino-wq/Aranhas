@@ -121,11 +121,11 @@ describe('GAD-7 Scoring Accuracy & Completeness', () => {
     expect(resPos.classification).toMatch(/combinada/i);
   });
 
-  it('exposes exactly the 7 TCR instruments in TCR_SCALES for interface accessibility', () => {
-    expect(TCR_SCALES).toHaveLength(7);
+  it('exposes exactly the 2 TCR instruments in TCR_SCALES for interface accessibility', () => {
+    expect(TCR_SCALES).toHaveLength(2);
     const ids = TCR_SCALES.map((s) => s.id);
-    expect(ids).toEqual(['phq-9', 'gad-7', 'audit', 'epds', 'meem', 'asrs-18', 'snap-iv']);
-    expect(TCR_SCALE_IDS).toEqual(['phq-9', 'gad-7', 'audit', 'epds', 'meem', 'asrs-18', 'snap-iv']);
+    expect(ids).toEqual(['phq-9', 'gad-7']);
+    expect(TCR_SCALE_IDS).toEqual(['phq-9', 'gad-7']);
     TCR_SCALES.forEach((s) => {
       expect(s.questions.length).toBeGreaterThan(0);
       expect(typeof s.calculateResult).toBe('function');

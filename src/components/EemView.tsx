@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { EEM_DOMAINS } from '../data/eemData';
 import { EemState } from '../types';
 import { generateEemSummary } from '../utils/eemFormatter';
-import { getEmptyEemState, getEuthymicEemPreset, toggleEemSelection } from '../utils/eemSelection';
+import { getEmptyEemState, getEuthymicEemPreset, applyEuthymicPreset, hasSelectedEemFindings, toggleEemSelection } from '../utils/eemSelection';
 import {
   Stethoscope,
   CheckCircle,
@@ -13,6 +13,7 @@ import {
   Sparkles,
   Copy,
   Check,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface EemViewProps {
@@ -98,14 +99,33 @@ export const EemView: React.FC<EemViewProps> = ({
     setImported(true);
   };
 
-  const handleResetToStandard = () => {
-    updateState(getEuthymicEemPreset());
+  const [showEuthymicConfirm, setShowEuthymicConfirm] = useState(false);
+
+  const handleRequestStandard = () => {
+    if (hasSelectedEemFindings(eem)) {
+      setShowEuthymicConfirm(true);
+    } else {
+      applyStandardPreset();
+    }
+  };
+
+  const applyStandardPreset = () => {
+    updateState(applyEuthymicPreset(eem));
     setImported(false);
     setCollapsedDomains({});
     setResetFeedback(true);
     setTimeout(() => {
       setResetFeedback(false);
     }, 2000);
+  };
+
+  const handleConfirmStandard = () => {
+    applyStandardPreset();
+    setShowEuthymicConfirm(false);
+  };
+
+  const handleCancelStandard = () => {
+    setShowEuthymicConfirm(false);
   };
 
   return (
@@ -127,13 +147,13 @@ export const EemView: React.FC<EemViewProps> = ({
               <span>Exame do Estado Mental (EEM)</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
-              Avaliação semiológica estruturada baseada no <em>Compêndio de Psiquiatria (Kaplan & Sadock)</em>, <em>Dalgalarrondo</em> e <em>StatPearls/NCBI</em>. Selecione os achados clínicos por função psíquica para gerar a síntese textual e exportar para o SOAP (Objetivo).
+              Avaliação semiológica estruturada baseada no <em>Compêndio de Psiquiatria (Kaplan e Sadock)</em>, <em>Dalgalarrondo</em> e <em>StatPearls (NCBI)</em>. Selecione os achados clínicos por função psíquica para gerar a síntese textual e exportar para o SOAP (Objetivo).
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handleResetToStandard}
+            onClick={handleRequestStandard}
             className={`self-start md:self-auto px-4 py-2 rounded-lg font-mono text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all border cursor-pointer shadow-xs shrink-0 ${
               resetFeedback
                 ? 'bg-teal-600 text-white border-teal-600'
@@ -305,6 +325,51 @@ export const EemView: React.FC<EemViewProps> = ({
           </p>
         </div>
       </div>
+
+      {showEuthymicConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="eemview-euthymic-confirm-title"
+            className="w-full max-w-md space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl text-slate-800 animate-in fade-in duration-150"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 id="eemview-euthymic-confirm-title" className="text-sm font-semibold text-slate-900">
+                  Substituir achados pelo Padrão Eutímico?
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Já existem achados semiológicos selecionados no EEM. A aplicação do padrão substituirá as opções selecionadas pelo perfil eutímico.
+                </p>
+                <p className="text-xs text-teal-800 font-medium">
+                  Todo o texto digitado e as observações complementares serão preservados integralmente.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleCancelStandard}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmStandard}
+                className="px-4 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-xs font-medium text-white transition-colors cursor-pointer shadow-xs"
+              >
+                Confirmar Padrão Eutímico
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

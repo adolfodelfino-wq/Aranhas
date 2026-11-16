@@ -18,6 +18,20 @@ export interface ScaleValidationReport {
   individualAlerts: string[];
 }
 
+/** Lê o aviso individual do PHQ-9 em resultados atuais e no histórico. */
+export function hasPositivePhq9Item9(result?: ScaleResult): boolean {
+  if (result?.scaleId !== 'phq-9') return false;
+  const positive = (value?: number) => value === 1 || value === 2 || value === 3;
+  return result.hasCriticalAlert === true
+    || positive(result.answersArray?.[8])
+    || (result.answersSummary?.some(({ questionText, value }) =>
+      positive(value) && /^\s*9\.|morto|ferir/i.test(questionText ?? '')
+    ) ?? false)
+    || [...(result.individualAlerts ?? []), ...(result.recommendations ?? [])].some((message) =>
+      /(?:item|pergunta)\s*9\b.*resposta positiva/i.test(message)
+    );
+}
+
 /**
  * Validates responses for any clinical scale:
  * - Checks that answers is an object and values are valid numbers.
@@ -76,7 +90,7 @@ export function validateScaleAnswers(
     if (scale.id === 'phq-9' && qId === 'q9' && val > 0) {
       const optionLabel = question.options.find((o) => o.value === val)?.label || `${val} pts`;
       individualAlerts.push(
-        `⚠️ ALERTA CLÍNICO INDIVIDUAL (PHQ-9 - Item 9): Resposta positiva ("${optionLabel}"). Exige avaliação clínica direta e presencial de ideação de morte/autolesão (investigar planos, meios, intencionalidade e fatores de proteção). Não classificar automaticamente como alto risco antes da avaliação médica presencial.`
+        `⚠️ ALERTA CLÍNICO INDIVIDUAL (PHQ-9 - Item 9): Resposta positiva ("${optionLabel}"). Exige avaliação clínica direta e presencial de ideação de morte ou autolesão (investigar planos, meios, intencionalidade e fatores de proteção). Não classificar automaticamente como alto risco antes da avaliação médica presencial.`
       );
     }
 
@@ -84,7 +98,7 @@ export function validateScaleAnswers(
     if (scale.id === 'epds' && qId === 'q10' && val > 0) {
       const optionLabel = question.options.find((o) => o.value === val)?.label || `${val} pts`;
       individualAlerts.push(
-        `⚠️ ALERTA CLÍNICO INDIVIDUAL (EPDS - Item 10): Resposta afirmativa para pensamentos de autoagressão ("${optionLabel}"). Requer acolhimento imediato na unidade e avaliação clínica direta da puérpera/gestante e suporte familiar.`
+        `⚠️ ALERTA CLÍNICO INDIVIDUAL (EPDS - Item 10): Resposta afirmativa para pensamentos de autoagressão ("${optionLabel}"). Requer acolhimento imediato na unidade, avaliação clínica direta da gestante ou puérpera e suporte familiar.`
       );
     }
 
@@ -165,7 +179,7 @@ export function createIncompleteScaleResult(
     `Preenchimento incompleto (${answeredCount} de ${totalRequired} questões respondidas). Conclua todas as questões obrigatórias para gerar a pontuação total e classificação clínica.`
   );
 
-  const soapText = `${scale.acronym}: Preenchimento Incompleto (${answeredCount}/${totalRequired} respondidas, soma parcial: ${partialScore} pts) — Classificação clínica e escore total retidos por segurança.${
+  const soapText = `${scale.acronym}: Preenchimento Incompleto (${answeredCount}/${totalRequired} respondidas, soma parcial: ${partialScore} pts) - Classificação clínica e escore total retidos por segurança.${
     individualAlerts.length > 0 ? `\n• ${individualAlerts.join('\n• ')}` : ''
   }`;
 
