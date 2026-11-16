@@ -124,6 +124,50 @@ export const sanitizeDuplicateEemHeader = (text: string): string => {
 };
 
 /**
+ * Removes legacy auto-generated "EEM, <num>. <Domain>: ..." lines that may remain persisted in
+ * localStorage SOAP Assessment from older app builds, while preserving physician-authored notes.
+ */
+export const sanitizeLegacyAssessmentEem = (text: string): string => {
+  if (!text) return text;
+  const legacyEemLineRegex =
+    /^EEM,\s*(?:1|2|3|4|5|6|6b|6c|7|8|9|10|11)\.\s+(?:Aparência|Atitude e Comportamento|Fala e Linguagem|Humor|Afeto|Pensamento - Curso|Pensamento - Forma e Organização|Pensamento - Conteúdo e Temática|Sensopercepção|Orientação \(Autopsíquica e Alopsíquica\)|Atenção, Concentração e Memória|Insight(?:\s*\/\s*|\s+e\s+)Consciência da Enfermidade|Julgamento e Crítica da Realidade):[^\n]*$/i;
+
+  const filteredLines = text
+    .split('\n')
+    .filter((line) => !legacyEemLineRegex.test(line.trim()));
+
+  return filteredLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+/**
+ * Removes legacy auto-generated plan draft sentences from localStorage SOAP Plan
+ * left behind by older app builds, while preserving physician-authored plans.
+ */
+export const sanitizeLegacyPlanDraft = (text: string): string => {
+  if (!text) return text;
+  const legacyPlanLines = new Set([
+    'Realizar avaliação clínica direta de segurança nesta consulta, incluindo ideação atual, intenção, plano e acesso a meios.',
+    'Definir a proteção e o encaminhamento conforme a avaliação. Acionar a rede de urgência se houver risco iminente.',
+    'Discutir higiene do sono e organização da rotina noturna, conforme a avaliação clínica.',
+    'Discutir compreensão de sintomas depressivos e ativação gradual de rotina, conforme a avaliação clínica.',
+    'Discutir estratégias de desaceleração e controle da ansiedade, conforme a avaliação clínica.',
+    'Revisar a repercussão funcional e pactuar o plano e o prazo de reavaliação com a pessoa.',
+  ]);
+
+  const filteredLines = text
+    .split('\n')
+    .filter((line) => !legacyPlanLines.has(line.trim()));
+
+  return filteredLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+/**
  * Seamlessly integrates or replaces the EEM block within SOAP Objective without duplicating headers.
  */
 export const formatEemIntoObjective = (currentObjective: string, eemNarrative: string): string => {

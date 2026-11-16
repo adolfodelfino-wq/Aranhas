@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COMMON_APS_CODES, formatForPec } from '../utils/pecFormatter';
-import { formatEemIntoObjective } from '../utils/eemFormatter';
+import { formatEemIntoObjective, sanitizeLegacyAssessmentEem, sanitizeLegacyPlanDraft } from '../utils/eemFormatter';
 import type { PatientSession, SoapState } from '../types';
 
 /**
@@ -178,6 +178,31 @@ describe('MRC-SOAP v1.0 | verificação automatizada de registro e exportação'
     expect(updated).toContain('Humor: eutímico.');
     expect(updated).not.toContain('Humor: ansioso.');
     expect(updated.match(/Exame do Estado Mental \(EEM\):/gi)).toHaveLength(1);
+  });
+
+  it('[SOAP-09] remove linhas legadas de EEM auto-inseridas no campo A sem apagar notas do médico', () => {
+    const legacyOnly = [
+      'EEM, 1. Aparência: Vestuário extravagante, bizarro ou desalinhado.',
+      'EEM, 2. Atitude e Comportamento: Desconfiado, esquivo ou vigilante.',
+      'EEM, 10. Insight / Consciência da Enfermidade: Preservado (reconhece o problema e busca auxílio).',
+      'EEM, 10. Insight e Consciência da Enfermidade: Preservado (reconhece o problema e busca auxílio).',
+      'EEM, 11. Julgamento e Crítica da Realidade: Prejudicado (comprometimento na tomada de decisões).',
+    ].join('\n');
+    expect(sanitizeLegacyAssessmentEem(legacyOnly)).toBe('');
+
+    const mixed = `${legacyOnly}\n\nHipótese diagnóstica sob investigação clínica.`;
+    expect(sanitizeLegacyAssessmentEem(mixed)).toBe('Hipótese diagnóstica sob investigação clínica.');
+  });
+
+  it('[SOAP-10] remove linhas legadas de plano auto-geradas no campo P sem apagar condutas do médico', () => {
+    const legacyPlan = [
+      'Discutir compreensão de sintomas depressivos e ativação gradual de rotina, conforme a avaliação clínica.',
+      'Revisar a repercussão funcional e pactuar o plano e o prazo de reavaliação com a pessoa.',
+    ].join('\n');
+    expect(sanitizeLegacyPlanDraft(legacyPlan)).toBe('');
+
+    const mixedPlan = `${legacyPlan}\n\nRetorno presencial em 14 dias com equipe de referência.`;
+    expect(sanitizeLegacyPlanDraft(mixedPlan)).toBe('Retorno presencial em 14 dias com equipe de referência.');
   });
 });
 

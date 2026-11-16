@@ -25,7 +25,12 @@ import {
   DEMO_SCALE_HISTORY,
   DEMO_SCALE_RESULTS,
 } from './data/demoPatientData';
-import { formatEemIntoObjective, sanitizeDuplicateEemHeader } from './utils/eemFormatter';
+import {
+  formatEemIntoObjective,
+  sanitizeDuplicateEemHeader,
+  sanitizeLegacyAssessmentEem,
+  sanitizeLegacyPlanDraft,
+} from './utils/eemFormatter';
 import {
   fetchPatientCloudHistory,
   syncPatientToCloud,
@@ -146,6 +151,12 @@ export const App: React.FC = () => {
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed.objective === 'string') {
             parsed.objective = sanitizeDuplicateEemHeader(parsed.objective);
+          }
+          if (parsed && typeof parsed.assessment === 'string') {
+            parsed.assessment = sanitizeLegacyAssessmentEem(parsed.assessment);
+          }
+          if (parsed && typeof parsed.plan === 'string') {
+            parsed.plan = sanitizeLegacyPlanDraft(parsed.plan);
           }
           return parsed;
         }
